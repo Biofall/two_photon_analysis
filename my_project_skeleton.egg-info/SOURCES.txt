@@ -1,0 +1,11 @@
+README.md
+setup.py
+./scripts/template_hello_world
+my_project_skeleton.egg-info/PKG-INFO
+my_project_skeleton.egg-info/SOURCES.txt
+my_project_skeleton.egg-info/dependency_links.txt
+my_project_skeleton.egg-info/requires.txt
+my_project_skeleton.egg-info/top_level.txt
+two_photon_analysis/__init__.py
+two_photon_analysis/my_first_module.py
+two_photon_analysis/utils.py

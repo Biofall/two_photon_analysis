@@ -1,0 +1,11 @@
+Metadata-Version: 2.1
+Name: my-project-skeleton
+Version: 0.1
+Summary: This package is a 'template' and shows you what a package contains.
+Home-page: UNKNOWN
+Author: TGF
+Author-email: wouldn't you like to know
+License: UNKNOWN
+Description: UNKNOWN
+Platform: UNKNOWN
+Provides-Extra: dev
