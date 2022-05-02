@@ -39,11 +39,11 @@ except ImportError:
 
 
 config = {
-    "name": "my_project_skeleton",
+    "name": "two_photon_analysis",
     "version": "0.1",
-    "description": "This package is a 'template' and shows you what a package contains.",
-    "author": "TGF",
-    "author_email": "wouldn't you like to know",
+    "description": "This package contains functions and scripts to format, motion-correct, and analyze bruker 2-photon-data",
+    "author": "ABK",
+    "author_email": "krave@stanford.edu",
     "url": "",
     "download_url": "",
     "install_requires": [
@@ -62,7 +62,7 @@ config = {
     # manualy specify packages like this # "packages": [
     # manualy specify packages like this #     "ouroboros","ouroboros.new_package",
     # manualy specify packages like this # ],
-    "scripts": ["./scripts/template_hello_world"],
+    "scripts": ["./scripts/template_hello_world","./scripts/process_imports"],
 }
 
 setup(**config)

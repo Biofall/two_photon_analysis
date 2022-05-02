@@ -1,0 +1,8 @@
+numpy
+matplotlib
+jupyter
+ipython
+
+[dev]
+black
+jupytext

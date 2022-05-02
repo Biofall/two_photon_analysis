@@ -1,0 +1,14 @@
+Metadata-Version: 2.1
+Name: two-photon-analysis
+Version: 0.1
+Summary: This package contains functions and scripts to format, motion-correct, and analyze bruker 2-photon-data
+Home-page: 
+Download-URL: 
+Author: ABK
+Author-email: krave@stanford.edu
+License: UNKNOWN
+Platform: UNKNOWN
+Provides-Extra: dev
+
+UNKNOWN
+
