@@ -1,11 +1,13 @@
 Metadata-Version: 2.1
-Name: my-project-skeleton
+Name: two_photon_analysis
 Version: 0.1
 Summary: This package is a 'template' and shows you what a package contains.
-Home-page: UNKNOWN
-Author: TGF
-Author-email: wouldn't you like to know
+Home-page:
+Download-URL:
+Author: ABK
+Author-email: krave@stanford.edu
 License: UNKNOWN
-Description: UNKNOWN
 Platform: UNKNOWN
 Provides-Extra: dev
+
+UNKNOWN
