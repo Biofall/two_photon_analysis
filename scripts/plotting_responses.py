@@ -2,7 +2,7 @@
 Example script to interact with ImagingDataObject, and extract data.
 
 https://github.com/ClandininLab/visanalysis
-mhturner@stanford.edu
+adapted from Max Turner's code by Avery Krieger 5/20/22
 """
 from visanalysis.analysis import imaging_data, shared_analysis
 from visanalysis.util import plot_tools
@@ -10,9 +10,9 @@ import matplotlib.pyplot as plt
 import os
 
 #experiment_file_directory = '/Users/mhturner/GitHub/visanalysis/examples/example_data/responses/bruker'
-experiment_file_directory = '/Users/averykrieger/Documents/GitHub/Bruker-Analysis-Avery/example_data/responses/bruker'
-experiment_file_name = '2021-11-29_eg'
-series_number = 6
+experiment_file_directory = '/Users/averykrieger/Documents/local_data_repo/20220527'
+experiment_file_name = '2022-05-27'
+series_number = 11
 
 file_path = os.path.join(experiment_file_directory, experiment_file_name + '.hdf5')
 
@@ -32,8 +32,9 @@ print(protocol_ID)
 
 # epoch_parameters: list of dicts of all epoch parameters, one for each epoch (trial)
 epoch_parameters = ID.getEpochParameters()
+print(epoch_parameters)
 # Pass a param key to return a list of specified param values, one for each trial
-current_rv_ratio = ID.getEpochParameters('current_rv_ratio')
+current_opto_stim = ID.getEpochParameters('opto_stim')
 
 # fly_metadata: dict
 fly_metadata = ID.getFlyMetadata()
@@ -42,19 +43,20 @@ print(prep)
 
 # acquisition_metadata: dict
 acquisition_metadata = ID.getAcquisitionMetadata()
-sample_period = ID.getAcquisitionMetadata('sample_period')
-print(sample_period)
+print(acquisition_metadata)
+#sample_period = ID.getAcquisitionMetadata('sample_period')
+#print(sample_period)
 # %% ROIS AND RESPONSES
 
 # Get list of rois present in the hdf5 file for this series
 roi_set_names = ID.getRoiSetNames()
 roi_set_names
 # getRoiResponses() wants a ROI set name, returns roi_data (dict)
-roi_data = ID.getRoiResponses('glom')
+roi_data = ID.getRoiResponses('medulla_rois')
 roi_data.keys()
 
 # See the ROI overlaid on top of the image
-ID.generateRoiMap(roi_name='glom', z=1)
+ID.generateRoiMap(roi_name='medulla_rois', z=1)
 
 # Plot whole ROI response across entire series
 fh0, ax0 = plt.subplots(1, 1, figsize=(12, 4))
@@ -68,6 +70,15 @@ fh1, ax1 = plt.subplots(1, 1, figsize=(6, 4))
 ax1.plot(roi_data.get('time_vector'), roi_data.get('epoch_response')[0, 10:15, :].T)
 ax1.set_ylabel('Response (dF/F)')
 ax1.set_xlabel('Time (s)')
+
+
+ID.getStimulusTiming(plot_trace_flag=True)
+
+v = ID.getVoltageData()
+v[0].shape
+v[1]
+
+plt.plot(v[0][2, :])
 
 # %% Plot trial-average responses by specified parameter name
 
