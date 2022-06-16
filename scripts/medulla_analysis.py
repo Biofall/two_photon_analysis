@@ -18,18 +18,29 @@ import os
 
 experiment_file_directory = '/Users/averykrieger/Documents/local_data_repo/20220527'
 experiment_file_name = '2022-05-27'
-series_number = 17
+series_number = 3
 opto_condition = False
-roi_name = 'distal_medulla'
+roi_name = 'distal_medulla-2'
+
+displayFix = False
 
 file_path = os.path.join(experiment_file_directory, experiment_file_name + '.hdf5')
 save_path='/Users/averykrieger/Documents/local_data_repo/figs/'
 saveFig = True
 
 # ImagingDataObject wants a path to an hdf5 file and a series number from that file
-ID = imaging_data.ImagingDataObject(file_path,
+# displayFix is for the few trials in which something is blocking the display,
+# specify for the ID to only use one display photodiode for timing
+if displayFix == False:
+    ID = imaging_data.ImagingDataObject(file_path,
+                                        series_number,
+                                        quiet=False)
+else:
+    cfg_dict = {'timing_channel_ind': 1}
+    ID = imaging_data.ImagingDataObject(file_path,
                                     series_number,
-                                    quiet=False)
+                                    quiet=True,
+                                    cfg_dict=cfg_dict)
 
 # getRoiResponses() wants a ROI set name, returns roi_data (dict)
 roi_data = ID.getRoiResponses(roi_name)
@@ -93,7 +104,6 @@ def plotConditionedROIResponses(ID, roi_data, opto_condition, saveFig):
         fh.savefig(save_path+str(experiment_file_name)+' | SeriesNumber'+str(series_number)+' | '+str(roi_name) + '.pdf', dpi=300)
 
 # %% CALLING THAT PLOT FUNCTION
-print(noOptoMean.size)
 plotConditionedROIResponses(ID, roi_data, opto_condition, saveFig)
 
 
