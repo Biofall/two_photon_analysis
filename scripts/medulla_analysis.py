@@ -19,11 +19,11 @@ import os
 
 experiment_file_directory = '/Users/averykrieger/Documents/local_data_repo/20220527'
 experiment_file_name = '2022-05-27'
-series_number = 2
+series_number = 16
 opto_condition = True
-roi_name = 'distal medulla-2'
+roi_name = 'medial_medulla-1'
 
-displayFix = False
+displayFix = True
 
 file_path = os.path.join(experiment_file_directory, experiment_file_name + '.hdf5')
 save_path='/Users/averykrieger/Documents/local_data_repo/figs/'
@@ -220,6 +220,45 @@ def plotROIResponsesMetrics(noptoMaxes, noptoMeans, yoptoMaxes, yoptoMeans, roi_
     fh.suptitle(f'{experiment_file_name} | {series_number} | {roi_name} | TempFreq', fontsize=20)
     if saveFig == True:
         fh.savefig(metric_save_path+str(experiment_file_name)+' | SeriesNumber'+str(series_number)+' | '+str(roi_name) + ' | ' + 'TempFreq' '.pdf', dpi=300)
+
+# %% Heatmaps
+
+target_sp = np.unique(ID.getEpochParameters('current_spatial_period'))
+target_tf = np.unique(ID.getEpochParameters('current_temporal_frequency'))
+
+opto_maxes, opto_means = getResponseMetrics(ID, roi_name, opto_condition, silent = True)
+nopto_maxes, nopto_means = getResponseMetrics(ID, roi_name, opto_condition = False, silent = True)
+div_max = nopto_maxes / opto_maxes
+div_mean = nopto_means / opto_means
+
+saveFig = True
+
+fh, ax = plt.subplots(2, roi_number, figsize=(10*roi_number, 20))
+for roi_ind in range(roi_number):
+    # the maxes
+    ax[0, roi_ind].imshow(div_max[roi_ind,:,:], cmap = 'coolwarm')
+    ax[0, roi_ind].set_xticks(np.arange(len(target_sp)), labels=target_sp)
+    ax[0, roi_ind].set_yticks(np.arange(len(target_tf)), labels=target_tf)
+    ax[0, roi_ind].set_title(f'ROI:{roi_ind} | Max', fontsize=40)
+    # Loop over data dimensions and create text annotations.
+    for i in range(len(target_sp)):
+        for j in range(len(target_tf)):
+            text = ax[0, roi_ind].text(j, i, round(div_max[roi_ind, i, j], 3),
+                           ha="center", va="center", color="w")
+
+    # The means
+    ax[1, roi_ind].imshow(div_mean[roi_ind,:,:], cmap = 'coolwarm')
+    ax[1, roi_ind].set_xticks(np.arange(len(target_sp)), labels=target_sp)
+    ax[1, roi_ind].set_yticks(np.arange(len(target_tf)), labels=target_tf)
+    ax[1, roi_ind].set_title(f'ROI:{roi_ind} | Mean', fontsize=40)
+    # Loop over data dimensions and create text annotations.
+    for i in range(len(target_sp)):
+        for j in range(len(target_tf)):
+            text = ax[1, roi_ind].text(j, i, round(div_mean[roi_ind, i, j], 3),
+                           ha="center", va="center", color="w")
+fh.suptitle(f'{experiment_file_name} | {series_number} | Heatmap of No Opto / Opto | {roi_name}', fontsize=40)
+if saveFig == True:
+    fh.savefig(metric_save_path+str(experiment_file_name)+' | SeriesNumber'+str(series_number)+' | '+str(roi_name) + ' | ' + 'Heatmap' '.pdf', dpi=300)
 
 # %% Call those functions from above
 noptoMaxes, noptoMeans = getResponseMetrics(ID, roi_name, opto_condition = False, silent = True)
