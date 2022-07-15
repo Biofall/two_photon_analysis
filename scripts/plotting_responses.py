@@ -1,25 +1,34 @@
 """
-Example script to interact with ImagingDataObject, and extract data.
+Script to call medulla_analysis.py functions and plot across flies
 
-https://github.com/ClandininLab/visanalysis
-adapted from Max Turner's code by Avery Krieger 5/20/22
+Avery Krieger 5/20/22
 """
 from visanalysis.analysis import imaging_data, shared_analysis
 from visanalysis.util import plot_tools
 import matplotlib.pyplot as plt
 import os
+from two_photon_analysis import medulla_analysis as ma
 
-#experiment_file_directory = '/Users/mhturner/GitHub/visanalysis/examples/example_data/responses/bruker'
-experiment_file_directory = '/Users/averykrieger/Documents/local_data_repo/20220527'
-experiment_file_name = '2022-05-27'
-series_number = 11
+ID, roi_data = ma.dataLoader(file_directory = '/Users/averykrieger/Documents/local_data_repo/20220527',
+                      save_path = '/Users/averykrieger/Documents/local_data_repo/figs/',
+                      file_name = '2022-05-27',
+                      series_number = 16,
+                      roi_name = 'distal_medulla-1',
+                      opto_condition = True,
+                      displayFix = True,
+                      saveFig = True)
 
-file_path = os.path.join(experiment_file_directory, experiment_file_name + '.hdf5')
 
-# ImagingDataObject wants a path to an hdf5 file and a series number from that file
-ID = imaging_data.ImagingDataObject(file_path,
-                                    series_number,
-                                    quiet=False)
+ma.plotConditionedROIResponses(ID, roi_data, opto_condition = True, dff=False, df=True, saveFig=True)
+
+# %% Pasting some function calls
+
+noptoMaxes, noptoMeans = getResponseMetrics(ID, roi_name, opto_condition = False, silent = True)
+yoptoMaxes, yoptoMeans = getResponseMetrics(ID, roi_name, opto_condition = True, silent = True)
+
+# call the below function for convenience
+plotROIResponsesMetrics(noptoMaxes, noptoMeans, yoptoMaxes, yoptoMeans, roi_number)
+
 
 # %% PARAMETERS & METADATA
 
@@ -56,7 +65,7 @@ roi_data = ID.getRoiResponses('medulla_rois')
 roi_data.keys()
 
 # See the ROI overlaid on top of the image
-ID.generateRoiMap(roi_name='medulla_rois', z=1)
+#ID.generateRoiMap(roi_name='medulla_rois', z=1)
 
 # Plot whole ROI response across entire series
 fh0, ax0 = plt.subplots(1, 1, figsize=(12, 4))
@@ -81,12 +90,20 @@ v[1]
 plt.plot(v[0][2, :])
 
 # %% Plot trial-average responses by specified parameter name
+ID.getEpochParameters()
+query = {'current_spatial_period': 20, 'current_temporal_frequency': 1.0}
+filtered_trials = shared_analysis.filterTrials(roi_data.get('epoch_response'), ID, query=query)
+filtered_trials.shape
+unique_parameter_values, mean_response, sem_response, trial_response_by_stimulus = ID.getTrialAverages(roi_data.get('epoch_response'), parameter_key=('current_spatial_period', 'current_temporal_frequency'))
+ID.getTrialAverages
+print(unique_parameter_values)
+mean_response.shape
+roi_data.get('epoch_response').shape
 
-unique_parameter_values, mean_response, sem_response, trial_response_by_stimulus = ID.getTrialAverages(roi_data.get('epoch_response'), parameter_key='current_rv_ratio')
 roi_data.keys()
 
 fh, ax = plt.subplots(1, len(unique_parameter_values), figsize=(10, 2))
-[x.set_ylim([-0.15, 0.25]) for x in ax.ravel()]
+#[x.set_ylim([-0.15, 0.25]) for x in ax.ravel()]
 [plot_tools.cleanAxes(x) for x in ax.ravel()]
 for u_ind, up in enumerate(unique_parameter_values):
     ax[u_ind].plot(roi_data['time_vector'], mean_response[:, u_ind, :].T, color='k')
