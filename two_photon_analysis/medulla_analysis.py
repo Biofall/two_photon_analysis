@@ -56,8 +56,7 @@ def plotConditionedROIResponses(ID, roi_data, opto_condition, saveFig, save_path
             True used when a 300dpi pdf of the plot is saved
             False when no plot saved
     """
-
-    time_vector, epoch_response = ID.getEpochResponseMatrix(np.vstack(roi_data['roi_response']), dff=dff, df=df)
+    time_vector, epoch_response = getAltEpochResponseMatrix(ID, np.vstack(roi_data['roi_response']), dff=dff, df=df)
 
     # Find the unique parameter space for this experiment
     target_sp = np.unique(ID.getEpochParameters('current_spatial_period'))
@@ -110,7 +109,7 @@ def plotConditionedROIResponses(ID, roi_data, opto_condition, saveFig, save_path
             fh.savefig(saveName, dpi=300)
 
 # Plotting heatmaps for opto and no opto comparisons
-def plotOptoHeatmaps(ID, roi_data, save_path, dff = True, df = False):
+def plotOptoHeatmaps(ID, roi_data, saveName, dff = True, df = False):
 
     target_sp = np.unique(ID.getEpochParameters('current_spatial_period'))
     target_tf = np.unique(ID.getEpochParameters('current_temporal_frequency'))
@@ -152,13 +151,13 @@ def plotOptoHeatmaps(ID, roi_data, save_path, dff = True, df = False):
             for j in range(len(target_tf)):
                 text = ax[1, roi_ind].text(j, i, round(norm_mean[roi_ind, i, j], 3),
                                ha="center", va="center", color="w")
-    fh.suptitle(f'{experiment_file_name} | {series_number} | Heatmap of No Opto / Opto | {roi_name}', fontsize=40)
+    fh.suptitle(f'{saveName} | Heatmap of No Opto / Opto', fontsize=40)
 
     if saveFig == True:
-        fh.savefig(save_path+'metrics/heatmaps/'+'test  '+str(experiment_file_name)+' | SeriesNumber'+str(series_number)+' | '+str(roi_name) + ' | ' + 'Heatmap' '.pdf', dpi=300)
+        fh.savefig(saveName, dpi=300)
 
 # Plotting the max and mean metrics
-def plotROIResponsesMetrics(noptoMaxes, noptoMeans, yoptoMaxes, yoptoMeans, roi_number, saveFig=True):
+def plotROIResponsesMetrics(ID, plotTitle, figTitle, noptoMaxes, noptoMeans, yoptoMaxes, yoptoMeans, roi_number, saveFig=True):
 
     saveFig = True
     # Collapse across stimulus space.
@@ -169,11 +168,11 @@ def plotROIResponsesMetrics(noptoMaxes, noptoMeans, yoptoMaxes, yoptoMeans, roi_
     fh, ax = plt.subplots(2, roi_number, figsize=(20*roi_number, 20))
     for roi_ind in range(roi_number):
         # Max Values
-        nopto_spatial_per_max_max = np.max(noptoMaxes[roi_ind,:,:], axis = 1)
+        nopto_spatial_per_max_max = np.mean(noptoMaxes[roi_ind,:,:], axis = 1)
         ax[0, roi_ind].plot(target_sp, noptoMaxes[roi_ind,:,:], 'b^', alpha=0.4, markersize=20)
         ax[0, roi_ind].plot(target_sp, nopto_spatial_per_max_max, '-bo', linewidth=6, alpha=0.8)
 
-        yopto_spatial_per_max_max = np.max(yoptoMaxes[roi_ind,:,:], axis = 1)
+        yopto_spatial_per_max_max = np.mean(yoptoMaxes[roi_ind,:,:], axis = 1)
         ax[0, roi_ind].plot(target_sp, yoptoMaxes[roi_ind,:,:], 'r^', alpha=0.4, markersize=20)
         ax[0, roi_ind].plot(target_sp, yopto_spatial_per_max_max, '-ro', linewidth=6, alpha=0.8)
 
@@ -190,20 +189,20 @@ def plotROIResponsesMetrics(noptoMaxes, noptoMeans, yoptoMaxes, yoptoMeans, roi_
 
         ax[1, roi_ind].set_title(f'ROI:{roi_ind}| Mean Respone by SpatPer', fontsize=20)
 
-    fh.suptitle(f'{experiment_file_name} | {series_number} | {roi_name} | SpatPer', fontsize=20)
+    fh.suptitle(plotTitle + f' | SpatPer', fontsize=20)
     if saveFig == True:
-        fh.savefig(metric_save_path+str(experiment_file_name)+' | SeriesNumber'+str(series_number)+' | '+str(roi_name) +' | ' + 'SpatPer' '.pdf', dpi=300)
+        fh.savefig(figTitle + 'SpatPer.pdf', dpi=300)
 
     # Second, plot max and avgs of temporal frequencies, collapsed across spatial_periods:
     fh, ax = plt.subplots(2, roi_number, figsize=(20*roi_number, 20))
     # Note the transpose in the scatterplot because we're looking at the flipped matrix for temporal frequency
     for roi_ind in range(roi_number):
         # Max Values
-        nopto_temp_freq_max_max = np.max(noptoMaxes[roi_ind,:,:], axis = 0)
+        nopto_temp_freq_max_max = np.mean(noptoMaxes[roi_ind,:,:], axis = 0)
         ax[0, roi_ind].plot(target_tf, noptoMaxes[roi_ind,:,:].T, 'b^', alpha=0.4, markersize=20)
         ax[0, roi_ind].plot(target_tf, nopto_temp_freq_max_max, '-bo', linewidth=6, alpha=0.8)
 
-        yopto_temp_freq_max_max = np.max(yoptoMaxes[roi_ind,:,:], axis = 0)
+        yopto_temp_freq_max_max = np.mean(yoptoMaxes[roi_ind,:,:], axis = 0)
         ax[0, roi_ind].plot(target_tf, yoptoMaxes[roi_ind,:,:].T, 'r^', alpha=0.4, markersize=20)
         ax[0, roi_ind].plot(target_tf, yopto_temp_freq_max_max, '-ro', linewidth=6, alpha=0.8)
 
@@ -220,13 +219,108 @@ def plotROIResponsesMetrics(noptoMaxes, noptoMeans, yoptoMaxes, yoptoMeans, roi_
 
         ax[1, roi_ind].set_title(f'ROI:{roi_ind}| Mean Respone by TempFreq', fontsize=20)
 
-    fh.suptitle(f'{experiment_file_name} | {series_number} | {roi_name} | TempFreq', fontsize=20)
+    fh.suptitle(plotTitle + f' | TempFreq', fontsize=20)
     if saveFig == True:
-        fh.savefig(metric_save_path+str(experiment_file_name)+' | SeriesNumber'+str(series_number)+' | '+str(roi_name) + ' | ' + 'TempFreq' '.pdf', dpi=300)
+        fh.savefig(figTitle + 'TempFreq.pdf', dpi=300)
+
+# %%
+def plotReponseMetricsAcrossROIs(ID, plotTitle, figTitle, noptoMaxes, noptoMeans, yoptoMaxes, yoptoMeans, roi_number, saveFig=True):
+    import matplotlib.patches as mpatches
+
+    saveFig = True
+    # Collapse across stimulus space.
+    target_sp = np.unique(ID.getEpochParameters('current_spatial_period'))
+    target_tf = np.unique(ID.getEpochParameters('current_temporal_frequency'))
+
+    # First, plot max and avgs of spatial period, collapsed across temp freq:
+    fh, ax = plt.subplots(2, 1) #, figsize=(40, 40))
+    plt.subplots_adjust(bottom=0.1, right=0.9, wspace=0.4, hspace=0.6)
+
+    #calculate mean across rois. optoMaxes = ROI x SpatPer x TempFreq
+    nopto_spatial_mean_max_across_rois= np.mean(np.mean(noptoMaxes[:,:,:], axis = 0), axis = 1)
+    yopto_spatial_mean_max_across_rois= np.mean(np.mean(yoptoMaxes[:,:,:], axis = 0), axis = 1)
+    nopto_spatial_mean_mean_across_rois = np.mean(np.mean(noptoMeans[:,:,:], axis = 0), axis = 1)
+    yopto_spatial_mean_mean_across_rois = np.mean(np.mean(yoptoMeans[:,:,:], axis = 0), axis = 1)
+
+    for roi_ind in range(roi_number):
+        # Max Values for each ROI get plotted, avg across TF
+        nopto_spatial_per_max_max = np.mean(noptoMaxes[roi_ind,:,:], axis = 1)
+        ax[0].plot(target_sp, nopto_spatial_per_max_max, 'k^', alpha=0.4)
+
+        yopto_spatial_per_max_max = np.mean(yoptoMaxes[roi_ind,:,:], axis = 1)
+        ax[0].plot(target_sp, yopto_spatial_per_max_max, 'r^', alpha=0.4)
+
+        ax[0].set_title('Max Respone by SpatPer')
+
+        # Mean Values for each ROI get plotted, avg across TF
+        nopto_spatial_per_mean = np.mean(noptoMeans[roi_ind,:,:], axis = 1)
+        ax[1].plot(target_sp, nopto_spatial_per_mean, 'k^', alpha=0.4)
+
+        yopto_spatial_per_mean = np.mean(yoptoMeans[roi_ind,:,:], axis = 1)
+        ax[1].plot(target_sp, yopto_spatial_per_mean, 'r^', alpha=0.4)
+
+        ax[1].set_title('Mean Respone by SpatPer')
+
+    ax[0].plot(target_sp, nopto_spatial_mean_max_across_rois, '-ko', alpha=0.8)
+    ax[0].plot(target_sp, yopto_spatial_mean_max_across_rois, '-ro', alpha=0.8)
+
+    ax[1].plot(target_sp, nopto_spatial_mean_mean_across_rois, '-ko', alpha=0.8)
+    ax[1].plot(target_sp, yopto_spatial_mean_mean_across_rois, '-ro', alpha=0.8)
+
+    red_patch = mpatches.Patch(color='red', label='With Opto')
+    black_patch = mpatches.Patch(color='black', label='No Opto')
+    ax[1].legend(handles=[red_patch, black_patch])
+
+    fh.suptitle(plotTitle + ' | SpatPer')
+    if saveFig == True:
+        fh.savefig(figTitle + 'SpatPer.pdf', dpi=300)
+
+    # Second, plot max and avgs of temporal frequencies, collapsed across spatial_periods:
+    fh, ax = plt.subplots(2, 1)
+    plt.subplots_adjust(bottom=0.1, right=0.9, wspace=0.4, hspace=0.6)
+    nopto_temporal_mean_max_across_rois= np.mean(np.mean(noptoMaxes[:,:,:], axis = 0), axis = 0)
+    yopto_temporal_mean_max_across_rois= np.mean(np.mean(yoptoMaxes[:,:,:], axis = 0), axis = 0)
+    nopto_temporal_mean_mean_across_rois = np.mean(np.mean(noptoMeans[:,:,:], axis = 0), axis = 0)
+    yopto_temporal_mean_mean_across_rois = np.mean(np.mean(yoptoMeans[:,:,:], axis = 0), axis = 0)
+
+    for roi_ind in range(roi_number):
+        # Max Values
+        nopto_temporal_per_max_max = np.mean(noptoMaxes[roi_ind,:,:], axis = 0)
+        ax[0].plot(target_tf, nopto_temporal_per_max_max, 'k^', alpha=0.4)
+
+        yopto_temporal_per_max_max = np.mean(yoptoMaxes[roi_ind,:,:], axis = 0)
+        ax[0].plot(target_tf, yopto_temporal_per_max_max, 'r^', alpha=0.4)
+
+        ax[0].set_title('Max Respone by TempFreq')
+
+        # Mean Values
+        nopto_temporal_per_mean = np.mean(noptoMeans[roi_ind,:,:], axis = 0)
+        ax[1].plot(target_tf, nopto_temporal_per_mean, 'k^', alpha=0.4)
+
+        yopto_temporal_per_mean = np.mean(yoptoMeans[roi_ind,:,:], axis = 0)
+        ax[1].plot(target_tf, yopto_temporal_per_mean, 'r^', alpha=0.4)
+
+        ax[1].set_title('Mean Respone by Temp Freq')
+
+    ax[0].plot(target_tf, nopto_temporal_mean_max_across_rois, '-ko', alpha=0.8)
+    ax[0].plot(target_tf, yopto_temporal_mean_max_across_rois, '-ro', alpha=0.8)
+
+    ax[1].plot(target_tf, nopto_temporal_mean_mean_across_rois, '-ko', alpha=0.8)
+    ax[1].plot(target_tf, yopto_temporal_mean_mean_across_rois, '-ro', alpha=0.8)
+
+    red_patch = mpatches.Patch(color='red', label='With Opto')
+    black_patch = mpatches.Patch(color='black', label='No Opto')
+    ax[1].legend(handles=[red_patch, black_patch])
+
+    fh.suptitle(plotTitle + ' | TempFreq')
+    if saveFig == True:
+        fh.savefig(figTitle + 'TempFreq.pdf', dpi=300)
+
+
 
 # %% Find Mean and Maxing by condition
 def getResponseMetrics(ID, roi_data, dff, df, opto_condition = True, silent = True):
-    time_vector, epoch_response = ID.getEpochResponseMatrix(np.vstack(roi_data['roi_response']), dff=dff, df=df)
+    time_vector, epoch_response = getAltEpochResponseMatrix(ID, np.vstack(roi_data['roi_response']), dff=dff, df=df)
 
     target_sp = np.unique(ID.getEpochParameters('current_spatial_period'))
     target_tf = np.unique(ID.getEpochParameters('current_temporal_frequency'))
@@ -331,6 +425,97 @@ class MidPointNorm(Normalize):
                 return  val*abs(vmin-midpoint) + midpoint
             else:
                 return  val*abs(vmax-midpoint) + midpoint
+
+# %% My own version of getEpochResponseMatrix that allows for different
+#    flourescence calculations than df/f
+
+import warnings
+
+def getAltEpochResponseMatrix(ID, region_response, dff=True, df=False):
+        """
+        getEpochReponseMatrix(self, region_response, dff=True)
+            Takes in long stack response traces and splits them up into each stimulus epoch
+            Params:
+                region_response: Matrix of region/voxel responses. Shape = (n regions, time)
+                dff: (Bool) convert from raw intensity value to dF/F based on mean of pre_time
+
+            Returns:
+                time_vector (1d array): 1d array, time values for epoch_response traces (sec)
+                response_matrix (ndarray): response for each roi in each epoch.
+                    shape = (rois, epochs, frames per epoch)
+        """
+        no_regions, t_dim = region_response.shape
+
+        run_parameters = ID.getRunParameters()
+        response_timing = ID.getResponseTiming()
+        stimulus_timing = ID.getStimulusTiming()
+
+        epoch_start_times = stimulus_timing['stimulus_start_times'] - run_parameters['pre_time']
+        epoch_end_times = stimulus_timing['stimulus_end_times'] + run_parameters['tail_time']
+        epoch_time = (run_parameters['pre_time']
+                      + run_parameters['stim_time']
+                      + run_parameters['tail_time'])  # sec
+
+        # find how many acquisition frames correspond to pre, stim, tail time
+        epoch_frames = int(epoch_time / response_timing['sample_period'])  # in acquisition frames
+        pre_frames = int(run_parameters['pre_time'] / response_timing['sample_period'])  # in acquisition frames
+        time_vector = np.arange(0, epoch_frames) * response_timing['sample_period']  # sec
+
+        no_trials = len(epoch_start_times)
+        response_matrix = np.empty(shape=(no_regions, no_trials, epoch_frames), dtype=float)
+        response_matrix[:] = np.nan
+        cut_inds = np.empty(0, dtype=int)  # trial/epoch indices to cut from response_matrix
+        for idx, val in enumerate(epoch_start_times):
+            stack_inds = np.where(np.logical_and(response_timing['time_vector'] < epoch_end_times[idx],
+                                                 response_timing['time_vector'] >= epoch_start_times[idx]))[0]
+            if len(stack_inds) == 0:  # no imaging acquisitions happened during this epoch presentation
+                cut_inds = np.append(cut_inds, idx)
+                continue
+            if np.any(stack_inds > region_response.shape[1]):
+                cut_inds = np.append(cut_inds, idx)
+                continue
+            if idx == no_trials:
+                if len(stack_inds) < epoch_frames:  # missed images for the end of the stimulus
+                    cut_inds = np.append(cut_inds, idx)
+                    print('Missed acquisition frames at the end of the stimulus!')
+                    continue
+            # pull out Roi values for these scans. shape of newRespChunk is (nROIs,nScans)
+            new_resp_chunk = region_response[:, stack_inds]
+
+            if dff:
+                # calculate baseline using pre frames
+
+                baseline = np.mean(new_resp_chunk[:, 0:pre_frames], axis=1, keepdims=True)
+                # to dF/F
+                with warnings.catch_warnings():  # Warning to catch divide by zero or nan. Will return nan or inf
+                    warnings.simplefilter("ignore", category=RuntimeWarning)
+                    new_resp_chunk = (new_resp_chunk - baseline) / baseline
+
+            if df:
+                # calculate baseline using pre frames, don't divide by f
+
+                baseline = np.mean(new_resp_chunk[:, 0:pre_frames], axis=1, keepdims=True)
+                # to dF/F
+                with warnings.catch_warnings():  # Warning to catch divide by zero or nan. Will return nan or inf
+                    warnings.simplefilter("ignore", category=RuntimeWarning)
+                    new_resp_chunk = (new_resp_chunk - baseline)
+
+            if epoch_frames > new_resp_chunk.shape[-1]:
+                print('Warnging: Size mismatch idx = {}'.format(idx))  # the end of a response clipped off
+                response_matrix[:, idx, :new_resp_chunk.shape[-1]] = new_resp_chunk[:, 0:]
+            else:
+                response_matrix[:, idx, :] = new_resp_chunk[:, 0:epoch_frames]
+            # except:
+            #     print('Size mismatch idx = {}'.format(idx))  # the end of a response clipped off
+            #     print(response_matrix.shape)
+            #     print(new_resp_chunk.shape)
+            #     print(epoch_frames)
+                # cut_inds = np.append(cut_inds, idx)
+
+        if len(cut_inds) > 0:
+            print('Warning: cut {} epochs from epoch response matrix'.format(len(cut_inds)))
+        response_matrix = np.delete(response_matrix, cut_inds, axis=1)  # shape = (region, trial, time)
+        return time_vector, response_matrix
 
 # %% ToDo:
 # now, import to pandas DF. in this df, the  maxes and means would be appended to a df
