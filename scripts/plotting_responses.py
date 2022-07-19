@@ -9,25 +9,200 @@ import matplotlib.pyplot as plt
 import os
 from two_photon_analysis import medulla_analysis as ma
 
-ID, roi_data = ma.dataLoader(file_directory = '/Users/averykrieger/Documents/local_data_repo/20220527',
-                      save_path = '/Users/averykrieger/Documents/local_data_repo/figs/',
-                      file_name = '2022-05-27',
-                      series_number = 16,
-                      roi_name = 'distal_medulla-1',
-                      opto_condition = True,
-                      displayFix = True,
-                      saveFig = True)
+# %% Analysis Parameters
+file_directory = '/Users/averykrieger/Documents/local_data_repo/20220527'
+save_path = '/Users/averykrieger/Documents/local_data_repo/figs/'
+file_name = '2022-05-27'
+series_number = 16
+roi_name = 'medial_vis_responsive'
+opto_condition = True
+displayFix = True
+saveFig = True
+dff = False
+# Handling the DF/F or DF or Raw options for the Ca traces
+if dff == False:
+    df = True
+else:
+    df = False
+
+# Load up that data
+ID, roi_data = ma.dataLoader(file_directory = file_directory,
+                      save_path = save_path,
+                      file_name = file_name,
+                      series_number = series_number,
+                      roi_name = roi_name,
+                      opto_condition = opto_condition,
+                      displayFix = displayFix,
+                      saveFig = saveFig)
+# saveNames for figures
+if df == True:
+    saveName = save_path+str(file_name)+' | SeriesNumber'+' | DF is '+str(df)+' | '+str(series_number)+' | '+str(roi_name) + '.pdf'
+else:
+    saveName = save_path+str(file_name)+' | SeriesNumber'+' | DFF is '+str(dff)+' | '+str(series_number)+' | '+str(roi_name) + '.pdf'
+
+# %% PLOT traces of each ROI
+ma.plotConditionedROIResponses(ID = ID, roi_data = roi_data,
+                               opto_condition = opto_condition, dff=dff, df = df,
+                               save_path = save_path, saveFig=saveFig,
+                               saveName = saveName)
+
+# %% Heatmaps of ROIs opto vs no opto
+heatmapFigName = save_path+'metrics/heatmaps/'+'test  '+str(file_name)+' | SeriesNumber'+str(series_number)+' | '+str(roi_name) + ' | ' + 'Heatmap' '.pdf'
+ma.plotOptoHeatmaps(ID, roi_data, saveName = heatmapFigName, dff = dff, df = df)
 
 
-ma.plotConditionedROIResponses(ID, roi_data, opto_condition = True, dff=False, df=True, saveFig=True)
+# %% Calculate Response Metrics so that they can be plotted
 
-# %% Pasting some function calls
+noptoMaxes, noptoMeans = ma.getResponseMetrics(ID = ID, roi_data = roi_data,
+                                              dff = dff, df = df,
+                                              opto_condition = False,
+                                              silent = True)
+yoptoMaxes, yoptoMeans = ma.getResponseMetrics(ID = ID, roi_data = roi_data,
+                                              dff = dff, df = df,
+                                              opto_condition = True,
+                                              silent = True)
+roi_number = len(roi_data['roi_response'])
 
-noptoMaxes, noptoMeans = getResponseMetrics(ID, roi_name, opto_condition = False, silent = True)
-yoptoMaxes, yoptoMeans = getResponseMetrics(ID, roi_name, opto_condition = True, silent = True)
+# gotta get those title and fig names going
+plotTitle=f'{file_name} | {series_number}'
+if df == True:
+    roiResponseFigName = save_path+'/metrics/'+str(file_name)+' | SeriesNumber '+str(series_number)+' | DF | '+str(roi_name) + ' | '
+elif dff == True:
+        roiResponseFigName = save_path+'/metrics/'+str(file_name)+' | SeriesNumber '+str(series_number)+' | DF/F | '+str(roi_name) + ' | '
+else:
+    roiResponseFigName = save_path+'/metrics/'+str(file_name)+' | SeriesNumber'+str(series_number)+'raw | '+str(roi_name) + ' | '
 
-# call the below function for convenience
-plotROIResponsesMetrics(noptoMaxes, noptoMeans, yoptoMaxes, yoptoMeans, roi_number)
+
+# %% PLOT ROI Resonse Metrics (ROIs are separate)
+ma.plotROIResponsesMetrics(ID, plotTitle, roiResponseFigName, noptoMaxes, noptoMeans, yoptoMaxes, yoptoMeans, roi_number)
+
+# %% PLOT ROI Resonse Metrics (ROIs are collapsed)
+ma.plotReponseMetricsAcrossROIs(ID, plotTitle, roiResponseFigName, noptoMaxes, noptoMeans, yoptoMaxes, yoptoMeans, roi_number)
+
+# %%
+def plotReponseMetricsAcrossROIs(ID, plotTitle, figTitle, noptoMaxes, noptoMeans, yoptoMaxes, yoptoMeans, roi_number, saveFig=True):
+    from visanalysis.analysis import imaging_data, shared_analysis
+    from visanalysis.util import plot_tools
+    import matplotlib.pyplot as plt
+    import numpy as np
+    from scipy.stats import sem as sem
+    import os
+    import matplotlib.patches as mpatches
+
+    saveFig = True
+    # Collapse across stimulus space.
+    target_sp = np.unique(ID.getEpochParameters('current_spatial_period'))
+    target_tf = np.unique(ID.getEpochParameters('current_temporal_frequency'))
+
+    # First, plot max and avgs of spatial period, collapsed across temp freq:
+    fh, ax = plt.subplots(2, 1) #, figsize=(40, 40))
+    plt.subplots_adjust(bottom=0.1, right=0.9, wspace=0.4, hspace=0.6)
+
+    #calculate mean across rois. optoMaxes = ROI x SpatPer x TempFreq
+    nopto_spatial_mean_max_across_rois= np.mean(np.mean(noptoMaxes[:,:,:], axis = 0), axis = 1)
+    yopto_spatial_mean_max_across_rois= np.mean(np.mean(yoptoMaxes[:,:,:], axis = 0), axis = 1)
+    nopto_spatial_mean_mean_across_rois = np.mean(np.mean(noptoMeans[:,:,:], axis = 0), axis = 1)
+    yopto_spatial_mean_mean_across_rois = np.mean(np.mean(yoptoMeans[:,:,:], axis = 0), axis = 1)
+
+    for roi_ind in range(roi_number):
+        # Max Values for each ROI get plotted, avg across TF
+        nopto_spatial_per_max_max = np.mean(noptoMaxes[roi_ind,:,:], axis = 1)
+        ax[0].plot(target_sp, nopto_spatial_per_max_max, 'k^', alpha=0.4)
+
+        yopto_spatial_per_max_max = np.mean(yoptoMaxes[roi_ind,:,:], axis = 1)
+        ax[0].plot(target_sp, yopto_spatial_per_max_max, 'r^', alpha=0.4)
+
+        ax[0].set_title('Max Respone by SpatPer')
+
+        # Mean Values for each ROI get plotted, avg across TF
+        nopto_spatial_per_mean = np.mean(noptoMeans[roi_ind,:,:], axis = 1)
+        ax[1].plot(target_sp, nopto_spatial_per_mean, 'k^', alpha=0.4)
+
+        yopto_spatial_per_mean = np.mean(yoptoMeans[roi_ind,:,:], axis = 1)
+        ax[1].plot(target_sp, yopto_spatial_per_mean, 'r^', alpha=0.4)
+
+        ax[1].set_title('Mean Respone by SpatPer')
+
+    ax[0].plot(target_sp, nopto_spatial_mean_max_across_rois, '-ko', alpha=0.8)
+    ax[0].plot(target_sp, yopto_spatial_mean_max_across_rois, '-ro', alpha=0.8)
+
+    ax[1].plot(target_sp, nopto_spatial_mean_mean_across_rois, '-ko', alpha=0.8)
+    ax[1].plot(target_sp, yopto_spatial_mean_mean_across_rois, '-ro', alpha=0.8)
+
+    red_patch = mpatches.Patch(color='red', label='With Opto')
+    black_patch = mpatches.Patch(color='black', label='No Opto')
+    ax[1].legend(handles=[red_patch, black_patch])
+
+    fh.suptitle(plotTitle + ' | SpatPer')
+    if saveFig == True:
+        fh.savefig(figTitle + 'SpatPer.pdf', dpi=300)
+
+    # Second, plot max and avgs of temporal frequencies, collapsed across spatial_periods:
+    fh, ax = plt.subplots(2, 1)
+    plt.subplots_adjust(bottom=0.1, right=0.9, wspace=0.4, hspace=0.6)
+    nopto_temporal_mean_max_across_rois= np.mean(np.mean(noptoMaxes[:,:,:], axis = 0), axis = 0)
+    yopto_temporal_mean_max_across_rois= np.mean(np.mean(yoptoMaxes[:,:,:], axis = 0), axis = 0)
+    nopto_temporal_mean_mean_across_rois = np.mean(np.mean(noptoMeans[:,:,:], axis = 0), axis = 0)
+    yopto_temporal_mean_mean_across_rois = np.mean(np.mean(yoptoMeans[:,:,:], axis = 0), axis = 0)
+
+    for roi_ind in range(roi_number):
+        # Max Values
+        nopto_temporal_per_max_max = np.mean(noptoMaxes[roi_ind,:,:], axis = 0)
+        ax[0].plot(target_tf, nopto_temporal_per_max_max, 'k^', alpha=0.4)
+
+        yopto_temporal_per_max_max = np.mean(yoptoMaxes[roi_ind,:,:], axis = 0)
+        ax[0].plot(target_tf, yopto_temporal_per_max_max, 'r^', alpha=0.4)
+
+        ax[0].set_title('Max Respone by TempFreq')
+
+        # Mean Values
+        nopto_temporal_per_mean = np.mean(noptoMeans[roi_ind,:,:], axis = 0)
+        ax[1].plot(target_tf, nopto_temporal_per_mean, 'k^', alpha=0.4)
+
+        yopto_temporal_per_mean = np.mean(yoptoMeans[roi_ind,:,:], axis = 0)
+        ax[1].plot(target_tf, yopto_temporal_per_mean, 'r^', alpha=0.4)
+
+        ax[1].set_title('Mean Respone by Temp Freq')
+
+    ax[0].plot(target_tf, nopto_temporal_mean_max_across_rois, '-ko', alpha=0.8)
+    ax[0].plot(target_tf, yopto_temporal_mean_max_across_rois, '-ro', alpha=0.8)
+
+    ax[1].plot(target_tf, nopto_temporal_mean_mean_across_rois, '-ko', alpha=0.8)
+    ax[1].plot(target_tf, yopto_temporal_mean_mean_across_rois, '-ro', alpha=0.8)
+
+    red_patch = mpatches.Patch(color='red', label='With Opto')
+    black_patch = mpatches.Patch(color='black', label='No Opto')
+    ax[1].legend(handles=[red_patch, black_patch])
+
+    fh.suptitle(plotTitle + ' | TempFreq')
+    if saveFig == True:
+        fh.savefig(figTitle + 'TempFreq.pdf', dpi=300)
+
+
+# %% Collapse across ROIs
+
+for i in roi_set_list:
+    roi_name = roi_set_list[i]
+    ID, roi_data = ma.dataLoader(file_directory = file_directory,
+                          save_path = save_path,
+                          file_name = file_name,
+                          series_number = series_number,
+                          roi_name = roi_name,
+                          opto_condition = opto_condition,
+                          displayFix = displayFix,
+                          saveFig = saveFig)
+
+
+    noptoMaxes, noptoMeans = ma.getResponseMetrics(ID = ID, roi_data = roi_data,
+                                                  dff = dff, df = df,
+                                                  opto_condition = False,
+                                                  silent = True)
+    yoptoMaxes, yoptoMeans = ma.getResponseMetrics(ID = ID, roi_data = roi_data,
+                                                  dff = dff, df = df,
+                                                  opto_condition = True,
+                                                  silent = True)
+
+
 
 
 # %% PARAMETERS & METADATA
@@ -59,7 +234,6 @@ print(acquisition_metadata)
 
 # Get list of rois present in the hdf5 file for this series
 roi_set_names = ID.getRoiSetNames()
-roi_set_names
 # getRoiResponses() wants a ROI set name, returns roi_data (dict)
 roi_data = ID.getRoiResponses('medulla_rois')
 roi_data.keys()
