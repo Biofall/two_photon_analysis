@@ -47,7 +47,7 @@ def dataLoader(file_directory, save_path, file_name, series_number, roi_name, op
 
 # Plot conditioned ROI Responses
 # For plotting the various conditions in the experiment
-def plotConditionedROIResponses(ID, roi_data, opto_condition, saveFig, save_path, saveName, dff=True, df = False):
+def plotConditionedROIResponses(ID, roi_data, opto_condition, vis_stim_type, saveFig, save_path, saveName, dff=True, df = False):
     """
     -opto_condition: True or False
             True used when there is an optogenetic stimulus applied
@@ -57,48 +57,88 @@ def plotConditionedROIResponses(ID, roi_data, opto_condition, saveFig, save_path
             False when no plot saved
     """
     time_vector, epoch_response = getAltEpochResponseMatrix(ID, np.vstack(roi_data['roi_response']), dff=dff, df=df)
-
-    # Find the unique parameter space for this experiment
-    target_sp = np.unique(ID.getEpochParameters('current_spatial_period'))
-    target_tf = np.unique(ID.getEpochParameters('current_temporal_frequency'))
-    tf_number = len(target_tf)
     roi_number = len(roi_data['roi_response'])
+    print(epoch_response.shape)
+    # Find the unique parameter space for this experiment
+    if vis_stim_type == 'spatiotemporal':
+        target_sp = np.unique(ID.getEpochParameters('current_spatial_period'))
+        target_tf = np.unique(ID.getEpochParameters('current_temporal_frequency'))
+        tf_number = len(target_tf)
+
+        # Make the figure axes
+        fh, ax = plt.subplots(len(target_sp), len(target_tf) * roi_number, figsize=(25*roi_number, 25))
+    elif vis_stim_type == 'single':
+        opto_start_times = np.unique(ID.getEpochParameters('current_opto_start_time'))
+
+        # Make the figure axes
+        fh, ax = plt.subplots(len(opto_start_times), roi_number, figsize=(25*roi_number, 25))
+    else:
+        raise Exception('vis_stim_type should be spatiotemporal or single. It was: {}'.format(vis_stim_type))
+
     color = plt.cm.tab20(np.linspace(0, 1, roi_number))
 
-    # Make the figure axes
-    fh, ax = plt.subplots(len(target_sp), len(target_tf) * roi_number, figsize=(25*roi_number, 25))
+
     #[x.set_ylim([-0.55, +1.6]) for x in ax.ravel()] # list comprehension makes each axis have the same limit for comparisons
     for roi_ind in range(roi_number):
-        for sp_ind, sp in enumerate(target_sp):
-            for tf_ind, tf in enumerate(target_tf):
-                # For No Opto Condition (light off)
-                query = {'current_spatial_period': sp,
-                         'current_temporal_frequency': tf,
-                         'opto_stim': False}
+        # in the spatiotemporal condition:
+        if vis_stim_type == 'spatiotemporal':
+            for sp_ind, sp in enumerate(target_sp):
+                for tf_ind, tf in enumerate(target_tf):
+                    # For No Opto Condition (light off)
+                    query = {'current_spatial_period': sp,
+                             'current_temporal_frequency': tf,
+                             'opto_stim': False}
+                    no_opto_trials = shared_analysis.filterTrials(epoch_response, ID, query=query)
+                    noOptoMean = np.mean(no_opto_trials[roi_ind, :, :], axis=0)
+                    nopt_sem_plus = noOptoMean + sem(no_opto_trials[roi_ind, :, :], axis=0)
+                    nopt_sem_minus = noOptoMean - sem(no_opto_trials[roi_ind, :, :], axis=0)
+                    ax[sp_ind, tf_ind + (tf_number*roi_ind)].plot(roi_data['time_vector'],
+                        noOptoMean, color='m', alpha=1.0)
+                    ax[sp_ind, tf_ind + (tf_number*roi_ind)].fill_between(roi_data['time_vector'],
+                        nopt_sem_plus, nopt_sem_minus, color=color[roi_ind], alpha=0.8)
+
+                    if opto_condition == True:
+                        # For Opto Condition (light on)
+                        query = {'current_spatial_period': sp,
+                                 'current_temporal_frequency': tf,
+                                 'opto_stim': True}
+                        opto_trials = shared_analysis.filterTrials(epoch_response, ID, query=query)
+                        optoMean = np.mean(opto_trials[roi_ind, :, :], axis=0)
+                        opto_sem_plus = optoMean + sem(opto_trials[roi_ind, :, :], axis=0)
+                        opto_sem_minus = optoMean - sem(opto_trials[roi_ind, :, :], axis=0)
+                        ax[sp_ind, tf_ind + (tf_number*roi_ind)].plot(roi_data['time_vector'], optoMean, color='k', alpha=0.9)
+                        ax[sp_ind, tf_ind + (tf_number*roi_ind)].fill_between(roi_data['time_vector'],
+                            opto_sem_plus, opto_sem_minus, color='g', alpha=0.6)
+
+                    ax[sp_ind, tf_ind + (tf_number*roi_ind)].set_title(f'ROI:{roi_ind}|SpatPer:{sp}|TempFreq:{tf}', fontsize=20)
+                    #struther and riser paper has temporal frequency tuning in on-off layers of medulla
+        # in the single spatiotemporal visual stimuli condition
+        elif vis_stim_type == 'single':
+            for opto_time_ind, oi in enumerate(opto_start_times):
+                query = {'current_opto_start_time': oi, 'opto_stim': False}
+                # For no opto condition
                 no_opto_trials = shared_analysis.filterTrials(epoch_response, ID, query=query)
                 noOptoMean = np.mean(no_opto_trials[roi_ind, :, :], axis=0)
                 nopt_sem_plus = noOptoMean + sem(no_opto_trials[roi_ind, :, :], axis=0)
                 nopt_sem_minus = noOptoMean - sem(no_opto_trials[roi_ind, :, :], axis=0)
-                ax[sp_ind, tf_ind + (tf_number*roi_ind)].plot(roi_data['time_vector'],
+                ax[opto_time_ind, roi_ind].plot(roi_data['time_vector'],
                     noOptoMean, color='m', alpha=1.0)
-                ax[sp_ind, tf_ind + (tf_number*roi_ind)].fill_between(roi_data['time_vector'],
+                ax[opto_time_ind, roi_ind].fill_between(roi_data['time_vector'],
                     nopt_sem_plus, nopt_sem_minus, color=color[roi_ind], alpha=0.8)
 
                 if opto_condition == True:
-                    # For Opto Condition (light on)
-                    query = {'current_spatial_period': sp,
-                             'current_temporal_frequency': tf,
-                             'opto_stim': True}
+                    query = {'current_opto_start_time': oi, 'opto_stim': True}
+                    # For no opto condition
                     opto_trials = shared_analysis.filterTrials(epoch_response, ID, query=query)
                     optoMean = np.mean(opto_trials[roi_ind, :, :], axis=0)
                     opto_sem_plus = optoMean + sem(opto_trials[roi_ind, :, :], axis=0)
                     opto_sem_minus = optoMean - sem(opto_trials[roi_ind, :, :], axis=0)
-                    ax[sp_ind, tf_ind + (tf_number*roi_ind)].plot(roi_data['time_vector'], optoMean, color='k', alpha=0.9)
-                    ax[sp_ind, tf_ind + (tf_number*roi_ind)].fill_between(roi_data['time_vector'],
+                    ax[opto_time_ind, roi_ind].plot(roi_data['time_vector'],
+                        optoMean, color='k', alpha=0.9)
+                    ax[opto_time_ind, roi_ind].fill_between(roi_data['time_vector'],
                         opto_sem_plus, opto_sem_minus, color='g', alpha=0.6)
 
-                ax[sp_ind, tf_ind + (tf_number*roi_ind)].set_title(f'ROI:{roi_ind}|SpatPer:{sp}|TempFreq:{tf}', fontsize=20)
-                #struther and riser paper has temporal frequency tuning in on-off layers of medulla
+                ax[opto_time_ind, roi_ind].set_title(f'ROI:{roi_ind} | Opto Start:{oi}', fontsize=20)
 
     if saveFig == True:
         #save_path = '/Users/averykrieger/Documents/local_data_repo/figs/'

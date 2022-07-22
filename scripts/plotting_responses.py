@@ -14,7 +14,7 @@ file_directory = '/Users/averykrieger/Documents/local_data_repo/20220527'
 save_path = '/Users/averykrieger/Documents/local_data_repo/figs/'
 file_name = '2022-05-27'
 series_number = 16
-roi_name = 'medial_vis_responsive'
+roi_name = 'distal_vis_responsive'
 opto_condition = True
 displayFix = True
 saveFig = True
@@ -79,106 +79,90 @@ ma.plotROIResponsesMetrics(ID, plotTitle, roiResponseFigName, noptoMaxes, noptoM
 # %% PLOT ROI Resonse Metrics (ROIs are collapsed)
 ma.plotReponseMetricsAcrossROIs(ID, plotTitle, roiResponseFigName, noptoMaxes, noptoMeans, yoptoMaxes, yoptoMeans, roi_number)
 
-# %%
-def plotReponseMetricsAcrossROIs(ID, plotTitle, figTitle, noptoMaxes, noptoMeans, yoptoMaxes, yoptoMeans, roi_number, saveFig=True):
-    from visanalysis.analysis import imaging_data, shared_analysis
-    from visanalysis.util import plot_tools
-    import matplotlib.pyplot as plt
+
+# %% Compute the means across ROIs for temporal and spatial frequencies
+def getResponseMeansAcrossROIs(ID, noptoMaxes, noptoMeans, yoptoMaxes, yoptoMeans):
     import numpy as np
     from scipy.stats import sem as sem
-    import os
-    import matplotlib.patches as mpatches
 
-    saveFig = True
-    # Collapse across stimulus space.
+    roi_number = len(roi_data['roi_response'])
     target_sp = np.unique(ID.getEpochParameters('current_spatial_period'))
     target_tf = np.unique(ID.getEpochParameters('current_temporal_frequency'))
 
-    # First, plot max and avgs of spatial period, collapsed across temp freq:
-    fh, ax = plt.subplots(2, 1) #, figsize=(40, 40))
-    plt.subplots_adjust(bottom=0.1, right=0.9, wspace=0.4, hspace=0.6)
+    emptySizeSpatial = [roi_number, len(target_sp)]
+    emptySizeTemporal = [roi_number, len(target_tf)]
 
-    #calculate mean across rois. optoMaxes = ROI x SpatPer x TempFreq
-    nopto_spatial_mean_max_across_rois= np.mean(np.mean(noptoMaxes[:,:,:], axis = 0), axis = 1)
-    yopto_spatial_mean_max_across_rois= np.mean(np.mean(yoptoMaxes[:,:,:], axis = 0), axis = 1)
-    nopto_spatial_mean_mean_across_rois = np.mean(np.mean(noptoMeans[:,:,:], axis = 0), axis = 1)
-    yopto_spatial_mean_mean_across_rois = np.mean(np.mean(yoptoMeans[:,:,:], axis = 0), axis = 1)
-
-    for roi_ind in range(roi_number):
-        # Max Values for each ROI get plotted, avg across TF
-        nopto_spatial_per_max_max = np.mean(noptoMaxes[roi_ind,:,:], axis = 1)
-        ax[0].plot(target_sp, nopto_spatial_per_max_max, 'k^', alpha=0.4)
-
-        yopto_spatial_per_max_max = np.mean(yoptoMaxes[roi_ind,:,:], axis = 1)
-        ax[0].plot(target_sp, yopto_spatial_per_max_max, 'r^', alpha=0.4)
-
-        ax[0].set_title('Max Respone by SpatPer')
-
-        # Mean Values for each ROI get plotted, avg across TF
-        nopto_spatial_per_mean = np.mean(noptoMeans[roi_ind,:,:], axis = 1)
-        ax[1].plot(target_sp, nopto_spatial_per_mean, 'k^', alpha=0.4)
-
-        yopto_spatial_per_mean = np.mean(yoptoMeans[roi_ind,:,:], axis = 1)
-        ax[1].plot(target_sp, yopto_spatial_per_mean, 'r^', alpha=0.4)
-
-        ax[1].set_title('Mean Respone by SpatPer')
-
-    ax[0].plot(target_sp, nopto_spatial_mean_max_across_rois, '-ko', alpha=0.8)
-    ax[0].plot(target_sp, yopto_spatial_mean_max_across_rois, '-ro', alpha=0.8)
-
-    ax[1].plot(target_sp, nopto_spatial_mean_mean_across_rois, '-ko', alpha=0.8)
-    ax[1].plot(target_sp, yopto_spatial_mean_mean_across_rois, '-ro', alpha=0.8)
-
-    red_patch = mpatches.Patch(color='red', label='With Opto')
-    black_patch = mpatches.Patch(color='black', label='No Opto')
-    ax[1].legend(handles=[red_patch, black_patch])
-
-    fh.suptitle(plotTitle + ' | SpatPer')
-    if saveFig == True:
-        fh.savefig(figTitle + 'SpatPer.pdf', dpi=300)
-
-    # Second, plot max and avgs of temporal frequencies, collapsed across spatial_periods:
-    fh, ax = plt.subplots(2, 1)
-    plt.subplots_adjust(bottom=0.1, right=0.9, wspace=0.4, hspace=0.6)
-    nopto_temporal_mean_max_across_rois= np.mean(np.mean(noptoMaxes[:,:,:], axis = 0), axis = 0)
-    yopto_temporal_mean_max_across_rois= np.mean(np.mean(yoptoMaxes[:,:,:], axis = 0), axis = 0)
-    nopto_temporal_mean_mean_across_rois = np.mean(np.mean(noptoMeans[:,:,:], axis = 0), axis = 0)
-    yopto_temporal_mean_mean_across_rois = np.mean(np.mean(yoptoMeans[:,:,:], axis = 0), axis = 0)
+    nopto_spatial_per_max_max = np.empty(emptySizeSpatial,dtype=object)
+    opto_spatial_per_max_max = np.empty(emptySizeSpatial,dtype=object)
+    nopto_temporal_per_max_max = np.empty(emptySizeTemporal,dtype=object)
+    opto_temporal_per_max_max  = np.empty(emptySizeTemporal,dtype=object)
+    nopto_spatial_per_mean_mean  = np.empty(emptySizeSpatial,dtype=object)
+    opto_spatial_per_mean_mean  = np.empty(emptySizeSpatial,dtype=object)
+    nopto_temporal_per_mean_mean  = np.empty(emptySizeTemporal,dtype=object)
+    opto_temporal_per_mean_mean = np.empty(emptySizeTemporal,dtype=object)
 
     for roi_ind in range(roi_number):
         # Max Values
-        nopto_temporal_per_max_max = np.mean(noptoMaxes[roi_ind,:,:], axis = 0)
-        ax[0].plot(target_tf, nopto_temporal_per_max_max, 'k^', alpha=0.4)
+        nopto_spatial_per_max_max[roi_ind, :] = np.mean(noptoMaxes[roi_ind,:], axis = 1)
+        opto_spatial_per_max_max[roi_ind, :] = np.mean(yoptoMaxes[roi_ind,:], axis = 1)
 
-        yopto_temporal_per_max_max = np.mean(yoptoMaxes[roi_ind,:,:], axis = 0)
-        ax[0].plot(target_tf, yopto_temporal_per_max_max, 'r^', alpha=0.4)
-
-        ax[0].set_title('Max Respone by TempFreq')
+        nopto_temporal_per_max_max[roi_ind, :] = np.mean(noptoMaxes[roi_ind,:], axis = 0)
+        opto_temporal_per_max_max[roi_ind, :] = np.mean(yoptoMaxes[roi_ind,:], axis = 0)
 
         # Mean Values
-        nopto_temporal_per_mean = np.mean(noptoMeans[roi_ind,:,:], axis = 0)
-        ax[1].plot(target_tf, nopto_temporal_per_mean, 'k^', alpha=0.4)
+        nopto_spatial_per_mean_mean[roi_ind, :] = np.mean(noptoMeans[roi_ind,:], axis = 1)
+        opto_spatial_per_mean_mean[roi_ind, :] = np.mean(yoptoMeans[roi_ind,:], axis = 1)
 
-        yopto_temporal_per_mean = np.mean(yoptoMeans[roi_ind,:,:], axis = 0)
-        ax[1].plot(target_tf, yopto_temporal_per_mean, 'r^', alpha=0.4)
+        nopto_temporal_per_mean_mean[roi_ind, :] = np.mean(noptoMeans[roi_ind,:], axis = 0)
+        opto_temporal_per_mean_mean[roi_ind, :] = np.mean(yoptoMeans[roi_ind,:], axis = 0)
 
-        ax[1].set_title('Mean Respone by Temp Freq')
+# Stats on the above
+from scipy import stats as st
 
-    ax[0].plot(target_tf, nopto_temporal_mean_max_across_rois, '-ko', alpha=0.8)
-    ax[0].plot(target_tf, yopto_temporal_mean_max_across_rois, '-ro', alpha=0.8)
+test_stat_temporal_max = np.empty(len(target_tf),dtype=object)
+test_stat_temporal_mean = np.empty(len(target_tf),dtype=object)
+test_stat_spatial_max = np.empty(len(target_sp),dtype=object)
+test_stat_spatial_mean = np.empty(len(target_sp),dtype=object)
 
-    ax[1].plot(target_tf, nopto_temporal_mean_mean_across_rois, '-ko', alpha=0.8)
-    ax[1].plot(target_tf, yopto_temporal_mean_mean_across_rois, '-ro', alpha=0.8)
+test_pvalue_temporal_max = np.empty(len(target_tf),dtype=object)
+test_pvalue_temporal_mean = np.empty(len(target_tf),dtype=object)
+test_pvalue_spatial_max = np.empty(len(target_sp),dtype=object)
+test_pvalue_spatial_mean = np.empty(len(target_sp),dtype=object)
 
-    red_patch = mpatches.Patch(color='red', label='With Opto')
-    black_patch = mpatches.Patch(color='black', label='No Opto')
-    ax[1].legend(handles=[red_patch, black_patch])
+for sp_ind in range(len(target_sp)):
+    print('sp_ind = '+ str(sp_ind))
+    test_stat_spatial_max[sp_ind], test_pvalue_spatial_max[sp_ind] = \
+    st.ttest_ind(a = nopto_spatial_per_max_max[:,sp_ind],
+                 b = opto_spatial_per_max_max[:,sp_ind])
+    test_stat_spatial_mean[sp_ind], test_pvalue_spatial_mean[sp_ind] = \
+    st.ttest_ind(a = nopto_spatial_per_mean_mean[:,sp_ind],
+                 b = opto_spatial_per_mean_mean[:,sp_ind])
 
-    fh.suptitle(plotTitle + ' | TempFreq')
-    if saveFig == True:
-        fh.savefig(figTitle + 'TempFreq.pdf', dpi=300)
+for tf_ind in range(len(target_tf)):
+    test_stat_temporal_max[tf_ind], test_pvalue_temporal_max[tf_ind] = \
+    st.ttest_ind(a = nopto_temporal_per_max_max[:,tf_ind],
+                 b = opto_temporal_per_max_max[:,tf_ind])
+    test_stat_temporal_mean[tf_ind], test_pvalue_temporal_mean[tf_ind] = \
+    st.ttest_ind(a = nopto_temporal_per_mean_mean[:,tf_ind],
+                 b = opto_temporal_per_mean_mean[:,tf_ind])
+
+test_stat_temporal_max
+test_pvalue_temporal_max
+
+test_stat_temporal_mean
+
+test_pvalue_temporal_mean
+
+test_stat_spatial_max
+test_pvalue_spatial_max
+
+test_stat_spatial_mean
+test_pvalue_spatial_mean
 
 
+# %% ToDo:
+
+# Do paired t tests somehow. Across ROIs, one combo of TempFreq and SpatPer, opto or not differences2154
 # %% Collapse across ROIs
 
 for i in roi_set_list:
