@@ -10,15 +10,22 @@ import os
 from two_photon_analysis import medulla_analysis as ma
 
 # %% Analysis Parameters
-file_directory = '/Users/averykrieger/Documents/local_data_repo/20220527'
+fileTwo = '/Users/averykrieger/Documents/local_data_repo/20220527'
+fileTwoName = '2022-05-27'
+fileThree = '/Volumes/ROG2TBAK/data/bruker/20220718'
+fileThreeName = '2022-07-18' #Alt = 5, 9, 14, 18
+
+file_directory = fileThree
+file_name = fileThreeName
+alt_pre_time = 1
 save_path = '/Users/averykrieger/Documents/local_data_repo/figs/'
-file_name = '2022-05-27'
-series_number = 16
-roi_name = 'distal_vis_responsive'
+series_number = 18
+roi_name = 'proximal_visual_response'
 opto_condition = True
+vis_stim_type = 'single' # 'spatiotemporal' or 'single'
 displayFix = True
 saveFig = True
-dff = False
+dff = True
 # Handling the DF/F or DF or Raw options for the Ca traces
 if dff == False:
     df = True
@@ -38,46 +45,54 @@ ID, roi_data = ma.dataLoader(file_directory = file_directory,
 if df == True:
     saveName = save_path+str(file_name)+' | SeriesNumber'+' | DF is '+str(df)+' | '+str(series_number)+' | '+str(roi_name) + '.pdf'
 else:
-    saveName = save_path+str(file_name)+' | SeriesNumber'+' | DFF is '+str(dff)+' | '+str(series_number)+' | '+str(roi_name) + '.pdf'
+    saveName = save_path+str(file_name)+' | SeriesNumber'+' | DFF is '+str(dff)+' | '+str(series_number)+' | '+str(roi_name) + ' | alt pre time: ' + str(alt_pre_time)+ '.pdf'
 
-# %% PLOT traces of each ROI
+#ID.getStimulusTiming(plot_trace_flag=True)
+
+# PLOT traces of each ROI
 ma.plotConditionedROIResponses(ID = ID, roi_data = roi_data,
-                               opto_condition = opto_condition, dff=dff, df = df,
-                               save_path = save_path, saveFig=saveFig,
-                               saveName = saveName)
-
-# %% Heatmaps of ROIs opto vs no opto
-heatmapFigName = save_path+'metrics/heatmaps/'+'test  '+str(file_name)+' | SeriesNumber'+str(series_number)+' | '+str(roi_name) + ' | ' + 'Heatmap' '.pdf'
-ma.plotOptoHeatmaps(ID, roi_data, saveName = heatmapFigName, dff = dff, df = df)
+                               opto_condition = opto_condition,
+                               vis_stim_type = vis_stim_type,
+                               alt_pre_time = alt_pre_time,
+                               dff=dff, df = df, save_path = save_path,
+                               saveFig=saveFig, saveName = saveName)
 
 
-# %% Calculate Response Metrics so that they can be plotted
 
+# Calculate Response Metrics so that they can be plotted
 noptoMaxes, noptoMeans = ma.getResponseMetrics(ID = ID, roi_data = roi_data,
                                               dff = dff, df = df,
+                                              vis_stim_type = vis_stim_type,
+                                              alt_pre_time = alt_pre_time,
                                               opto_condition = False,
-                                              silent = True)
+                                              silent = False)
 yoptoMaxes, yoptoMeans = ma.getResponseMetrics(ID = ID, roi_data = roi_data,
                                               dff = dff, df = df,
+                                              vis_stim_type = vis_stim_type,
+                                              alt_pre_time = alt_pre_time,
                                               opto_condition = True,
-                                              silent = True)
-roi_number = len(roi_data['roi_response'])
+                                              silent = False)
+
+#Normalize Max and Mean values for each ROI
+noptoMaxes, yoptoMaxes, noptoMeans, yoptoMeans = ma.normalizeMetrics(noptoMaxes, yoptoMaxes, noptoMeans, yoptoMeans)
+
 
 # gotta get those title and fig names going
 plotTitle=f'{file_name} | {series_number}'
+roi_number = len(roi_data['roi_response'])
 if df == True:
-    roiResponseFigName = save_path+'/metrics/'+str(file_name)+' | SeriesNumber '+str(series_number)+' | DF | '+str(roi_name) + ' | '
+    roiResponseFigName = save_path+'metrics/'+str(file_name)+' | SeriesNumber '+str(series_number)+' | DF | '+str(roi_name) + ' | '
 elif dff == True:
-        roiResponseFigName = save_path+'/metrics/'+str(file_name)+' | SeriesNumber '+str(series_number)+' | DF/F | '+str(roi_name) + ' | '
+    roiResponseFigName = save_path+'metrics/'+str(file_name)+' | SeriesNumber'+' | DFF is '+str(dff)+' | '+str(series_number)+' | '+str(roi_name) + ' | alt pre time: ' + str(alt_pre_time)+ '.pdf'
 else:
-    roiResponseFigName = save_path+'/metrics/'+str(file_name)+' | SeriesNumber'+str(series_number)+'raw | '+str(roi_name) + ' | '
+    roiResponseFigName = save_path+'metrics/'+str(file_name)+' | SeriesNumber'+str(series_number)+'raw | '+str(roi_name) + ' | '
 
 
-# %% PLOT ROI Resonse Metrics (ROIs are separate)
-ma.plotROIResponsesMetrics(ID, plotTitle, roiResponseFigName, noptoMaxes, noptoMeans, yoptoMaxes, yoptoMeans, roi_number)
+# # PLOT ROI Resonse Metrics (ROIs are separate)
+ma.plotROIResponsesMetrics(ID, plotTitle, roiResponseFigName, noptoMaxes, noptoMeans, yoptoMaxes, yoptoMeans, roi_number, vis_stim_type)
 
-# %% PLOT ROI Resonse Metrics (ROIs are collapsed)
-ma.plotReponseMetricsAcrossROIs(ID, plotTitle, roiResponseFigName, noptoMaxes, noptoMeans, yoptoMaxes, yoptoMeans, roi_number)
+#% # PLOT ROI Resonse Metrics (ROIs are collapsed)
+ma.plotReponseMetricsAcrossROIs(ID, plotTitle, roiResponseFigName, noptoMaxes, noptoMeans, yoptoMaxes, yoptoMeans, roi_number, vis_stim_type)
 
 
 # %% Compute the means across ROIs for temporal and spatial frequencies
@@ -146,23 +161,43 @@ for tf_ind in range(len(target_tf)):
     st.ttest_ind(a = nopto_temporal_per_mean_mean[:,tf_ind],
                  b = opto_temporal_per_mean_mean[:,tf_ind])
 
-test_stat_temporal_max
-test_pvalue_temporal_max
-
-test_stat_temporal_mean
-
-test_pvalue_temporal_mean
-
-test_stat_spatial_max
-test_pvalue_spatial_max
-
-test_stat_spatial_mean
-test_pvalue_spatial_mean
+# test_stat_temporal_max
+# test_pvalue_temporal_max
+#
+# test_stat_temporal_mean
+# test_pvalue_temporal_mean
+#
+# test_stat_spatial_max
+# test_pvalue_spatial_max
+#
+# test_stat_spatial_mean
+# test_pvalue_spatial_mean
 
 
 # %% ToDo:
 
 # Do paired t tests somehow. Across ROIs, one combo of TempFreq and SpatPer, opto or not differences2154
+
+
+#%% Heatmaps of ROIs opto vs no opto
+# heatmapFigName = save_path+'metrics/heatmaps/'+'test  '+str(file_name)+' | SeriesNumber'+str(series_number)+' | '+str(roi_name) + ' | ' + 'Heatmap' '.pdf'
+# ma.plotOptoHeatmaps(ID, roi_data, saveName = heatmapFigName, dff = dff, df = df)
+import numpy as np
+roi_data['epoch_response'].shape
+roi_data['epoch_response'][0, 0, :]
+ID.getEpochParameters('current_opto_start_time')[0]
+np.sum(np.array(ID.getEpochParameters('current_opto_start_time')) == 9.0)
+
+epoch_response
+ot = 2.
+query = {'current_opto_start_time': ot, 'opto_stim': True}
+filtered_trials = shared_analysis.filterTrials(roi_data['epoch_response'], ID, query=query)
+filtered_trials.shape
+
+voltage_trace, voltage_time_vector, voltage_sampling_rate = ID.getVoltageData()
+voltage_trace.shape
+plt.plot(voltage_trace[1, :])
+
 # %% Collapse across ROIs
 
 for i in roi_set_list:
@@ -193,17 +228,17 @@ for i in roi_set_list:
 
 # all run_parameters as a dict
 run_parameters = ID.getRunParameters()
-
+print(run_parameters)
 # specified run parameter
 protocol_ID = ID.getRunParameters('protocol_ID')
 print(protocol_ID)
 
 # epoch_parameters: list of dicts of all epoch parameters, one for each epoch (trial)
 epoch_parameters = ID.getEpochParameters()
-print(epoch_parameters)
+print(epoch_parameters[0])
 # Pass a param key to return a list of specified param values, one for each trial
 current_opto_stim = ID.getEpochParameters('opto_stim')
-
+current_opto_stim
 # fly_metadata: dict
 fly_metadata = ID.getFlyMetadata()
 prep = ID.getFlyMetadata('prep')
