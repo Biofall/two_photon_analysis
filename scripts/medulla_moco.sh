@@ -17,7 +17,7 @@ echo $brain_master
 
 # Optional params
 type_of_transform=${3:-"SyN"}
-output_format=${4:-"h5"}
+output_format=${4:-"nii"}
 meanbrain_n_frames=${5:-"100"}
 echo $type_of_transform
 echo $output_format
@@ -28,4 +28,4 @@ args="{\"directory\":\"$directory\",\"brain_master\":\"$brain_master\",\"meanbra
 
 ml py-ants/0.3.2_py36
 
-python3 -u ./motion_correction.py $args
+python3 -u /home/users/mhturner/brainsss/scripts/motion_correction.py $args
