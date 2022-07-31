@@ -4,7 +4,7 @@
 #SBATCH --time=12:00:00
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=3
-#SBATCH --output=/home/users/mhturner/two_photon_analysis/scripts/%x.%j.out
+#SBATCH --output=/home/users/krave/logs/mocologs/%x.%j.out
 #SBATCH --open-mode=append
 
 date
@@ -28,4 +28,4 @@ args="{\"directory\":\"$directory\",\"brain_master\":\"$brain_master\",\"meanbra
 
 ml gcc/6.3.0 python/3.6 py-numpy/1.14.3_py36 py-pandas/0.23.0_py36 viz py-scikit-learn/0.19.1_py36 py-ants/0.3.2_py36
 
-python3 -u /home/users/mhturner/brainsss/scripts/motion_correction.py $args
+python3 -u /home/users/krave/github_repos/brainsss/scripts/motion_correction.py $args
