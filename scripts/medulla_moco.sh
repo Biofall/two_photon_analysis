@@ -26,6 +26,7 @@ echo $meanbrain_n_frames
 args="{\"directory\":\"$directory\",\"brain_master\":\"$brain_master\",\"meanbrain_n_frames\":\"$meanbrain_n_frames\","\
 "\"type_of_transform\":\"$type_of_transform\",\"output_format\":\"$output_format\"}"
 
-ml gcc/6.3.0 python/3.6 py-numpy/1.14.3_py36 py-pandas/0.23.0_py36 viz py-scikit-learn/0.19.1_py36 py-ants/0.3.2_py36 plotly chart_studio
+#ml gcc/6.3.0 py-numpy/1.14.3_py36 py-pandas/0.23.0_py36 viz py-scikit-learn/0.19.1_py36 py-ants/0.3.2_py36
+ml py-ants/0.3.2_py36
 
 python3 -u /home/users/krave/github_repos/brainsss/scripts/motion_correction.py $args
