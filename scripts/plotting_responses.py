@@ -18,12 +18,12 @@ fileTwoName = '2022-05-27'
 fileThree = '/Volumes/ROG2TBAK/data/bruker/20220718'
 fileThreeName = '2022-07-18' #Alt = 5, 9, 14, 18
 
-file_directory = fileOne
-file_name = fileOneName
+file_directory = fileTwo
+file_name = fileTwoName
 alt_pre_time = 1
 save_path = '/Users/averykrieger/Documents/local_data_repo/figs/'
-series_number = 9
-roi_name = 'distal_rois'
+series_number = 2
+roi_name = 'medial_2_rois'
 opto_condition = True
 vis_stim_type = 'spatiotemporal' # 'spatiotemporal' or 'single'
 displayFix = True
@@ -49,6 +49,10 @@ if df == True:
     saveName = save_path+str(file_name)+' | SeriesNumber'+' | DF is '+str(df)+' | '+str(series_number)+' | '+str(roi_name) + '.pdf'
 else:
     saveName = save_path+str(file_name)+' | SeriesNumber'+' | DFF is '+str(dff)+' | '+str(series_number)+' | '+str(roi_name) + ' | alt pre time: ' + str(alt_pre_time)+ '.pdf'
+
+# Find out if the stimuli Combos were good
+if vis_stim_type == 'spatiotemporal':
+    ma.stimComboChecker(ID)
 
 #ID.getStimulusTiming(plot_trace_flag=True)
 
@@ -179,6 +183,7 @@ def getResponseMeansAcrossROIs(ID, noptoMaxes, noptoMeans, yoptoMaxes, yoptoMean
 
 # %% ToDo:
 
+stimComboChecker(ID)
 # Do paired t tests somehow. Across ROIs, one combo of TempFreq and SpatPer, opto or not differences2154
 
 
@@ -239,9 +244,23 @@ print(protocol_ID)
 # epoch_parameters: list of dicts of all epoch parameters, one for each epoch (trial)
 epoch_parameters = ID.getEpochParameters()
 print(epoch_parameters[0])
-# Pass a param key to return a list of specified param values, one for each trial
-current_opto_stim = ID.getEpochParameters('opto_stim')
-current_opto_stim
+
+from itertools import compress
+temporal_frequency_list = ID.getEpochParameters('current_temporal_frequency')
+opto_list = ID.getEpochParameters('opto_stim')
+opto_temp_freq=list(compress(temporal_frequency_list, opto_list))
+fh3 = plt.hist(opto_temp_freq)
+nopto_list = [not elem for elem in opto_list]
+nopto_temp_freq = list(compress(temporal_frequency_list, nopto_list))
+fh4 = plt.hist(nopto_temp_freq)
+
+spatial_period_list = ID.getEpochParameters('current_spatial_period')
+opto_spat_per=list(compress(spatial_period_list, opto_list))
+nopto_spat_per=list(compress(spatial_period_list, nopto_list))
+fh5 = plt.hist(opto_spat_per)
+fh6 = plt.hist(nopto_spat_per)
+
+# %%
 # fly_metadata: dict
 fly_metadata = ID.getFlyMetadata()
 prep = ID.getFlyMetadata('prep')
@@ -287,9 +306,12 @@ plt.plot(v[0][2, :])
 
 # %% Plot trial-average responses by specified parameter name
 ID.getEpochParameters()
-query = {'current_spatial_period': 20, 'current_temporal_frequency': 1.0}
+query = {'current_spatial_period': 10, 'current_temporal_frequency': 4.0}
 filtered_trials = shared_analysis.filterTrials(roi_data.get('epoch_response'), ID, query=query)
 filtered_trials.shape
+
+
+
 unique_parameter_values, mean_response, sem_response, trial_response_by_stimulus = ID.getTrialAverages(roi_data.get('epoch_response'), parameter_key=('current_spatial_period', 'current_temporal_frequency'))
 ID.getTrialAverages
 print(unique_parameter_values)
