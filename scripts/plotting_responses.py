@@ -6,23 +6,26 @@ Avery Krieger 5/20/22
 from visanalysis.analysis import imaging_data, shared_analysis
 from visanalysis.util import plot_tools
 import matplotlib.pyplot as plt
+import numpy as np
 import os
 from two_photon_analysis import medulla_analysis as ma
 
 # %% Analysis Parameters
+fileOne = '/Users/averykrieger/Documents/local_data_repo/20220526'
+fileOneName = '2022-05-26'
 fileTwo = '/Users/averykrieger/Documents/local_data_repo/20220527'
 fileTwoName = '2022-05-27'
 fileThree = '/Volumes/ROG2TBAK/data/bruker/20220718'
 fileThreeName = '2022-07-18' #Alt = 5, 9, 14, 18
 
-file_directory = fileThree
-file_name = fileThreeName
+file_directory = fileOne
+file_name = fileOneName
 alt_pre_time = 1
 save_path = '/Users/averykrieger/Documents/local_data_repo/figs/'
-series_number = 18
-roi_name = 'proximal_visual_response'
+series_number = 9
+roi_name = 'distal_rois'
 opto_condition = True
-vis_stim_type = 'single' # 'spatiotemporal' or 'single'
+vis_stim_type = 'spatiotemporal' # 'spatiotemporal' or 'single'
 displayFix = True
 saveFig = True
 dff = True
@@ -131,35 +134,35 @@ def getResponseMeansAcrossROIs(ID, noptoMaxes, noptoMeans, yoptoMaxes, yoptoMean
         nopto_temporal_per_mean_mean[roi_ind, :] = np.mean(noptoMeans[roi_ind,:], axis = 0)
         opto_temporal_per_mean_mean[roi_ind, :] = np.mean(yoptoMeans[roi_ind,:], axis = 0)
 
-# Stats on the above
-from scipy import stats as st
+    # Stats on the above
+    from scipy import stats as st
 
-test_stat_temporal_max = np.empty(len(target_tf),dtype=object)
-test_stat_temporal_mean = np.empty(len(target_tf),dtype=object)
-test_stat_spatial_max = np.empty(len(target_sp),dtype=object)
-test_stat_spatial_mean = np.empty(len(target_sp),dtype=object)
+    test_stat_temporal_max = np.empty(len(target_tf),dtype=object)
+    test_stat_temporal_mean = np.empty(len(target_tf),dtype=object)
+    test_stat_spatial_max = np.empty(len(target_sp),dtype=object)
+    test_stat_spatial_mean = np.empty(len(target_sp),dtype=object)
 
-test_pvalue_temporal_max = np.empty(len(target_tf),dtype=object)
-test_pvalue_temporal_mean = np.empty(len(target_tf),dtype=object)
-test_pvalue_spatial_max = np.empty(len(target_sp),dtype=object)
-test_pvalue_spatial_mean = np.empty(len(target_sp),dtype=object)
+    test_pvalue_temporal_max = np.empty(len(target_tf),dtype=object)
+    test_pvalue_temporal_mean = np.empty(len(target_tf),dtype=object)
+    test_pvalue_spatial_max = np.empty(len(target_sp),dtype=object)
+    test_pvalue_spatial_mean = np.empty(len(target_sp),dtype=object)
 
-for sp_ind in range(len(target_sp)):
-    print('sp_ind = '+ str(sp_ind))
-    test_stat_spatial_max[sp_ind], test_pvalue_spatial_max[sp_ind] = \
-    st.ttest_ind(a = nopto_spatial_per_max_max[:,sp_ind],
-                 b = opto_spatial_per_max_max[:,sp_ind])
-    test_stat_spatial_mean[sp_ind], test_pvalue_spatial_mean[sp_ind] = \
-    st.ttest_ind(a = nopto_spatial_per_mean_mean[:,sp_ind],
-                 b = opto_spatial_per_mean_mean[:,sp_ind])
+    for sp_ind in range(len(target_sp)):
+        print('sp_ind = '+ str(sp_ind))
+        test_stat_spatial_max[sp_ind], test_pvalue_spatial_max[sp_ind] = \
+        st.ttest_ind(a = nopto_spatial_per_max_max[:,sp_ind],
+                     b = opto_spatial_per_max_max[:,sp_ind])
+        test_stat_spatial_mean[sp_ind], test_pvalue_spatial_mean[sp_ind] = \
+        st.ttest_ind(a = nopto_spatial_per_mean_mean[:,sp_ind],
+                     b = opto_spatial_per_mean_mean[:,sp_ind])
 
-for tf_ind in range(len(target_tf)):
-    test_stat_temporal_max[tf_ind], test_pvalue_temporal_max[tf_ind] = \
-    st.ttest_ind(a = nopto_temporal_per_max_max[:,tf_ind],
-                 b = opto_temporal_per_max_max[:,tf_ind])
-    test_stat_temporal_mean[tf_ind], test_pvalue_temporal_mean[tf_ind] = \
-    st.ttest_ind(a = nopto_temporal_per_mean_mean[:,tf_ind],
-                 b = opto_temporal_per_mean_mean[:,tf_ind])
+    for tf_ind in range(len(target_tf)):
+        test_stat_temporal_max[tf_ind], test_pvalue_temporal_max[tf_ind] = \
+        st.ttest_ind(a = nopto_temporal_per_max_max[:,tf_ind],
+                     b = opto_temporal_per_max_max[:,tf_ind])
+        test_stat_temporal_mean[tf_ind], test_pvalue_temporal_mean[tf_ind] = \
+        st.ttest_ind(a = nopto_temporal_per_mean_mean[:,tf_ind],
+                     b = opto_temporal_per_mean_mean[:,tf_ind])
 
 # test_stat_temporal_max
 # test_pvalue_temporal_max
