@@ -44,6 +44,49 @@ def dataLoader(file_directory, save_path, file_name, series_number, roi_name, op
 
     return ID, roi_data
 
+# %% Stimulus Combo Checker
+
+def stimComboChecker(ID):
+    from collections import Counter
+
+    # First find the numbers of unique stimuli:
+    target_sp = np.unique(ID.getEpochParameters('current_spatial_period'))
+    target_tf = np.unique(ID.getEpochParameters('current_temporal_frequency'))
+    opto_cons = np.unique(ID.getEpochParameters('opto_stim'))
+    sp_number = len(target_sp)
+    tf_number = len(target_tf)
+    opto_number = len(opto_cons)
+    total_supposed_combos = sp_number*tf_number*opto_number
+
+    # Now see what was actually shown
+    current_opto_stim = ID.getEpochParameters('opto_stim')
+    spatial_period_list = ID.getEpochParameters('current_spatial_period')
+    temporal_frequency_list = ID.getEpochParameters('current_temporal_frequency')
+
+    tab_dict = Counter(zip(spatial_period_list,temporal_frequency_list, current_opto_stim))
+    uniqueComboNumber = len(tab_dict)
+
+    matches = True
+    if total_supposed_combos != uniqueComboNumber:
+        matches = False
+
+    print('````````````````````````````````````````````````````````````````')
+    print('````````````````````Stim Combo Checker Start````````````````````')
+    print('................................................................')
+    print('The possible number of stimuli are:')
+    print(f'Spatial Period = {sp_number}')
+    print(f'Temporal Frequency = {tf_number}')
+    print(f'Opto Conditions = {opto_number}')
+    print(f'Total Possible Conditions = {total_supposed_combos}')
+    print(f'----- The ACTUAL shown stimuli total = {uniqueComboNumber}-----')
+    if matches == True:
+        print('These numbers MATCH! Yayyyy')
+    elif matches == False:
+        print('These numbers DO NOT Match! This is bad and/or sad')
+    print('``````````````````````````````````````````` `````````````````````')
+    print(f'````````````````````Stim Combo Checker End``````````````````````')
+    print('.................................................................')
+
 # %% Plotting things
 
 # Plot conditioned ROI Responses
@@ -232,7 +275,8 @@ def plotROIResponsesMetrics(ID, plotTitle, figTitle, noptoMaxes, noptoMeans, yop
 
         fh.suptitle(plotTitle + f' | SpatPer', fontsize=20)
         if saveFig == True:
-            fh.savefig(figTitle + 'SpatPer.pdf', dpi=300)
+            fh.savefig(figTitle + 'EachRoiSpatPer.pdf', dpi=300)
+            print('Saving! spat per')
 
         # Second, plot max and avgs of temporal frequencies, collapsed across spatial_periods:
         fh, ax = plt.subplots(2, roi_number, figsize=(20*roi_number, 20))
@@ -261,7 +305,8 @@ def plotROIResponsesMetrics(ID, plotTitle, figTitle, noptoMaxes, noptoMeans, yop
             ax[1, roi_ind].set_title(f'ROI:{roi_ind}| Mean Respone by TempFreq', fontsize=20)
 
         if saveFig == True:
-            fh.savefig(figTitle + 'TempFreq.pdf', dpi=300)
+            fh.savefig(figTitle + 'EachRoiTempFreq.pdf', dpi=300)
+            print('Saving! spat per')
 
     elif vis_stim_type == 'single':
         opto_start_times = np.unique(ID.getEpochParameters('current_opto_start_time'))
@@ -334,7 +379,8 @@ def plotReponseMetricsAcrossROIs(ID, plotTitle, figTitle, noptoMaxes, noptoMeans
 
         fh.suptitle(plotTitle + ' | SpatPer')
         if saveFig == True:
-            fh.savefig(figTitle + 'SpatPer.pdf', dpi=300)
+            fh.savefig(figTitle + 'AcrossROISpatPer.pdf', dpi=300)
+            print('Saving! spat per')
 
         # Second, plot max and avgs of temporal frequencies, collapsed across spatial_periods:
         fh, ax = plt.subplots(2, 1)
@@ -375,7 +421,9 @@ def plotReponseMetricsAcrossROIs(ID, plotTitle, figTitle, noptoMaxes, noptoMeans
 
         fh.suptitle(plotTitle + ' | TempFreq')
         if saveFig == True:
-            fh.savefig(figTitle + 'TempFreq.pdf', dpi=300)
+            fh.savefig(figTitle + 'AcrossROITempFreq.pdf', dpi=300)
+            print('Saving! Temp Freq')
+
 
     elif vis_stim_type == 'single':
         opto_start_times = np.unique(ID.getEpochParameters('current_opto_start_time'))
@@ -462,13 +510,13 @@ def getResponseMetrics(ID, roi_data, dff, df, vis_stim_type, alt_pre_time = 0, o
                     trials_mean = ID.getResponseAmplitude(filtered_trials[roi_ind,:,:], metric = 'mean')
                     trials_mean_mean = np.mean(trials_mean)
 
-                    # DEBUGGING:
-                    print(f'ROI: {roi_ind} | OT: {ot}')
-                    print(f'filtered trials size = {filtered_trials.shape}')
-                    print(f'trials_max shape: {trials_max.shape}')
-                    print(f'trials_max_mean: {trials_max_mean}')
-                    print(f'trials_mean shape: {trials_mean.shape}')
-                    print(f'trials_mean_mean: {trials_mean_mean}')
+                    # # DEBUGGING:
+                    # print(f'ROI: {roi_ind} | OT: {ot}')
+                    # print(f'filtered trials size = {filtered_trials.shape}')
+                    # print(f'trials_max shape: {trials_max.shape}')
+                    # print(f'trials_max_mean: {trials_max_mean}')
+                    # print(f'trials_mean shape: {trials_mean.shape}')
+                    # print(f'trials_mean_mean: {trials_mean_mean}')
 
                     allMaxes[roi_ind, sp_ind, tf_ind] = trials_max_mean
                     allMeans[roi_ind, sp_ind, tf_ind] = trials_mean_mean
