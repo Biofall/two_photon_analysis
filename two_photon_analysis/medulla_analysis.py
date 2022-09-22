@@ -252,22 +252,22 @@ def plotROIResponsesMetrics(ID, plotTitle, figTitle, noptoMaxes, noptoMeans, yop
 
         for roi_ind in range(roi_number):
             # Max Values
-            nopto_spatial_per_max_max = np.mean(noptoMaxes[roi_ind,:,:], axis = 1)
+            nopto_spatial_per_max_max = np.nanmean(noptoMaxes[roi_ind,:,:], axis = 1)
             ax[0, roi_ind].plot(target_sp, noptoMaxes[roi_ind,:,:], 'b^', alpha=0.4, markersize=20)
             ax[0, roi_ind].plot(target_sp, nopto_spatial_per_max_max, '-bo', linewidth=6, alpha=0.8)
 
-            yopto_spatial_per_max_max = np.mean(yoptoMaxes[roi_ind,:,:], axis = 1)
+            yopto_spatial_per_max_max = np.nanmean(yoptoMaxes[roi_ind,:,:], axis = 1)
             ax[0, roi_ind].plot(target_sp, yoptoMaxes[roi_ind,:,:], 'r^', alpha=0.4, markersize=20)
             ax[0, roi_ind].plot(target_sp, yopto_spatial_per_max_max, '-ro', linewidth=6, alpha=0.8)
 
             ax[0, roi_ind].set_title(f'ROI:{roi_ind}| Max Respone by SpatPer', fontsize=20)
 
             # Mean Values
-            nopto_spatial_per_mean = np.mean(noptoMeans[roi_ind,:,:], axis = 1)
+            nopto_spatial_per_mean = np.nanmean(noptoMeans[roi_ind,:,:], axis = 1)
             ax[1, roi_ind].plot(target_sp, noptoMeans[roi_ind,:,:], 'bP', alpha=0.4, markersize=20)
             ax[1, roi_ind].plot(target_sp, nopto_spatial_per_mean, '-bo', linewidth=6, alpha=0.8)
 
-            yopto_spatial_per_mean = np.mean(yoptoMeans[roi_ind,:,:], axis = 1)
+            yopto_spatial_per_mean = np.nanmean(yoptoMeans[roi_ind,:,:], axis = 1)
             ax[1, roi_ind].plot(target_sp, yoptoMeans[roi_ind,:,:], 'rP', alpha=0.4, markersize=20)
             ax[1, roi_ind].plot(target_sp, yopto_spatial_per_mean, '-ro', linewidth=6, alpha=0.8)
 
@@ -283,22 +283,22 @@ def plotROIResponsesMetrics(ID, plotTitle, figTitle, noptoMaxes, noptoMeans, yop
         # Note the transpose in the scatterplot because we're looking at the flipped matrix for temporal frequency
         for roi_ind in range(roi_number):
             # Max Values
-            nopto_temp_freq_max_max = np.mean(noptoMaxes[roi_ind,:,:], axis = 0)
+            nopto_temp_freq_max_max = np.nanmean(noptoMaxes[roi_ind,:,:], axis = 0)
             ax[0, roi_ind].plot(target_tf, noptoMaxes[roi_ind,:,:].T, 'b^', alpha=0.4, markersize=20)
             ax[0, roi_ind].plot(target_tf, nopto_temp_freq_max_max, '-bo', linewidth=6, alpha=0.8)
 
-            yopto_temp_freq_max_max = np.mean(yoptoMaxes[roi_ind,:,:], axis = 0)
+            yopto_temp_freq_max_max = np.nanmean(yoptoMaxes[roi_ind,:,:], axis = 0)
             ax[0, roi_ind].plot(target_tf, yoptoMaxes[roi_ind,:,:].T, 'r^', alpha=0.4, markersize=20)
             ax[0, roi_ind].plot(target_tf, yopto_temp_freq_max_max, '-ro', linewidth=6, alpha=0.8)
 
             ax[0, roi_ind].set_title(f'ROI:{roi_ind}| Max Respone by TempFreq', fontsize=20)
 
             # Mean Values
-            nopto_temp_freq_mean = np.mean(noptoMeans[roi_ind,:,:], axis = 0)
+            nopto_temp_freq_mean = np.nanmean(noptoMeans[roi_ind,:,:], axis = 0)
             ax[1, roi_ind].plot(target_tf, noptoMeans[roi_ind,:,:].T, 'bP', alpha=0.4, markersize=20)
             ax[1, roi_ind].plot(target_tf, nopto_temp_freq_mean, '-bo', linewidth=6, alpha=0.8)
 
-            yopto_temp_freq_mean = np.mean(yoptoMeans[roi_ind,:,:], axis = 0)
+            yopto_temp_freq_mean = np.nanmean(yoptoMeans[roi_ind,:,:], axis = 0)
             ax[1, roi_ind].plot(target_tf, yoptoMeans[roi_ind,:,:].T, 'rP', alpha=0.4, markersize=20)
             ax[1, roi_ind].plot(target_tf, yopto_temp_freq_mean, '-ro', linewidth=6, alpha=0.8)
 
@@ -344,25 +344,25 @@ def plotReponseMetricsAcrossROIs(ID, plotTitle, figTitle, noptoMaxes, noptoMeans
         target_sp = np.unique(ID.getEpochParameters('current_spatial_period'))
         target_tf = np.unique(ID.getEpochParameters('current_temporal_frequency'))
         #calculate mean across rois. optoMaxes = ROI x SpatPer x TempFreq
-        nopto_spatial_mean_max_across_rois= np.mean(np.mean(noptoMaxes, axis = 0), axis = 1)
-        yopto_spatial_mean_max_across_rois= np.mean(np.mean(yoptoMaxes, axis = 0), axis = 1)
-        nopto_spatial_mean_mean_across_rois = np.mean(np.mean(noptoMeans, axis = 0), axis = 1)
-        yopto_spatial_mean_mean_across_rois = np.mean(np.mean(yoptoMeans, axis = 0), axis = 1)
+        nopto_spatial_mean_max_across_rois= np.nanmean(np.nanmean(noptoMaxes, axis = 0), axis = 1)
+        yopto_spatial_mean_max_across_rois= np.nanmean(np.nanmean(yoptoMaxes, axis = 0), axis = 1)
+        nopto_spatial_mean_mean_across_rois = np.nanmean(np.nanmean(noptoMeans, axis = 0), axis = 1)
+        yopto_spatial_mean_mean_across_rois = np.nanmean(np.nanmean(yoptoMeans, axis = 0), axis = 1)
         for roi_ind in range(roi_number):
             # Max Values for each ROI get plotted, avg across TF
-            nopto_spatial_per_max_max = np.mean(noptoMaxes[roi_ind,:,:], axis = 1)
+            nopto_spatial_per_max_max = np.nanmean(noptoMaxes[roi_ind,:,:], axis = 1)
             ax[0].plot(target_sp, nopto_spatial_per_max_max, 'k^', alpha=0.4)
 
-            yopto_spatial_per_max_max = np.mean(yoptoMaxes[roi_ind,:,:], axis = 1)
+            yopto_spatial_per_max_max = np.nanmean(yoptoMaxes[roi_ind,:,:], axis = 1)
             ax[0].plot(target_sp, yopto_spatial_per_max_max, 'r^', alpha=0.4)
 
             ax[0].set_title('Max Respone by SpatPer')
 
             # Mean Values for each ROI get plotted, avg across TF
-            nopto_spatial_per_mean = np.mean(noptoMeans[roi_ind,:,:], axis = 1)
+            nopto_spatial_per_mean = np.nanmean(noptoMeans[roi_ind,:,:], axis = 1)
             ax[1].plot(target_sp, nopto_spatial_per_mean, 'k^', alpha=0.4)
 
-            yopto_spatial_per_mean = np.mean(yoptoMeans[roi_ind,:,:], axis = 1)
+            yopto_spatial_per_mean = np.nanmean(yoptoMeans[roi_ind,:,:], axis = 1)
             ax[1].plot(target_sp, yopto_spatial_per_mean, 'r^', alpha=0.4)
 
             ax[1].set_title('Mean Respone by SpatPer')
@@ -385,26 +385,26 @@ def plotReponseMetricsAcrossROIs(ID, plotTitle, figTitle, noptoMaxes, noptoMeans
         # Second, plot max and avgs of temporal frequencies, collapsed across spatial_periods:
         fh, ax = plt.subplots(2, 1)
         plt.subplots_adjust(bottom=0.1, right=0.9, wspace=0.4, hspace=0.6)
-        nopto_temporal_mean_max_across_rois= np.mean(np.mean(noptoMaxes[:,:,:], axis = 0), axis = 0)
-        yopto_temporal_mean_max_across_rois= np.mean(np.mean(yoptoMaxes[:,:,:], axis = 0), axis = 0)
-        nopto_temporal_mean_mean_across_rois = np.mean(np.mean(noptoMeans[:,:,:], axis = 0), axis = 0)
-        yopto_temporal_mean_mean_across_rois = np.mean(np.mean(yoptoMeans[:,:,:], axis = 0), axis = 0)
+        nopto_temporal_mean_max_across_rois= np.nanmean(np.nanmean(noptoMaxes[:,:,:], axis = 0), axis = 0)
+        yopto_temporal_mean_max_across_rois= np.nanmean(np.nanmean(yoptoMaxes[:,:,:], axis = 0), axis = 0)
+        nopto_temporal_mean_mean_across_rois = np.nanmean(np.nanmean(noptoMeans[:,:,:], axis = 0), axis = 0)
+        yopto_temporal_mean_mean_across_rois = np.nanmean(np.nanmean(yoptoMeans[:,:,:], axis = 0), axis = 0)
 
         for roi_ind in range(roi_number):
             # Max Values
-            nopto_temporal_per_max_max = np.mean(noptoMaxes[roi_ind,:,:], axis = 0)
+            nopto_temporal_per_max_max = np.nanmean(noptoMaxes[roi_ind,:,:], axis = 0)
             ax[0].plot(target_tf, nopto_temporal_per_max_max, 'k^', alpha=0.4)
 
-            yopto_temporal_per_max_max = np.mean(yoptoMaxes[roi_ind,:,:], axis = 0)
+            yopto_temporal_per_max_max = np.nanmean(yoptoMaxes[roi_ind,:,:], axis = 0)
             ax[0].plot(target_tf, yopto_temporal_per_max_max, 'r^', alpha=0.4)
 
             ax[0].set_title('Max Respone by TempFreq')
 
             # Mean Values
-            nopto_temporal_per_mean = np.mean(noptoMeans[roi_ind,:,:], axis = 0)
+            nopto_temporal_per_mean = np.nanmean(noptoMeans[roi_ind,:,:], axis = 0)
             ax[1].plot(target_tf, nopto_temporal_per_mean, 'k^', alpha=0.4)
 
-            yopto_temporal_per_mean = np.mean(yoptoMeans[roi_ind,:,:], axis = 0)
+            yopto_temporal_per_mean = np.nanmean(yoptoMeans[roi_ind,:,:], axis = 0)
             ax[1].plot(target_tf, yopto_temporal_per_mean, 'r^', alpha=0.4)
 
             ax[1].set_title('Mean Respone by Temp Freq')
@@ -488,7 +488,9 @@ def getResponseMetrics(ID, roi_data, dff, df, vis_stim_type, alt_pre_time = 0, o
         tf_number = len(target_tf)
         sp_number = len(target_sp)
         allMaxes = np.empty((roi_number, sp_number, tf_number), float)
+        allMaxes[:] = np.NaN
         allMeans = np.empty((roi_number, sp_number, tf_number), float)
+        allMeans[:] = np.NaN
 
         for roi_ind in range(roi_number):
             for sp_ind, sp in enumerate(target_sp):
@@ -506,9 +508,9 @@ def getResponseMetrics(ID, roi_data, dff, df, vis_stim_type, alt_pre_time = 0, o
 
                     # NEW WAY:
                     trials_max = ID.getResponseAmplitude(filtered_trials[roi_ind,:,:], metric = 'max')
-                    trials_max_mean = np.mean(trials_max)
+                    trials_max_mean = np.nanmean(trials_max)
                     trials_mean = ID.getResponseAmplitude(filtered_trials[roi_ind,:,:], metric = 'mean')
-                    trials_mean_mean = np.mean(trials_mean)
+                    trials_mean_mean = np.nanmean(trials_mean)
 
                     # # DEBUGGING:
                     # print(f'ROI: {roi_ind} | OT: {ot}')
@@ -520,7 +522,7 @@ def getResponseMetrics(ID, roi_data, dff, df, vis_stim_type, alt_pre_time = 0, o
 
                     allMaxes[roi_ind, sp_ind, tf_ind] = trials_max_mean
                     allMeans[roi_ind, sp_ind, tf_ind] = trials_mean_mean
-
+        print(allMaxes)
         if silent == False:
             print('======================Response Metrics======================')
             print(f'Number of ROIs = {roi_number}')
