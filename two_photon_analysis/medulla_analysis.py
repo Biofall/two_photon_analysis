@@ -586,18 +586,32 @@ def getResponseMetrics(ID, roi_data, dff, df, vis_stim_type, alt_pre_time = 0, o
     return allMaxes, allMeans
 
 # %% Normalize Means and Maxes for each ROI
+# Only designed to work in the alternating case
+# Finds the Max across opto conditions for each ROI
 
 def normalizeMetrics(noptoMaxes, yoptoMaxes, noptoMeans, yoptoMeans):
-    max_norm_val = np.max(np.vstack([np.max(noptoMaxes, axis=1), np.max(yoptoMaxes, axis=1)]), axis=0)
-    mean_norm_val = np.max(np.vstack([np.max(noptoMeans, axis=1), np.max(yoptoMeans, axis=1)]), axis=0)
+    max_norm_val = np.max(np.hstack([np.max(noptoMaxes, axis=1), np.max(yoptoMaxes, axis=1)]), axis=1)
+    mean_norm_val = np.max(np.hstack([np.max(noptoMeans, axis=1), np.max(yoptoMeans, axis=1)]), axis=1)
 
-    noptoMaxes = noptoMaxes / max_norm_val[:, np.newaxis]
-    yoptoMaxes = yoptoMaxes / max_norm_val[:, np.newaxis]
+    noptoMaxes = noptoMaxes / max_norm_val[:, np.newaxis, np.newaxis]
+    yoptoMaxes = yoptoMaxes / max_norm_val[:, np.newaxis, np.newaxis]
 
-    noptoMeans = noptoMeans / mean_norm_val[:, np.newaxis]
-    yoptoMeans = yoptoMeans / mean_norm_val[:, np.newaxis]
+    noptoMeans = noptoMeans / mean_norm_val[:, np.newaxis, np.newaxis]
+    yoptoMeans = yoptoMeans / mean_norm_val[:, np.newaxis, np.newaxis]
+
+    # Debugging test_stat_spatia
+    test1 = np.sum(noptoMaxes==1)
+    test2 = np.sum(yoptoMaxes==1)
+
+    test3 = np.sum(noptoMeans==1)
+    test4 = np.sum(yoptoMeans==1)
+    print(f'No Opto maxes==1: {test1}')
+    print(f'Yes Opto maxes==1: {test2}')
+    print(f'No Opto means==1: {test3}')
+    print(f'Yes Opto means==1: {test4}')
 
     return noptoMaxes, yoptoMaxes, noptoMeans, yoptoMeans
+
 
 # %% Midpoint Normalize function - from https://stackoverflow.com/a/7746125
 # Used to center heatmap colors, key on zero
