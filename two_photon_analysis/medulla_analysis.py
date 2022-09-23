@@ -31,12 +31,12 @@ def dataLoader(file_directory, save_path, file_name, series_number, roi_name, op
     if displayFix == False:
         ID = imaging_data.ImagingDataObject(file_path,
                                             series_number,
-                                            quiet=False)
+                                            quiet=True)
     else:
         cfg_dict = {'timing_channel_ind': 1}
         ID = imaging_data.ImagingDataObject(file_path,
                                         series_number,
-                                        quiet=False,
+                                        quiet=True,
                                         cfg_dict=cfg_dict)
 
     # getRoiResponses() wants a ROI set name, returns roi_data (dict)
@@ -70,7 +70,8 @@ def stimComboChecker(ID):
     if total_supposed_combos != uniqueComboNumber:
         matches = False
 
-    print('````````````````````````````````````````````````````````````````')
+    print('\n\n')
+    print('================================================================')
     print('````````````````````Stim Combo Checker Start````````````````````')
     print('................................................................')
     print('The possible number of stimuli are:')
@@ -85,7 +86,8 @@ def stimComboChecker(ID):
         print('These numbers DO NOT Match! This is bad and/or sad')
     print('``````````````````````````````````````````` `````````````````````')
     print(f'````````````````````Stim Combo Checker End``````````````````````')
-    print('.................................................................')
+    print('================================================================')
+    print('\n\n')
 
 # %% Plotting things
 
@@ -102,7 +104,6 @@ def plotConditionedROIResponses(ID, roi_data, opto_condition, vis_stim_type, sav
     """
     time_vector, epoch_response = getAltEpochResponseMatrix(ID, np.vstack(roi_data['roi_response']), alt_pre_time=alt_pre_time, dff=dff, df=df)
     roi_number = len(roi_data['roi_response'])
-    print(epoch_response.shape)
     # Find the unique parameter space for this experiment
     if vis_stim_type == 'spatiotemporal':
         target_sp = np.unique(ID.getEpochParameters('current_spatial_period'))
@@ -276,7 +277,6 @@ def plotROIResponsesMetrics(ID, plotTitle, figTitle, noptoMaxes, noptoMeans, yop
         fh.suptitle(plotTitle + f' | SpatPer', fontsize=20)
         if saveFig == True:
             fh.savefig(figTitle + 'EachRoiSpatPer.pdf', dpi=300)
-            print('Saving! spat per')
 
         # Second, plot max and avgs of temporal frequencies, collapsed across spatial_periods:
         fh, ax = plt.subplots(2, roi_number, figsize=(20*roi_number, 20))
@@ -306,7 +306,6 @@ def plotROIResponsesMetrics(ID, plotTitle, figTitle, noptoMaxes, noptoMeans, yop
 
         if saveFig == True:
             fh.savefig(figTitle + 'EachRoiTempFreq.pdf', dpi=300)
-            print('Saving! spat per')
 
     elif vis_stim_type == 'single':
         opto_start_times = np.unique(ID.getEpochParameters('current_opto_start_time'))
@@ -380,7 +379,6 @@ def plotReponseMetricsAcrossROIs(ID, plotTitle, figTitle, noptoMaxes, noptoMeans
         fh.suptitle(plotTitle + ' | SpatPer')
         if saveFig == True:
             fh.savefig(figTitle + 'AcrossROISpatPer.pdf', dpi=300)
-            print('Saving! spat per')
 
         # Second, plot max and avgs of temporal frequencies, collapsed across spatial_periods:
         fh, ax = plt.subplots(2, 1)
@@ -422,8 +420,6 @@ def plotReponseMetricsAcrossROIs(ID, plotTitle, figTitle, noptoMaxes, noptoMeans
         fh.suptitle(plotTitle + ' | TempFreq')
         if saveFig == True:
             fh.savefig(figTitle + 'AcrossROITempFreq.pdf', dpi=300)
-            print('Saving! Temp Freq')
-
 
     elif vis_stim_type == 'single':
         opto_start_times = np.unique(ID.getEpochParameters('current_opto_start_time'))
@@ -512,7 +508,16 @@ def getResponseMetrics(ID, roi_data, dff, df, vis_stim_type, alt_pre_time = 0, o
                     trials_mean = ID.getResponseAmplitude(filtered_trials[roi_ind,:,:], metric = 'mean')
                     trials_mean_mean = np.nanmean(trials_mean)
 
-                    # # DEBUGGING:
+                    # # # DEBUGGING:
+                    # print('\n\n')
+                    # print('================== getRresponseMetrics Debugging! ============================')
+                    # print('trials_max:')
+                    # print(trials_max)
+                    # print('\n\n')
+                    # print('trials_max_mean:')
+                    # print(trials_max_mean)
+                    # print('\n\n')
+
                     # print(f'ROI: {roi_ind} | OT: {ot}')
                     # print(f'filtered trials size = {filtered_trials.shape}')
                     # print(f'trials_max shape: {trials_max.shape}')
@@ -522,8 +527,9 @@ def getResponseMetrics(ID, roi_data, dff, df, vis_stim_type, alt_pre_time = 0, o
 
                     allMaxes[roi_ind, sp_ind, tf_ind] = trials_max_mean
                     allMeans[roi_ind, sp_ind, tf_ind] = trials_mean_mean
-        print(allMaxes)
+
         if silent == False:
+            print('\n\n')
             print('======================Response Metrics======================')
             print(f'Number of ROIs = {roi_number}')
             print(f'Spatial Periods = {target_sp}')
@@ -531,6 +537,7 @@ def getResponseMetrics(ID, roi_data, dff, df, vis_stim_type, alt_pre_time = 0, o
             print(f'Size should thus be: ({roi_number}, {tf_number}, {sp_number})')
             print(f'Size of allMaxes:    {allMaxes.shape}')
             print('============================================================')
+            print('\n\n')
 
     elif vis_stim_type == 'single':
         opto_start_times = np.unique(ID.getEpochParameters('current_opto_start_time'))
@@ -573,12 +580,14 @@ def getResponseMetrics(ID, roi_data, dff, df, vis_stim_type, alt_pre_time = 0, o
 
 
         if silent == False:
+            print('\n\n')
             print('======================Response Metrics======================')
             print(f'Number of ROIs = {roi_number}')
             print(f'Opto Start Times = {opto_start_times}')
             print(f'Size should thus be: ({roi_number}, {opto_time_number})')
             print(f'Size of allMaxes:    {allMaxes.shape}')
             print('============================================================')
+            print('\n\n')
 
     else:
         raise Exception('vis_stim_type should be spatiotemporal or single. It was: {}'.format(vis_stim_type))
@@ -590,8 +599,9 @@ def getResponseMetrics(ID, roi_data, dff, df, vis_stim_type, alt_pre_time = 0, o
 # Finds the Max across opto conditions for each ROI
 
 def normalizeMetrics(noptoMaxes, yoptoMaxes, noptoMeans, yoptoMeans):
-    max_norm_val = np.max(np.hstack([np.max(noptoMaxes, axis=1), np.max(yoptoMaxes, axis=1)]), axis=1)
-    mean_norm_val = np.max(np.hstack([np.max(noptoMeans, axis=1), np.max(yoptoMeans, axis=1)]), axis=1)
+
+    max_norm_val = np.nanmax(np.hstack([np.max(noptoMaxes, axis=1), np.max(yoptoMaxes, axis=1)]), axis=1)
+    mean_norm_val = np.nanmax(np.hstack([np.max(noptoMeans, axis=1), np.max(yoptoMeans, axis=1)]), axis=1)
 
     noptoMaxes = noptoMaxes / max_norm_val[:, np.newaxis, np.newaxis]
     yoptoMaxes = yoptoMaxes / max_norm_val[:, np.newaxis, np.newaxis]
@@ -599,16 +609,27 @@ def normalizeMetrics(noptoMaxes, yoptoMaxes, noptoMeans, yoptoMeans):
     noptoMeans = noptoMeans / mean_norm_val[:, np.newaxis, np.newaxis]
     yoptoMeans = yoptoMeans / mean_norm_val[:, np.newaxis, np.newaxis]
 
-    # Debugging test_stat_spatia
-    test1 = np.sum(noptoMaxes==1)
-    test2 = np.sum(yoptoMaxes==1)
+    # Norm Checker prints
+    noptoMaxSum = np.sum(noptoMaxes==1)
+    yoptoMaxSum = np.sum(yoptoMaxes==1)
+    maxSum = noptoMaxSum + yoptoMaxSum
+    noptoMeanSum = np.sum(noptoMeans==1)
+    yoptoMeanSum = np.sum(yoptoMeans==1)
+    meanSum = noptoMeanSum + yoptoMeanSum
+    totalLength = len(mean_norm_val)
 
-    test3 = np.sum(noptoMeans==1)
-    test4 = np.sum(yoptoMeans==1)
-    print(f'No Opto maxes==1: {test1}')
-    print(f'Yes Opto maxes==1: {test2}')
-    print(f'No Opto means==1: {test3}')
-    print(f'Yes Opto means==1: {test4}')
+    print('\n\n')
+    print('================================================================')
+    print('=====================Normalization Checker======================')
+    print(f'No Opto maxes==1: {noptoMaxSum}')
+    print(f'Yes Opto maxes==1: {yoptoMaxSum}')
+    print(f'Maxes add up to: {maxSum}')
+    print(f'No Opto means==1: {noptoMeanSum}')
+    print(f'Yes Opto means==1: {yoptoMeanSum}')
+    print(f'Means add up to: {meanSum}')
+    print(f'Both of the sums should be: {totalLength}')
+    print('================================================================')
+    print('\n\n')
 
     return noptoMaxes, yoptoMaxes, noptoMeans, yoptoMeans
 
@@ -784,6 +805,7 @@ def getAltEpochResponseMatrix(ID, region_response, alt_pre_time=0, dff=True, df=
         if len(cut_inds) > 0:
             print('Warning: cut {} epochs from epoch response matrix'.format(len(cut_inds)))
         response_matrix = np.delete(response_matrix, cut_inds, axis=1)  # shape = (region, trial, time)
+
         return time_vector, response_matrix
 
 # %% ToDo:
