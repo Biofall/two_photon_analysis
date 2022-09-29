@@ -19,15 +19,15 @@ fileTwoName = '2022-05-27'
 fileThree = '/Volumes/ROG2TBAK/data/bruker/20220718'
 fileThreeName = '2022-07-18' #Alt = 5, 9, 14, 18
 
-#roi_sets = ['distal_rois-standard', 'medial_1_rois-standard', 'medial_2_rois-standard', 'proximal_rois-standard']
-roi_sets = ['medial_2_rois-standard']
+roi_sets = ['distal_rois-standard', 'medial_1_rois-standard','medial_2_rois-standard','proximal_rois-standard']
+#roi_sets = ['medial_2_rois-standard']
 for i in range(len(roi_sets)):
 
-    file_directory = fileTwo
-    file_name = fileTwoName
+    file_directory = fileOne
+    file_name = fileOneName
     alt_pre_time = 1
     save_path = '/Users/averykrieger/Documents/local_data_repo/figs/'
-    series_number = 10
+    series_number = 9
     roi_name = roi_sets[i]
     opto_condition = True
     vis_stim_type = 'spatiotemporal' # 'spatiotemporal' or 'single'
@@ -61,16 +61,6 @@ for i in range(len(roi_sets)):
 
     #ID.getStimulusTiming(plot_trace_flag=True)
 
-    # PLOT traces of each ROI
-    ma.plotConditionedROIResponses(ID = ID, roi_data = roi_data,
-                                   opto_condition = opto_condition,
-                                   vis_stim_type = vis_stim_type,
-                                   alt_pre_time = alt_pre_time,
-                                   dff=dff, df = df, save_path = save_path,
-                                   saveFig=saveFig, saveName = saveName)
-
-
-
     # Calculate Response Metrics so that they can be plotted
     noptoMaxes, noptoMeans = ma.getResponseMetrics(ID = ID, roi_data = roi_data,
                                                   dff = dff, df = df,
@@ -88,15 +78,62 @@ for i in range(len(roi_sets)):
                                                   silent = False)
     print('\n\nFinished yoptoMaxes, yoptoMeans!\n')
 
-    # # Tests
-    # hStacked = np.hstack([np.max(noptoMaxes, axis=1), np.max(yoptoMaxes, axis=1)])
-    # hStacked
-    # np.max(hStacked)
-    #
-    # max_norm_val = np.max(np.hstack([np.max(noptoMaxes, axis=1), np.max(yoptoMaxes, axis=1)]), axis=1)
-    # mean_norm_val = np.max(np.hstack([np.max(noptoMeans, axis=1), np.max(yoptoMeans, axis=1)]), axis=1)
-    # max_norm_val
 
+    # PLOT traces of each ROI
+    ma.plotConditionedROIResponses(ID = ID, roi_data = roi_data,
+                                   opto_condition = opto_condition,
+                                   vis_stim_type = vis_stim_type,
+                                   alt_pre_time = alt_pre_time,
+                                   dff=dff, df = df, save_path = save_path,
+                                   saveFig=saveFig, saveName = saveName)
+
+    # Plot inter-ROI and across-ROI heatmaps
+    ma.plotOptoHeatmaps(ID, roi_data, noptoMaxes, yoptoMaxes, noptoMeans, yoptoMeans, saveName)
+
+    ma.plotOptoHeatmapsAcrossROIs(ID, roi_data, noptoMaxes, yoptoMaxes, noptoMeans, yoptoMeans, saveName)
+#%% Let's get Pandas working
+import pandas as pd
+import pickle
+
+noptoMaxes.shape
+superPickleDFPath = '/Users/averykrieger/Documents/local_data_repo/'
+firstTime = 1
+mmDF = pd.DataFrame({'File_Name': file_name,
+                     'Series_Number': series_number,
+                     'ROI_Name': roi_name,
+                     'Opto_Condition': opto_condition,
+                     'Vis_Stim_Type': vis_stim_type,
+                     'Display_Fix': displayFix,
+                     'dFF': dff,
+                     'df': df,
+                     'No_Opto_Maxes': noptoMaxes,
+                     'No_Opto_Means': noptoMeans,
+                     'Yes_Opto_Maxes': yoptoMaxes,
+                     'Yes_Opto_Means': yoptoMeans,
+                    })
+if firstTime==1:
+        os.chdir(superPickleDFPath)
+        mmDF.to_pickle('superMMDF.pickle')
+
+now = datetime.now()
+dt_string = now.strftime("%m.%d.%Y-%H.%M.%S")
+currentPickleName = 'superMMDF.' + dt_string + '.pickle'
+mmDF.to_pickle(currentPickleName)
+
+# Read in previously made super DataFrame, if it exists
+tempSuperDF = pd.read_pickle('superMMDF.pickle')
+
+# Append mmDF to the end of super DataFrame, ignore indexes because they don't mean anything
+superMMDF = pd.concat([tempSuperDF, mmDF], ignore_index=True, sort=False)
+
+# If desired, save super data frame
+if overWriteSuper == 1:
+    superMMDF.to_pickle('superMMDF.pickle')
+# otherwise, save new master with datetime
+superMMDF.to_pickle('superMMDF.' + dt_string + '.pickle')
+
+
+# %% Separating for readability's sake
     #Normalize Max and Mean values for each ROI
     noptoMaxes, yoptoMaxes, noptoMeans, yoptoMeans = ma.normalizeMetrics(noptoMaxes, yoptoMaxes, noptoMeans, yoptoMeans)
 
@@ -111,10 +148,10 @@ for i in range(len(roi_sets)):
         roiResponseFigName = save_path+'metrics/'+str(file_name)+' | SeriesNumber'+str(series_number)+'raw | '+str(roi_name) + ' | '
 
 
-    # # PLOT ROI Resonse Metrics (ROIs are separate)
+    # PLOT ROI Resonse Metrics (ROIs are separate)
     ma.plotROIResponsesMetrics(ID, plotTitle, roiResponseFigName, noptoMaxes, noptoMeans, yoptoMaxes, yoptoMeans, roi_number, vis_stim_type)
 
-    #% # PLOT ROI Resonse Metrics (ROIs are collapsed)
+    # PLOT ROI Resonse Metrics (ROIs are collapsed)
     ma.plotReponseMetricsAcrossROIs(ID, plotTitle, roiResponseFigName, noptoMaxes, noptoMeans, yoptoMaxes, yoptoMeans, roi_number, vis_stim_type)
 
 
@@ -123,58 +160,6 @@ for i in range(len(roi_sets)):
     beepy.beep(sound='ready')
     #############################################
 beepy.beep(sound='success')
-
-
-# %% Heatmap testing
-
-def plotOptoHeatmaps(ID, noptoMaxes, yoptoMaxes, noptoMeans, yoptoMeans, saveName):
-
-    target_sp = np.unique(ID.getEpochParameters('current_spatial_period'))
-    target_tf = np.unique(ID.getEpochParameters('current_temporal_frequency'))
-
-    norm_max = (nopto_maxes-opto_maxes) / (nopto_maxes+opto_maxes)
-    norm_mean = (nopto_means-opto_means) / (nopto_means+opto_means)
-
-    norm = MidPointNorm(midpoint=0, vmin=-1, vmax=1, clip=True)
-
-    saveFig = True
-
-    roi_number = len(roi_data['roi_response'])
-
-    fh, ax = plt.subplots(2, roi_number, figsize=(10*roi_number, 20))
-    for roi_ind in range(roi_number):
-        # the maxes
-        maxImage = ax[0, roi_ind].imshow(norm_max[roi_ind,:,:], cmap = 'coolwarm', norm = norm)
-        ax[0, roi_ind].set_xticks(np.arange(len(target_sp)), labels=target_sp)
-        ax[0, roi_ind].set_yticks(np.arange(len(target_tf)), labels=target_tf)
-        ax[0, roi_ind].set_title(f'ROI:{roi_ind} | Max', fontsize=40)
-        # Loop over data dimensions and create text annotations.
-        for i in range(len(target_sp)):
-            for j in range(len(target_tf)):
-                text = ax[0, roi_ind].text(j, i, round(norm_max[roi_ind, i, j], 3),
-                               ha="center", va="center", color="w")
-
-        # The means
-        meanImage = ax[1, roi_ind].imshow(norm_mean[roi_ind,:,:], cmap = 'coolwarm', norm = norm)
-        ax[1, roi_ind].set_xticks(np.arange(len(target_sp)), labels=target_sp)
-        ax[1, roi_ind].set_yticks(np.arange(len(target_tf)), labels=target_tf)
-        ax[1, roi_ind].set_title(f'ROI:{roi_ind} | Mean', fontsize=40)
-        # Loop over data dimensions and create text annotations.
-        for i in range(len(target_sp)):
-            for j in range(len(target_tf)):
-                text = ax[1, roi_ind].text(j, i, round(norm_mean[roi_ind, i, j], 3),
-                               ha="center", va="center", color="w")
-    fh.suptitle(f'{saveName} | Heatmap of No Opto / Opto', fontsize=40)
-
-    if saveFig == True:
-        fh.savefig(saveName, dpi=300)
-
-
-
-
-
-
-
 
 
 
@@ -258,57 +243,8 @@ def getResponseMeansAcrossROIs(ID, noptoMaxes, noptoMeans, yoptoMaxes, yoptoMean
 # test_pvalue_spatial_mean
 
 
-# %% ToDo:
+# %% ToDo
 
-test = np.empty((2,5))
-test
-test[:]=np.NaN
-test
-
-# Do paired t tests somehow. Across ROIs, one combo of TempFreq and SpatPer, opto or not differences2154
-
-
-#%% Heatmaps of ROIs opto vs no opto
-# heatmapFigName = save_path+'metrics/heatmaps/'+'test  '+str(file_name)+' | SeriesNumber'+str(series_number)+' | '+str(roi_name) + ' | ' + 'Heatmap' '.pdf'
-# ma.plotOptoHeatmaps(ID, roi_data, saveName = heatmapFigName, dff = dff, df = df)
-import numpy as np
-roi_data['epoch_response'].shape
-roi_data['epoch_response'][0, 0, :]
-ID.getEpochParameters('current_opto_start_time')[0]
-np.sum(np.array(ID.getEpochParameters('current_opto_start_time')) == 9.0)
-
-epoch_response
-ot = 2.
-query = {'current_opto_start_time': ot, 'opto_stim': True}
-filtered_trials = shared_analysis.filterTrials(roi_data['epoch_response'], ID, query=query)
-filtered_trials.shape
-
-voltage_trace, voltage_time_vector, voltage_sampling_rate = ID.getVoltageData()
-voltage_trace.shape
-plt.plot(voltage_trace[1, :])
-
-# %% Collapse across ROIs
-
-for i in roi_set_list:
-    roi_name = roi_set_list[i]
-    ID, roi_data = ma.dataLoader(file_directory = file_directory,
-                          save_path = save_path,
-                          file_name = file_name,
-                          series_number = series_number,
-                          roi_name = roi_name,
-                          opto_condition = opto_condition,
-                          displayFix = displayFix,
-                          saveFig = saveFig)
-
-
-    noptoMaxes, noptoMeans = ma.getResponseMetrics(ID = ID, roi_data = roi_data,
-                                                  dff = dff, df = df,
-                                                  opto_condition = False,
-                                                  silent = True)
-    yoptoMaxes, yoptoMeans = ma.getResponseMetrics(ID = ID, roi_data = roi_data,
-                                                  dff = dff, df = df,
-                                                  opto_condition = True,
-                                                  silent = True)
 
 
 

@@ -194,20 +194,16 @@ def plotConditionedROIResponses(ID, roi_data, opto_condition, vis_stim_type, sav
             fh.savefig(saveName, dpi=300)
 
 # Plotting heatmaps for opto and no opto comparisons
-def plotOptoHeatmaps(ID, roi_data, saveName, dff = True, df = False):
+def plotOptoHeatmaps(ID, roi_data, noptoMaxes, yoptoMaxes, noptoMeans, yoptoMeans, saveName, dff = True, df = False):
 
     target_sp = np.unique(ID.getEpochParameters('current_spatial_period'))
     target_tf = np.unique(ID.getEpochParameters('current_temporal_frequency'))
 
-    opto_maxes, opto_means = getResponseMetrics(ID, roi_data, dff, df, opto_condition = True, silent = True)
-    nopto_maxes, nopto_means = getResponseMetrics(ID, roi_data, dff, df, opto_condition = False, silent = True)
-    # div_max = nopto_maxes / opto_maxes
-    # div_mean = nopto_means / opto_means
+    # The abs catches when a neg and pos value are close, inflating the denominator
+    norm_max = (yoptoMaxes-noptoMaxes) / np.nanmax(np.abs(yoptoMaxes)+np.abs(noptoMaxes))
+    norm_mean = (yoptoMeans-noptoMeans) / np.nanmax(np.abs(yoptoMeans)+np.abs(noptoMeans))
 
-    norm_max = (nopto_maxes-opto_maxes) / (nopto_maxes+opto_maxes)
-    norm_mean = (nopto_means-opto_means) / (nopto_means+opto_means)
-
-    norm = MidPointNorm(midpoint=0, vmin=-1, vmax=1, clip=True)
+    norm = MidPointNorm(midpoint=0, vmin=-.45, vmax=.45, clip=False)
 
     saveFig = True
 
@@ -239,7 +235,56 @@ def plotOptoHeatmaps(ID, roi_data, saveName, dff = True, df = False):
     fh.suptitle(f'{saveName} | Heatmap of No Opto / Opto', fontsize=40)
 
     if saveFig == True:
-        fh.savefig(saveName, dpi=300)
+        fh.savefig(saveName+'heatmap.pdf', dpi=300)
+
+
+
+#  Cross-roi heatmap summaries
+def plotOptoHeatmapsAcrossROIs(ID, roi_data, noptoMaxes, yoptoMaxes, noptoMeans, yoptoMeans, saveName, dff = True, df = False, saveFig = True):
+    target_sp = np.unique(ID.getEpochParameters('current_spatial_period'))
+    target_tf = np.unique(ID.getEpochParameters('current_temporal_frequency'))
+
+    # The abs catches when a neg and pos value are close, inflating the denominator
+    norm_max = (yoptoMaxes-noptoMaxes) / np.nanmax(np.abs(yoptoMaxes)+np.abs(noptoMaxes))
+    norm_mean = (yoptoMeans-noptoMeans) / np.nanmax(np.abs(yoptoMeans)+np.abs(noptoMeans))
+
+    norm_max_mean = np.mean(norm_max, axis = 0)
+    norm_mean_mean = np.mean(norm_mean, axis = 0)
+
+    # This centers the colormap at midpoint
+    #   The most intense color is set at vmin/vmax
+    #
+    norm = MidPointNorm(midpoint=0, vmin=-.45, vmax=.45, clip=False)
+
+    fh, ax = plt.subplots(2,1, figsize=(10,20))
+    plt.subplots_adjust(bottom=0.1, right=0.9, wspace=0.2, hspace=0.2)
+    maxImage = ax[0].imshow(norm_max_mean, cmap = 'coolwarm', norm = norm)
+    ax[0].set_xticks(np.arange(len(target_sp)), labels=target_sp)
+    ax[0].set_yticks(np.arange(len(target_tf)), labels=target_tf)
+    ax[0].set_title(f'Max Normalized Diff Across ROIs')
+    ax[0].set_xlabel('Spatial Period')
+    ax[0].set_ylabel('Temporal Frequency')
+    for i in range(len(target_sp)):
+        for j in range(len(target_tf)):
+            text = ax[0].text(j, i, round(norm_max_mean[i, j], 3),
+                           ha="center", va="center", color="w")
+
+    # Means
+    meanImage = ax[1].imshow(norm_mean_mean, cmap = 'coolwarm', norm = norm)
+    ax[1].set_xticks(np.arange(len(target_sp)), labels=target_sp)
+    ax[1].set_yticks(np.arange(len(target_tf)), labels=target_tf)
+    ax[1].set_title(f'Mean Normalized Diff Across ROIs')
+    ax[1].set_xlabel('Spatial Period')
+    ax[1].set_ylabel('Temporal Frequency')
+    for i in range(len(target_sp)):
+        for j in range(len(target_tf)):
+            text = ax[1].text(j, i, round(norm_mean_mean[i, j], 3),
+                           ha="center", va="center", color="w")
+
+    fh.suptitle(f'{saveName} | Heatmap of (No Opto-Yes Opto)/(No Opto+Yes Opto)')
+
+    if saveFig == True:
+        fh.savefig(saveName+'heatmapAcrossRois.pdf', dpi=300)
 
 # Plotting the max and mean metrics
 def plotROIResponsesMetrics(ID, plotTitle, figTitle, noptoMaxes, noptoMeans, yoptoMaxes, yoptoMeans, roi_number, vis_stim_type='spatiotemporal', saveFig=True):
@@ -254,23 +299,23 @@ def plotROIResponsesMetrics(ID, plotTitle, figTitle, noptoMaxes, noptoMeans, yop
         for roi_ind in range(roi_number):
             # Max Values
             nopto_spatial_per_max_max = np.nanmean(noptoMaxes[roi_ind,:,:], axis = 1)
-            ax[0, roi_ind].plot(target_sp, noptoMaxes[roi_ind,:,:], 'b^', alpha=0.4, markersize=20)
-            ax[0, roi_ind].plot(target_sp, nopto_spatial_per_max_max, '-bo', linewidth=6, alpha=0.8)
+            ax[0, roi_ind].plot(target_sp, noptoMaxes[roi_ind,:,:], 'k^', alpha=0.4, markersize=20)
+            ax[0, roi_ind].plot(target_sp, nopto_spatial_per_max_max, '-ko', linewidth=6, alpha=0.8)
 
             yopto_spatial_per_max_max = np.nanmean(yoptoMaxes[roi_ind,:,:], axis = 1)
-            ax[0, roi_ind].plot(target_sp, yoptoMaxes[roi_ind,:,:], 'r^', alpha=0.4, markersize=20)
-            ax[0, roi_ind].plot(target_sp, yopto_spatial_per_max_max, '-ro', linewidth=6, alpha=0.8)
+            ax[0, roi_ind].plot(target_sp, yoptoMaxes[roi_ind,:,:], 'g^', alpha=0.4, markersize=20)
+            ax[0, roi_ind].plot(target_sp, yopto_spatial_per_max_max, '-go', linewidth=6, alpha=0.8)
 
             ax[0, roi_ind].set_title(f'ROI:{roi_ind}| Max Respone by SpatPer', fontsize=20)
 
             # Mean Values
             nopto_spatial_per_mean = np.nanmean(noptoMeans[roi_ind,:,:], axis = 1)
-            ax[1, roi_ind].plot(target_sp, noptoMeans[roi_ind,:,:], 'bP', alpha=0.4, markersize=20)
-            ax[1, roi_ind].plot(target_sp, nopto_spatial_per_mean, '-bo', linewidth=6, alpha=0.8)
+            ax[1, roi_ind].plot(target_sp, noptoMeans[roi_ind,:,:], 'kP', alpha=0.4, markersize=20)
+            ax[1, roi_ind].plot(target_sp, nopto_spatial_per_mean, '-ko', linewidth=6, alpha=0.8)
 
             yopto_spatial_per_mean = np.nanmean(yoptoMeans[roi_ind,:,:], axis = 1)
-            ax[1, roi_ind].plot(target_sp, yoptoMeans[roi_ind,:,:], 'rP', alpha=0.4, markersize=20)
-            ax[1, roi_ind].plot(target_sp, yopto_spatial_per_mean, '-ro', linewidth=6, alpha=0.8)
+            ax[1, roi_ind].plot(target_sp, yoptoMeans[roi_ind,:,:], 'gP', alpha=0.4, markersize=20)
+            ax[1, roi_ind].plot(target_sp, yopto_spatial_per_mean, '-go', linewidth=6, alpha=0.8)
 
             ax[1, roi_ind].set_title(f'ROI:{roi_ind}| Mean Respone by SpatPer', fontsize=20)
 
@@ -284,23 +329,23 @@ def plotROIResponsesMetrics(ID, plotTitle, figTitle, noptoMaxes, noptoMeans, yop
         for roi_ind in range(roi_number):
             # Max Values
             nopto_temp_freq_max_max = np.nanmean(noptoMaxes[roi_ind,:,:], axis = 0)
-            ax[0, roi_ind].plot(target_tf, noptoMaxes[roi_ind,:,:].T, 'b^', alpha=0.4, markersize=20)
-            ax[0, roi_ind].plot(target_tf, nopto_temp_freq_max_max, '-bo', linewidth=6, alpha=0.8)
+            ax[0, roi_ind].plot(target_tf, noptoMaxes[roi_ind,:,:].T, 'k^', alpha=0.4, markersize=20)
+            ax[0, roi_ind].plot(target_tf, nopto_temp_freq_max_max, '-ko', linewidth=6, alpha=0.8)
 
             yopto_temp_freq_max_max = np.nanmean(yoptoMaxes[roi_ind,:,:], axis = 0)
-            ax[0, roi_ind].plot(target_tf, yoptoMaxes[roi_ind,:,:].T, 'r^', alpha=0.4, markersize=20)
-            ax[0, roi_ind].plot(target_tf, yopto_temp_freq_max_max, '-ro', linewidth=6, alpha=0.8)
+            ax[0, roi_ind].plot(target_tf, yoptoMaxes[roi_ind,:,:].T, 'g^', alpha=0.4, markersize=20)
+            ax[0, roi_ind].plot(target_tf, yopto_temp_freq_max_max, '-go', linewidth=6, alpha=0.8)
 
             ax[0, roi_ind].set_title(f'ROI:{roi_ind}| Max Respone by TempFreq', fontsize=20)
 
             # Mean Values
             nopto_temp_freq_mean = np.nanmean(noptoMeans[roi_ind,:,:], axis = 0)
-            ax[1, roi_ind].plot(target_tf, noptoMeans[roi_ind,:,:].T, 'bP', alpha=0.4, markersize=20)
-            ax[1, roi_ind].plot(target_tf, nopto_temp_freq_mean, '-bo', linewidth=6, alpha=0.8)
+            ax[1, roi_ind].plot(target_tf, noptoMeans[roi_ind,:,:].T, 'kP', alpha=0.4, markersize=20)
+            ax[1, roi_ind].plot(target_tf, nopto_temp_freq_mean, '-ko', linewidth=6, alpha=0.8)
 
             yopto_temp_freq_mean = np.nanmean(yoptoMeans[roi_ind,:,:], axis = 0)
-            ax[1, roi_ind].plot(target_tf, yoptoMeans[roi_ind,:,:].T, 'rP', alpha=0.4, markersize=20)
-            ax[1, roi_ind].plot(target_tf, yopto_temp_freq_mean, '-ro', linewidth=6, alpha=0.8)
+            ax[1, roi_ind].plot(target_tf, yoptoMeans[roi_ind,:,:].T, 'gP', alpha=0.4, markersize=20)
+            ax[1, roi_ind].plot(target_tf, yopto_temp_freq_mean, '-go', linewidth=6, alpha=0.8)
 
             ax[1, roi_ind].set_title(f'ROI:{roi_ind}| Mean Respone by TempFreq', fontsize=20)
 
@@ -315,12 +360,12 @@ def plotROIResponsesMetrics(ID, plotTitle, figTitle, noptoMaxes, noptoMeans, yop
         for roi_ind in range(roi_number):
             # Max Values
             ax[0, roi_ind].plot(opto_start_times, noptoMaxes[roi_ind,:], '-k^', alpha=0.8, markersize=20)
-            ax[0, roi_ind].plot(opto_start_times, yoptoMaxes[roi_ind,:], '-r^', alpha=0.8, markersize=20)
+            ax[0, roi_ind].plot(opto_start_times, yoptoMaxes[roi_ind,:], '-g^', alpha=0.8, markersize=20)
             ax[0, roi_ind].set_title(f'ROI:{roi_ind}| Max Respone by Opto Start Time', fontsize=20)
 
             # Mean Values
             ax[1, roi_ind].plot(opto_start_times, noptoMeans[roi_ind,:], '-kP', alpha=0.8, markersize=20)
-            ax[1, roi_ind].plot(opto_start_times, yoptoMeans[roi_ind,:], '-rP', alpha=0.8, markersize=20)
+            ax[1, roi_ind].plot(opto_start_times, yoptoMeans[roi_ind,:], '-gP', alpha=0.8, markersize=20)
             ax[1, roi_ind].set_title(f'ROI:{roi_ind}| Mean Respone by Opto Start Time', fontsize=20)
 
 
@@ -353,7 +398,7 @@ def plotReponseMetricsAcrossROIs(ID, plotTitle, figTitle, noptoMaxes, noptoMeans
             ax[0].plot(target_sp, nopto_spatial_per_max_max, 'k^', alpha=0.4)
 
             yopto_spatial_per_max_max = np.nanmean(yoptoMaxes[roi_ind,:,:], axis = 1)
-            ax[0].plot(target_sp, yopto_spatial_per_max_max, 'r^', alpha=0.4)
+            ax[0].plot(target_sp, yopto_spatial_per_max_max, 'g^', alpha=0.4)
 
             ax[0].set_title('Max Respone by SpatPer')
 
@@ -362,19 +407,19 @@ def plotReponseMetricsAcrossROIs(ID, plotTitle, figTitle, noptoMaxes, noptoMeans
             ax[1].plot(target_sp, nopto_spatial_per_mean, 'k^', alpha=0.4)
 
             yopto_spatial_per_mean = np.nanmean(yoptoMeans[roi_ind,:,:], axis = 1)
-            ax[1].plot(target_sp, yopto_spatial_per_mean, 'r^', alpha=0.4)
+            ax[1].plot(target_sp, yopto_spatial_per_mean, 'g^', alpha=0.4)
 
             ax[1].set_title('Mean Respone by SpatPer')
 
         ax[0].plot(target_sp, nopto_spatial_mean_max_across_rois, '-ko', alpha=0.8)
-        ax[0].plot(target_sp, yopto_spatial_mean_max_across_rois, '-ro', alpha=0.8)
+        ax[0].plot(target_sp, yopto_spatial_mean_max_across_rois, '-go', alpha=0.8)
 
         ax[1].plot(target_sp, nopto_spatial_mean_mean_across_rois, '-ko', alpha=0.8)
-        ax[1].plot(target_sp, yopto_spatial_mean_mean_across_rois, '-ro', alpha=0.8)
+        ax[1].plot(target_sp, yopto_spatial_mean_mean_across_rois, '-go', alpha=0.8)
 
-        red_patch = mpatches.Patch(color='red', label='With Opto')
+        green_patch = mpatches.Patch(color='green', label='With Opto')
         black_patch = mpatches.Patch(color='black', label='No Opto')
-        ax[1].legend(handles=[red_patch, black_patch])
+        ax[1].legend(handles=[green_patch, black_patch])
 
         fh.suptitle(plotTitle + ' | SpatPer')
         if saveFig == True:
@@ -394,7 +439,7 @@ def plotReponseMetricsAcrossROIs(ID, plotTitle, figTitle, noptoMaxes, noptoMeans
             ax[0].plot(target_tf, nopto_temporal_per_max_max, 'k^', alpha=0.4)
 
             yopto_temporal_per_max_max = np.nanmean(yoptoMaxes[roi_ind,:,:], axis = 0)
-            ax[0].plot(target_tf, yopto_temporal_per_max_max, 'r^', alpha=0.4)
+            ax[0].plot(target_tf, yopto_temporal_per_max_max, 'g^', alpha=0.4)
 
             ax[0].set_title('Max Respone by TempFreq')
 
@@ -403,19 +448,19 @@ def plotReponseMetricsAcrossROIs(ID, plotTitle, figTitle, noptoMaxes, noptoMeans
             ax[1].plot(target_tf, nopto_temporal_per_mean, 'k^', alpha=0.4)
 
             yopto_temporal_per_mean = np.nanmean(yoptoMeans[roi_ind,:,:], axis = 0)
-            ax[1].plot(target_tf, yopto_temporal_per_mean, 'r^', alpha=0.4)
+            ax[1].plot(target_tf, yopto_temporal_per_mean, 'g^', alpha=0.4)
 
             ax[1].set_title('Mean Respone by Temp Freq')
 
         ax[0].plot(target_tf, nopto_temporal_mean_max_across_rois, '-ko', alpha=0.8)
-        ax[0].plot(target_tf, yopto_temporal_mean_max_across_rois, '-ro', alpha=0.8)
+        ax[0].plot(target_tf, yopto_temporal_mean_max_across_rois, '-g', alpha=0.8)
 
         ax[1].plot(target_tf, nopto_temporal_mean_mean_across_rois, '-ko', alpha=0.8)
-        ax[1].plot(target_tf, yopto_temporal_mean_mean_across_rois, '-ro', alpha=0.8)
+        ax[1].plot(target_tf, yopto_temporal_mean_mean_across_rois, '-go', alpha=0.8)
 
-        red_patch = mpatches.Patch(color='red', label='With Opto')
+        green_patch = mpatches.Patch(color='green', label='With Opto')
         black_patch = mpatches.Patch(color='black', label='No Opto')
-        ax[1].legend(handles=[red_patch, black_patch])
+        ax[1].legend(handles=[green_patch, black_patch])
 
         fh.suptitle(plotTitle + ' | TempFreq')
         if saveFig == True:
@@ -442,23 +487,23 @@ def plotReponseMetricsAcrossROIs(ID, plotTitle, figTitle, noptoMaxes, noptoMeans
         for roi_ind in range(roi_number):
             # Max Values for each ROI get plotted
             ax[0].plot(opto_start_times, noptoMaxes[roi_ind, :], 'k^', alpha=0.4)
-            ax[0].plot(opto_start_times, yoptoMaxes[roi_ind, :], 'r^', alpha=0.4)
+            ax[0].plot(opto_start_times, yoptoMaxes[roi_ind, :], 'g^', alpha=0.4)
             ax[0].set_title('Max Respone by Opto Start Time')
 
             # Mean Values for each ROI get plotted
             ax[1].plot(opto_start_times, noptoMeans[roi_ind, :], 'k^', alpha=0.4)
-            ax[1].plot(opto_start_times, yoptoMeans[roi_ind, :], 'r^', alpha=0.4)
+            ax[1].plot(opto_start_times, yoptoMeans[roi_ind, :], 'g^', alpha=0.4)
             ax[1].set_title('Mean Respone by Opto Start Time')
 
         ax[0].plot(opto_start_times, nopto_max_across_rois, '-ko', alpha=0.8)
-        ax[0].plot(opto_start_times, yopto_max_across_rois, '-ro', alpha=0.8)
+        ax[0].plot(opto_start_times, yopto_max_across_rois, '-go', alpha=0.8)
 
         ax[1].plot(opto_start_times, nopto_mean_across_rois, '-ko', alpha=0.8)
-        ax[1].plot(opto_start_times, yopto_mean_across_rois, '-ro', alpha=0.8)
+        ax[1].plot(opto_start_times, yopto_mean_across_rois, '-go', alpha=0.8)
 
-        red_patch = mpatches.Patch(color='red', label='With Opto')
+        green_patch = mpatches.Patch(color='green', label='With Opto')
         black_patch = mpatches.Patch(color='black', label='No Opto')
-        ax[1].legend(handles=[red_patch, black_patch])
+        ax[1].legend(handles=[green_patch, black_patch])
 
         fh.suptitle(plotTitle + ' | Opto Start Time')
         if saveFig == True:
@@ -576,8 +621,6 @@ def getResponseMetrics(ID, roi_data, dff, df, vis_stim_type, alt_pre_time = 0, o
 
                     allMaxes[roi_ind, opto_time_ind] = trials_max_mean
                     allMeans[roi_ind, opto_time_ind] = trials_mean_mean
-
-
 
         if silent == False:
             print('\n\n')
