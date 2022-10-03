@@ -23,11 +23,11 @@ roi_sets = ['distal_rois-standard', 'medial_1_rois-standard','medial_2_rois-stan
 #roi_sets = ['medial_2_rois-standard']
 for i in range(len(roi_sets)):
 
-    file_directory = fileOne
-    file_name = fileOneName
+    file_directory = fileTwo
+    file_name = fileTwoName
     alt_pre_time = 1
     save_path = '/Users/averykrieger/Documents/local_data_repo/figs/'
-    series_number = 9
+    series_number = 16
     roi_name = roi_sets[i]
     opto_condition = True
     vis_stim_type = 'spatiotemporal' # 'spatiotemporal' or 'single'
@@ -91,6 +91,39 @@ for i in range(len(roi_sets)):
     ma.plotOptoHeatmaps(ID, roi_data, noptoMaxes, yoptoMaxes, noptoMeans, yoptoMeans, saveName)
 
     ma.plotOptoHeatmapsAcrossROIs(ID, roi_data, noptoMaxes, yoptoMaxes, noptoMeans, yoptoMeans, saveName)
+
+
+
+#  Separating for readability's sake
+    #Normalize Max and Mean values for each ROI
+    noptoMaxes, yoptoMaxes, noptoMeans, yoptoMeans = ma.normalizeMetrics(noptoMaxes, yoptoMaxes, noptoMeans, yoptoMeans)
+
+    # gotta get those title and fig names going
+    plotTitle=f'{file_name} | {series_number}'
+    roi_number = len(roi_data['roi_response'])
+    if df == True:
+        roiResponseFigName = save_path+'metrics/'+str(file_name)+' | SeriesNumber '+str(series_number)+' | DF | '+str(roi_name) + ' | '
+    elif dff == True:
+        roiResponseFigName = save_path+'metrics/'+str(file_name)+' | SeriesNumber'+' | DFF is '+str(dff)+' | '+str(series_number)+' | '+str(roi_name) + ' | alt pre time: ' + str(alt_pre_time)+ '.pdf'
+    else:
+        roiResponseFigName = save_path+'metrics/'+str(file_name)+' | SeriesNumber'+str(series_number)+'raw | '+str(roi_name) + ' | '
+
+
+    # PLOT ROI Resonse Metrics (ROIs are separate)
+    ma.plotROIResponsesMetrics(ID, plotTitle, roiResponseFigName, noptoMaxes, noptoMeans, yoptoMaxes, yoptoMeans, roi_number, vis_stim_type)
+
+    # PLOT ROI Resonse Metrics (ROIs are collapsed)
+    ma.plotReponseMetricsAcrossROIs(ID, plotTitle, roiResponseFigName, noptoMaxes, noptoMeans, yoptoMaxes, yoptoMeans, roi_number, vis_stim_type)
+
+
+    ############ BEEP WHEN DONE #################
+    import beepy
+    beepy.beep(sound='ready')
+    #############################################
+beepy.beep(sound='success')
+
+
+
 #%% Let's get Pandas working
 import pandas as pd
 import pickle
@@ -131,38 +164,6 @@ if overWriteSuper == 1:
     superMMDF.to_pickle('superMMDF.pickle')
 # otherwise, save new master with datetime
 superMMDF.to_pickle('superMMDF.' + dt_string + '.pickle')
-
-
-# %% Separating for readability's sake
-    #Normalize Max and Mean values for each ROI
-    noptoMaxes, yoptoMaxes, noptoMeans, yoptoMeans = ma.normalizeMetrics(noptoMaxes, yoptoMaxes, noptoMeans, yoptoMeans)
-
-    # gotta get those title and fig names going
-    plotTitle=f'{file_name} | {series_number}'
-    roi_number = len(roi_data['roi_response'])
-    if df == True:
-        roiResponseFigName = save_path+'metrics/'+str(file_name)+' | SeriesNumber '+str(series_number)+' | DF | '+str(roi_name) + ' | '
-    elif dff == True:
-        roiResponseFigName = save_path+'metrics/'+str(file_name)+' | SeriesNumber'+' | DFF is '+str(dff)+' | '+str(series_number)+' | '+str(roi_name) + ' | alt pre time: ' + str(alt_pre_time)+ '.pdf'
-    else:
-        roiResponseFigName = save_path+'metrics/'+str(file_name)+' | SeriesNumber'+str(series_number)+'raw | '+str(roi_name) + ' | '
-
-
-    # PLOT ROI Resonse Metrics (ROIs are separate)
-    ma.plotROIResponsesMetrics(ID, plotTitle, roiResponseFigName, noptoMaxes, noptoMeans, yoptoMaxes, yoptoMeans, roi_number, vis_stim_type)
-
-    # PLOT ROI Resonse Metrics (ROIs are collapsed)
-    ma.plotReponseMetricsAcrossROIs(ID, plotTitle, roiResponseFigName, noptoMaxes, noptoMeans, yoptoMaxes, yoptoMeans, roi_number, vis_stim_type)
-
-
-    ############ BEEP WHEN DONE #################
-    import beepy
-    beepy.beep(sound='ready')
-    #############################################
-beepy.beep(sound='success')
-
-
-
 
 # %% Compute the means across ROIs for temporal and spatial frequencies
 def getResponseMeansAcrossROIs(ID, noptoMaxes, noptoMeans, yoptoMaxes, yoptoMeans):
