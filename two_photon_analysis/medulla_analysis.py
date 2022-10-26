@@ -604,10 +604,10 @@ def getResponseMetrics(ID, roi_data, dff, df, vis_stim_type, alt_pre_time = 0, o
                     # allMeans[roi_ind, opto_time_ind] = trials_mean
 
                     #NEW WAY:
-                    trials_max = ID.getResponseAmplitude(epoch_response_matrix=filtered_trials[roi_ind,:,:], metric= 'max')
+                    trials_max = ID.getResponseAmplitude(epoch_response_matrix=filtered_trials[roi_ind,:], metric= 'max')
                     trials_max_mean = np.mean(trials_max)
 
-                    trials_mean = ID.getResponseAmplitude(epoch_response_matrix=filtered_trials[roi_ind,:,:], metric= 'mean')
+                    trials_mean = ID.getResponseAmplitude(epoch_response_matrix=filtered_trials[roi_ind,:], metric= 'mean')
                     trials_mean_mean = np.mean(trials_mean)
 
                     # # DEBUGGING:
@@ -641,16 +641,27 @@ def getResponseMetrics(ID, roi_data, dff, df, vis_stim_type, alt_pre_time = 0, o
 # Only designed to work in the alternating case
 # Finds the Max across opto conditions for each ROI
 
-def normalizeMetrics(noptoMaxes, yoptoMaxes, noptoMeans, yoptoMeans):
+def normalizeMetrics(noptoMaxes, yoptoMaxes, noptoMeans, yoptoMeans, vis_stim_type):
 
-    max_norm_val = np.nanmax(np.hstack([np.max(noptoMaxes, axis=1), np.max(yoptoMaxes, axis=1)]), axis=1)
-    mean_norm_val = np.nanmax(np.hstack([np.max(noptoMeans, axis=1), np.max(yoptoMeans, axis=1)]), axis=1)
+    if vis_stim_type == 'spatiotemporal':
+        max_norm_val = np.nanmax(np.hstack([np.max(noptoMaxes, axis=1), np.max(yoptoMaxes, axis=1)]), axis=1)
+        mean_norm_val = np.nanmax(np.hstack([np.max(noptoMeans, axis=1), np.max(yoptoMeans, axis=1)]), axis=1)
 
-    noptoMaxes = noptoMaxes / max_norm_val[:, np.newaxis, np.newaxis]
-    yoptoMaxes = yoptoMaxes / max_norm_val[:, np.newaxis, np.newaxis]
+        noptoMaxes = noptoMaxes / max_norm_val[:, np.newaxis, np.newaxis]
+        yoptoMaxes = yoptoMaxes / max_norm_val[:, np.newaxis, np.newaxis]
 
-    noptoMeans = noptoMeans / mean_norm_val[:, np.newaxis, np.newaxis]
-    yoptoMeans = yoptoMeans / mean_norm_val[:, np.newaxis, np.newaxis]
+        noptoMeans = noptoMeans / mean_norm_val[:, np.newaxis, np.newaxis]
+        yoptoMeans = yoptoMeans / mean_norm_val[:, np.newaxis, np.newaxis]
+
+    elif vis_stim_type == 'single':
+        max_norm_val = np.nanmax(np.vstack([np.max(noptoMaxes, axis=1), np.max(yoptoMaxes, axis=1)]), axis = 0)
+        mean_norm_val = np.nanmax(np.vstack([np.max(noptoMeans, axis=1), np.max(yoptoMeans, axis=1)]), axis = 0)
+
+        noptoMaxes = noptoMaxes / max_norm_val[:, np.newaxis]
+        yoptoMaxes = yoptoMaxes / max_norm_val[:, np.newaxis]
+
+        noptoMeans = noptoMeans / mean_norm_val[:, np.newaxis]
+        yoptoMeans = yoptoMeans / mean_norm_val[:, np.newaxis]
 
     # Norm Checker prints
     noptoMaxSum = np.sum(noptoMaxes==1)
