@@ -3,6 +3,7 @@ setup.py
 ./scripts/process_imports
 ./scripts/template_hello_world
 two_photon_analysis/__init__.py
+two_photon_analysis/medulla_analysis.py
 two_photon_analysis/my_first_module.py
 two_photon_analysis/utils.py
 two_photon_analysis.egg-info/PKG-INFO
