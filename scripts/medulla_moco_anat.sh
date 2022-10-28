@@ -3,7 +3,7 @@
 #SBATCH --job-name=medulla_moco
 #SBATCH --time=24:00:00
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=6
+#SBATCH --cpus-per-task=3
 #SBATCH --output=/home/users/krave/logs/mocologs/%x.%j.out
 #SBATCH --open-mode=append
 #SBATCH --partition=trc
