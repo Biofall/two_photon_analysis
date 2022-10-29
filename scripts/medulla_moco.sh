@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --mail-type=END,FAIL
 #SBATCH --job-name=medulla_moco
-#SBATCH --time=12:00:00
+#SBATCH --time=48:00:00
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
 #SBATCH --output=/home/users/krave/logs/mocologs/%x.%j.out
