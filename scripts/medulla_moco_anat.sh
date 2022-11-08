@@ -18,7 +18,7 @@ echo $directory
 echo $brain_master
 
 # Optional params
-type_of_transform=${4:-"Affine"}
+type_of_transform=${4:-"Rigid"}
 output_format=${5:-"nii"}
 meanbrain_n_frames=${6:-"100"}
 echo $type_of_transform
