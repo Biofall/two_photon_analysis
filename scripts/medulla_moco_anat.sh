@@ -3,7 +3,7 @@
 #SBATCH --job-name=medulla_moco
 #SBATCH --time=24:00:00
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=3
+#SBATCH --cpus-per-task=16
 #SBATCH --output=/home/users/krave/logs/mocologs/%x.%j.out
 #SBATCH --open-mode=append
 #SBATCH --partition=trc
@@ -18,7 +18,7 @@ echo $directory
 echo $brain_master
 
 # Optional params
-type_of_transform=${4:-"SyN"}
+type_of_transform=${4:-"Affine"}
 output_format=${5:-"nii"}
 meanbrain_n_frames=${6:-"100"}
 echo $type_of_transform
