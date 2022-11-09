@@ -20,7 +20,7 @@ echo $brain_master
 # Optional params
 type_of_transform=${4:-"DenseRigid"}
 output_format=${5:-"nii"}
-meanbrain_n_frames=${6:-"100"}
+meanbrain_n_frames=${6:-"500"}
 total_sigma=${7:-"1"}
 echo $type_of_transform
 echo $output_format
