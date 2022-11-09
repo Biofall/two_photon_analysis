@@ -17,17 +17,19 @@ echo $directory
 echo $brain_master
 
 # Optional params
-type_of_transform=${3:-"Rigid"}
+type_of_transform=${3:-"DenseRigid"}
 output_format=${4:-"nii"}
-meanbrain_n_frames=${5:-"100"}
-aff_metrics=${5:-"mattes"}
+total_sigma=${5:-'1'}
+meanbrain_n_frames=${6:-"100"}
+#aff_metrics=${7:-"mattes"}
 
 echo $type_of_transform
 echo $output_format
 echo $meanbrain_n_frames
 
 args="{\"directory\":\"$directory\",\"brain_master\":\"$brain_master\",\"meanbrain_n_frames\":\"$meanbrain_n_frames\","\
-"\"type_of_transform\":\"$type_of_transform\",\"output_format\":\"$output_format\",\"aff_metric\":\"$aff_metric\"}"
+"\"type_of_transform\":\"$type_of_transform\",\"output_format\":\"$output_format\",\"total_sigma\":\"$total_sigma\"}"
+#,\"aff_metric\":\"$aff_metric\"}"
 
 #ml gcc/6.3.0 py-numpy/1.14.3_py36 py-pandas/0.23.0_py36 viz py-scikit-learn/0.19.1_py36 py-ants/0.3.2_py36
 ml py-ants/0.3.2_py36

@@ -21,12 +21,13 @@ echo $brain_master
 type_of_transform=${4:-"SyNRA"}
 output_format=${5:-"nii"}
 meanbrain_n_frames=${6:-"100"}
+total_sigma=${7:-"1"}
 echo $type_of_transform
 echo $output_format
 echo $meanbrain_n_frames
 
 args="{\"directory\":\"$directory\",\"brain_master\":\"$brain_master\",\"brain_mirror\":\"$brain_mirror\",\"meanbrain_n_frames\":\"$meanbrain_n_frames\","\
-"\"type_of_transform\":\"$type_of_transform\",\"output_format\":\"$output_format\"}"
+"total_sigma\":\"$total_sigma\","\"type_of_transform\":\"$type_of_transform\",\"output_format\":\"$output_format\"}"
 
 #ml gcc/6.3.0 py-numpy/1.14.3_py36 py-pandas/0.23.0_py36 viz py-scikit-learn/0.19.1_py36 py-ants/0.3.2_py36
 ml py-ants/0.3.2_py36
