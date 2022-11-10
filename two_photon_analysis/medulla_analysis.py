@@ -16,6 +16,9 @@ import numpy as np
 from scipy.stats import sem as sem
 import os
 import warnings
+from pathlib import Path
+from scipy import interpolate
+from two_photon_analysis.utils import getRandVal
 
 # %% Data Loader
 # takes in all the file and exp deets and returns an ID and roi_data
@@ -862,42 +865,245 @@ def getAltEpochResponseMatrix(ID, region_response, alt_pre_time=0, dff=True, df=
 
         return time_vector, response_matrix
 
-# %% ToDo:
-# now, import to pandas DF. in this df, the  maxes and means would be appended to a df
-# the fileName, series Number, opto condition, and roi_name should be added  as columns
+# TRF Utils Below:
 
-# %% Lil functin to test the voltage sampling
-# fh, ax = plt.subplots(1, 1, figsize=(12, 4))
-# ax.plot(voltage_trace[0, :])
-# voltage_sampling_rate
-# ax.set_xlim([0,200000])
-#
-#
-# ID.getStimulusTiming().keys()
-# stimulus_start_times = ID.getStimulusTiming(plot_trace_flag=False)['stimulus_start_times']
-#
-# opto_on = []
-# opto_off = []
-# voltage_time_vector[-1]
-# # epoch_time in seconds
-# epoch_time = ID.getRunParameters('pre_time') + ID.getRunParameters('stim_time') + ID.getRunParameters('tail_time')
-# epoch_len = epoch_time * voltage_sampling_rate  # sec -> data points of voltage trace
-#
-# opto_traces = []
-# no_opto_traces = []
-# for ss_ind, ss in enumerate(stimulus_start_times):
-#     start_index = np.where(voltage_time_vector > (ss - ID.getRunParameters('pre_time')))[0][0]
-#     trial_voltage = voltage_trace[0, start_index:np.int32(start_index+epoch_len)]
-#     if ID.getEpochParameters('opto_stim')[ss_ind]:
-#         opto_traces.append(trial_voltage)
-#     else:
-#         no_opto_traces.append(trial_voltage)
-#
-# opto_traces = np.vstack(opto_traces)
-# no_opto_traces = np.vstack(no_opto_traces)
-#
-# np.max(opto_traces, axis=1)
-#
-# fh, ax = plt.subplots(1, 2, figsize=(8, 4))
-# ax[0].plot(opto_traces.T, 'k')
-# ax[1].plot(no_opto_traces.T, 'r')
+def trfMaker(
+             experiment_file_directory, experiment_file_name,
+             series_number, roi_set_name, filter_length, dff, savefig = True, silent = False
+            ):
+    # join path to proper format for ImagingDataObject()
+    file_path = os.path.join(experiment_file_directory, experiment_file_name + ".hdf5")
+    print(file_path)
+    # create save directory
+    save_directory = "/Volumes/ROG2TBAK/data/bruker/trfs/" + experiment_file_name + "/"
+    print(save_directory)
+    Path(save_directory).mkdir(exist_ok=True)
+    # create ImagingDataObject (wants a path to an hdf5 file and a series number from that file)
+    ID = imaging_data.ImagingDataObject(file_path, series_number, quiet=True)
+    # get ROI timecourses and stimulus parameters
+    roi_data = ID.getRoiResponses(roi_set_name)
+    ID.getRoiSetNames()
+
+    # Interpolation of the ROI response trace into sample period time
+    roi_ind = 0
+    response_trace = roi_data.get('roi_response')[roi_ind][0, :]
+    response_time = np.arange(1, len(response_trace)+1) * ID.getAcquisitionMetadata('sample_period')
+    # Interpolation function to interpolate response. Fxn built using sample period
+    f_interp_response = interpolate.interp1d(response_time, response_trace)
+
+    # Establish relevant variables
+    epoch_parameters = ID.getEpochParameters()
+    ideal_frame_rate = 120  # Hz
+    sample_period = ID.getAcquisitionMetadata('sample_period') # (sec), bruker imaging acquisition period
+    filter_len = filter_length * ideal_frame_rate
+    stimulus_timing = ID.getStimulusTiming(plot_trace_flag=False)
+    stimulus_start_times = stimulus_timing['stimulus_start_times']
+    run_parameters = ID.getRunParameters
+    stim_frames = run_parameters('stim_time') * ideal_frame_rate
+
+    # frame flip times in a stimulus presentation:
+    stim_times = np.arange(1, stim_frames+1) * 1/ideal_frame_rate
+
+    # Initialize roi_trfs - ROI x Filter x Trials
+    roi_trfs = np.zeros(
+        (
+            roi_data["epoch_response"].shape[0],
+            int(filter_len),
+            int(run_parameters("num_epochs")),
+        )
+    )
+    all_stims = []
+    all_responses = []
+
+    if silent == False:
+        print('\n----------------------------------------------------------------------------------')
+        print('Initializing: (1) visual stim recreation (2) fft responses (3) generate filters...\n')
+
+    for epoch_ind in range(int(ID.getRunParameters('num_epochs'))):
+        if (epoch_ind%10 == 0) and silent == False:
+            print(f'...Starting Trial {epoch_ind} of {int(ID.getRunParameters("num_epochs"))}...')
+        for roi_ind in range(0, roi_data["epoch_response"].shape[0]):
+            # initalize trf by trial array (T, trial)
+            roi_trf = np.zeros((int(filter_len), int(run_parameters("num_epochs"))))
+
+            response_trace = roi_data.get('roi_response')[roi_ind][0, :]
+            response_time = np.arange(1, len(response_trace)+1) * ID.getAcquisitionMetadata('sample_period')
+            # Interpolation function to interpolate response. Fxn built using sample period
+            f_interp_response = interpolate.interp1d(response_time, response_trace)
+
+            # Regenerate the stimulus
+            start_seed = epoch_parameters[epoch_ind]['start_seed']
+            rand_min = eval(epoch_parameters[epoch_ind]['distribution_data'])['kwargs']['rand_min']
+            rand_max = eval(epoch_parameters[epoch_ind]['distribution_data'])['kwargs']['rand_max']
+            update_rate = epoch_parameters[epoch_ind]['update_rate']
+
+            new_stim = np.array([getRandVal(rand_min, rand_max, start_seed, update_rate, t) for t in stim_times])
+            current_frame_times = stimulus_start_times[epoch_ind] + stim_times  # In Prairie View time (sec)
+
+            baseline_time = 1 # (sec) generally could be pre_time, but for opto only take previous 1 sec
+            baseline_times = np.linspace(current_frame_times[0]-baseline_time, current_frame_times[0], int(1/sample_period))
+            baseline = np.mean(f_interp_response(baseline_times))
+
+            if dff == True:
+                # Convert to dF/F
+                current_interp_response = (f_interp_response(current_frame_times) - baseline) / baseline
+            else: # don't df/f
+                current_interp_response = f_interp_response(current_frame_times)
+
+            filter_fft = np.fft.fft(current_interp_response - np.mean(current_interp_response)) * np.conj(
+              np.fft.fft(new_stim - np.mean(new_stim)))
+
+            filt = np.real(np.fft.ifft(filter_fft))[0 : int(filter_len)]
+
+            trf = np.flip(filt)
+
+            #roi_trf[:, epoch_ind] = trf
+            roi_trfs[roi_ind, :, epoch_ind] = trf
+    if silent == False:
+    #all_trfs = np.stack(all_trfs, axis=-1)
+        print('\n-------')
+        print('DONE!')
+        print('-------\n')
+
+    # Run optoSplit
+    (roi_mean_trf, nopto_mean_trf, nopto_sem_plus, nopto_sem_minus,
+     yopto_mean_trf, yopto_sem_plus, yopto_sem_minus) = optoSplitAndMean(roi_trfs)
+
+    return (roi_mean_trf, nopto_mean_trf, nopto_sem_plus, nopto_sem_minus,
+            yopto_mean_trf, yopto_sem_plus, yopto_sem_minus)
+
+def optoSplitAndMean(roi_trfs, silent = True):
+    # SPLIT into NO Opto and YES Opto trials (alternating)
+    no_slice = roi_trfs[:, :, 0::2]  # Every 2 trials, starting at 0
+    yes_slice = roi_trfs[:, :, 1::2]  # Every 2 trials, starting at 1
+
+    # compute mean TRF across trials
+    # We go from ROI x TRF x Trial --> ROI x TRF
+    roi_mean_trf = np.mean(roi_trfs, 2)
+    nopto_mean_trf = np.mean(no_slice, 2)
+    yopto_mean_trf = np.mean(yes_slice, 2)
+
+    # Standard Error of the Mean calculations
+    nopto_sem = sem(no_slice, axis=2)  # calculate the no opto sem
+    nopto_sem_plus = np.squeeze(nopto_mean_trf + nopto_sem)
+    nopto_sem_minus = np.squeeze(nopto_mean_trf - nopto_sem)
+    yopto_sem = sem(yes_slice, axis=2)  # calculate the yes opto sem
+    yopto_sem_plus = np.squeeze(yopto_mean_trf + yopto_sem)
+    yopto_sem_minus = np.squeeze(yopto_mean_trf - yopto_sem)
+
+
+    if silent == False:
+        # Checking ouputs for separating no opto from opto trials
+        print("\n----------------------------------------------------------------------------")
+        print("----------------------------------------------------------------------------")
+        print("||    Checking the shape of the various trfs to ensure opto/no opto split:!")
+        print("||    Shape of roi_trfs is: " + str(roi_trfs.shape))
+        print("||    Shape of no_slice is: " + str(no_slice.shape))
+        print("||    Shape of yes_slice is: " + str(yes_slice.shape))
+        print("||")
+        print("||    Shape of roi_mean_trf is: " + str(roi_mean_trf.shape))
+        print("||    Shape of nopto_mean_trf is: " + str(nopto_mean_trf.shape))
+        print("||    Shape of yopto_mean_trf is: " + str(yopto_mean_trf.shape))
+        print("----------------------------------------------------------------------------")
+        print("----------------------------------------------------------------------------\n")
+
+        print(f'shape of std error is {nopto_sem_plus.shape}')
+
+    return (roi_mean_trf, nopto_mean_trf, nopto_sem_plus, nopto_sem_minus,
+            yopto_mean_trf, yopto_sem_plus, yopto_sem_minus
+           )
+
+def avgAcrossROIs(nopto_mean_trf, nopto_sem_plus, nopto_sem_minus, yopto_mean_trf, yopto_sem_plus, yopto_sem_minus):
+    # We go from ROI x TRF --> TRF
+    across_roi_nopto_trf = np.mean(nopto_mean_trf, axis = 0)
+    across_roi_nopto_sem_plus = np.mean(nopto_sem_plus, axis = 0)
+    across_roi_nopto_sem_minus = np.mean(nopto_sem_minus, axis = 0)
+    across_roi_yopto_trf = np.mean(yopto_mean_trf, axis = 0)
+    across_roi_yopto_sem_plus = np.mean(yopto_sem_plus, axis = 0)
+    across_roi_yopto_sem_minus = np.mean(yopto_sem_minus, axis = 0)
+
+    return across_roi_nopto_trf, across_roi_nopto_sem_plus, across_roi_nopto_sem_minus, across_roi_yopto_trf, across_roi_yopto_sem_plus, across_roi_yopto_sem_minus
+
+# SEM Plot for single ROIs!
+def plotSingleTRFComparison(
+                  nopto_trf, nopto_sem_plus, nopto_sem_minus,
+                  yopto_trf, yopto_sem_plus, yopto_sem_minus,
+                  filter_len, savefig = False
+                 ):
+    fh, ax = plt.subplots(1, 1, figsize=(20, 10))
+    #time = np.arange(0, roi_trfs.shape[1])
+    filter_time = np.flip(np.arange(0, filter_len) * 1/ideal_frame_rate)
+
+    ax.plot(filter_time, yopto_trf, color="r")
+    ax.fill_between(filter_time, yopto_sem_plus, yopto_sem_minus, color="r", alpha=0.4)
+    ax.plot(filter_time, nopto_trf, color="g")
+    ax.fill_between(filter_time, nopto_sem_plus, nopto_sem_minus, color="g", alpha=0.4)
+    ax.axhline(y=0, color="k", alpha=0.5)
+    red_patch = mpatches.Patch(color="red", label="Opto Condition")
+    green_patch = mpatches.Patch(color="green", label="No Opto Condition")
+
+    ax.legend(handles=[green_patch, red_patch], fontsize=20)
+    ax.set_title(
+        f"Temporal Receptive Field for {experiment_file_name} | Series {series_number} | {roi_set_name} | Filter Length: {filter_length}",
+        fontsize=25,
+    )
+    ax.set_xlabel("Time (s)", fontweight="bold", fontsize=13)
+    ax.grid(True)
+
+    if savefig == True:
+        fh.savefig(
+            save_directory
+            + "Cross-ROI.TemporalReceptiveField."
+            + str(experiment_file_name)
+            + "."
+            + str(series_number)
+            + "."
+            + str(roi_set_name)
+            + ".FilterLength"
+            + str(filter_length)
+            + ".pdf",
+            dpi=300,
+        )
+
+# SEM Plot for multiple ROIs!
+def plotMultipleTRFComparisons(
+                               nopto_mean_trf, nopto_sem_plus, nopto_sem_minus,
+                               yopto_mean_trf, yopto_sem_plus, yopto_sem_minus,
+                               filter_len, savefig = False
+                              ):
+    roi_count = roi_data["epoch_response"].shape[0]
+
+    fh, ax = plt.subplots(roi_count, 1, figsize=(10,roi_count*5))
+    #time = np.arange(0, roi_trfs.shape[1])
+    filter_time = np.flip(np.arange(0, filter_len) * 1/ideal_frame_rate)
+    for roi_ind in range(0, roi_count):
+        ax[roi_ind].plot(filter_time, yopto_mean_trf[roi_ind], color="r")
+        ax[roi_ind].fill_between(filter_time, yopto_sem_plus[roi_ind], yopto_sem_minus[roi_ind], color="r", alpha=0.4)
+        ax[roi_ind].plot(filter_time, nopto_mean_trf[roi_ind], color="g")
+        ax[roi_ind].fill_between(filter_time, nopto_sem_plus[roi_ind], nopto_sem_minus[roi_ind], color="g", alpha=0.4)
+        ax[roi_ind].axhline(y=0, color="k", alpha=0.5)
+        red_patch = mpatches.Patch(color="red", label="Opto Condition")
+        green_patch = mpatches.Patch(color="green", label="No Opto Condition")
+
+        ax[roi_ind].legend(handles=[green_patch, red_patch], fontsize=12)
+        ax[roi_ind].set_title(
+            f"Temporal Receptive Field for {experiment_file_name} | Series {series_number} | {roi_set_name}: ROI_{roi_ind+1} | Filter Length: {filter_length}",
+            fontsize=12,
+        )
+        ax[roi_ind].set_xlabel("Time (s)", fontsize=11)
+        ax[roi_ind].grid(True)
+
+    if savefig == True:
+        fh.savefig(
+            save_directory
+            + "Each-ROI.TemporalReceptiveField."
+            + str(experiment_file_name)
+            + "."
+            + str(series_number)
+            + "."
+            + str(roi_set_name)
+            + ".FilterLength"
+            + str(filter_length)
+            + ".pdf",
+            dpi=300,
+        )
