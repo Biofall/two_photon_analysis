@@ -21,8 +21,8 @@ echo $brain_master
 type_of_transform=${4:-"DenseRigid"}
 output_format=${5:-"nii"}
 meanbrain_n_frames=${6:-"100"}
-total_sigma=${7:-"1"}
-aff_metric=${8:-"GC"}
+total_sigma=${7:-"0"}
+aff_metric=${8:-"mattes"}
 
 echo $type_of_transform
 echo $output_format

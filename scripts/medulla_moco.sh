@@ -19,7 +19,7 @@ echo $brain_master
 # Optional params
 type_of_transform=${3:-"DenseRigid"}
 output_format=${4:-"nii"}
-total_sigma=${5:-'1'}
+total_sigma=${5:-'0'}
 meanbrain_n_frames=${6:-"100"}
 #aff_metrics=${7:-"mattes"}
 
