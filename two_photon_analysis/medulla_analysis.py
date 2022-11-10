@@ -838,7 +838,7 @@ def getAltEpochResponseMatrix(ID, region_response, alt_pre_time=0, dff=True, df=
                     warnings.simplefilter("ignore", category=RuntimeWarning)
                     new_resp_chunk = (new_resp_chunk - baseline) / baseline
 
-            if df:
+            elif df:
                 # calculate baseline using pre frames, don't divide by f
 
                 baseline = np.mean(new_resp_chunk[:, 0:pre_frames], axis=1, keepdims=True)
@@ -850,6 +850,7 @@ def getAltEpochResponseMatrix(ID, region_response, alt_pre_time=0, dff=True, df=
             if epoch_frames > new_resp_chunk.shape[-1]:
                 print('Warnging: Size mismatch idx = {}'.format(idx))  # the end of a response clipped off
                 response_matrix[:, idx, :new_resp_chunk.shape[-1]] = new_resp_chunk[:, 0:]
+
             else:
                 response_matrix[:, idx, :] = new_resp_chunk[:, 0:epoch_frames]
             # except:
@@ -858,6 +859,7 @@ def getAltEpochResponseMatrix(ID, region_response, alt_pre_time=0, dff=True, df=
             #     print(new_resp_chunk.shape)
             #     print(epoch_frames)
                 # cut_inds = np.append(cut_inds, idx)
+
 
         if len(cut_inds) > 0:
             print('Warning: cut {} epochs from epoch response matrix'.format(len(cut_inds)))
@@ -1028,7 +1030,7 @@ def avgAcrossROIs(nopto_mean_trf, nopto_sem_plus, nopto_sem_minus, yopto_mean_tr
 def plotSingleTRFComparison(
                   nopto_trf, nopto_sem_plus, nopto_sem_minus,
                   yopto_trf, yopto_sem_plus, yopto_sem_minus,
-                  filter_len, savefig = False
+                  filter_len, ideal_frame_rate = 120, savefig = False
                  ):
     fh, ax = plt.subplots(1, 1, figsize=(20, 10))
     #time = np.arange(0, roi_trfs.shape[1])
@@ -1043,10 +1045,10 @@ def plotSingleTRFComparison(
     green_patch = mpatches.Patch(color="green", label="No Opto Condition")
 
     ax.legend(handles=[green_patch, red_patch], fontsize=20)
-    ax.set_title(
-        f"Temporal Receptive Field for {experiment_file_name} | Series {series_number} | {roi_set_name} | Filter Length: {filter_length}",
-        fontsize=25,
-    )
+    # ax.set_title(
+    #     f"Temporal Receptive Field for {experiment_file_name} | Series {series_number} | {roi_set_name} | Filter Length: {filter_length}",
+    #     fontsize=25,
+    # )
     ax.set_xlabel("Time (s)", fontweight="bold", fontsize=13)
     ax.grid(True)
 
@@ -1069,9 +1071,9 @@ def plotSingleTRFComparison(
 def plotMultipleTRFComparisons(
                                nopto_mean_trf, nopto_sem_plus, nopto_sem_minus,
                                yopto_mean_trf, yopto_sem_plus, yopto_sem_minus,
-                               filter_len, savefig = False
+                               filter_len, ideal_frame_rate = 120, savefig = False
                               ):
-    roi_count = roi_data["epoch_response"].shape[0]
+    roi_count = nopto_mean_trf.shape[0]
 
     fh, ax = plt.subplots(roi_count, 1, figsize=(10,roi_count*5))
     #time = np.arange(0, roi_trfs.shape[1])
@@ -1086,10 +1088,10 @@ def plotMultipleTRFComparisons(
         green_patch = mpatches.Patch(color="green", label="No Opto Condition")
 
         ax[roi_ind].legend(handles=[green_patch, red_patch], fontsize=12)
-        ax[roi_ind].set_title(
-            f"Temporal Receptive Field for {experiment_file_name} | Series {series_number} | {roi_set_name}: ROI_{roi_ind+1} | Filter Length: {filter_length}",
-            fontsize=12,
-        )
+        # ax[roi_ind].set_title(
+        #     f"Temporal Receptive Field for {experiment_file_name} | Series {series_number} | {roi_set_name}: ROI_{roi_ind+1} | Filter Length: {filter_length}",
+        #     fontsize=12,
+        # )
         ax[roi_ind].set_xlabel("Time (s)", fontsize=11)
         ax[roi_ind].grid(True)
 
