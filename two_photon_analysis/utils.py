@@ -21,7 +21,16 @@ def plotFFTFilter(filter_fft, ideal_frame_rate):
     ax.set_xlabel('Freq (Hz)')
     ax.set_ylabel('Power')
     ax.set_title('FFT Filter baby')
-    
+
+def dropTrials(roi_trfs, n_trials_to_drop):
+    # multiply by 2 for no opto+opto pairing
+    double_drop = n_trials_to_drop*2
+    dropped_roi_trfs = roi_trfs[:, :, double_drop:]
+
+    return dropped_roi_trfs
+    print(f'{double_drop} trials dropped!')
+
+
 # % Lil functin to test the voltage sampling
 # fh, ax = plt.subplots(1, 1, figsize=(12, 4))
 # ax.plot(voltage_trace[0, :])
