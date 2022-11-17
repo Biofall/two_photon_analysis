@@ -11,6 +11,7 @@ Avery Krieger 6/6/22
 # %% Imports
 from visanalysis.analysis import imaging_data, shared_analysis
 from visanalysis.util import plot_tools
+import matplotlib.patches as mpatches 
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.stats import sem as sem
@@ -987,11 +988,11 @@ def optoSplitAndMean(roi_trfs, silent = True):
 
     # Standard Error of the Mean calculations
     nopto_sem = sem(no_slice, axis=2)  # calculate the no opto sem
-    nopto_sem_plus = np.squeeze(nopto_mean_trf + nopto_sem)
-    nopto_sem_minus = np.squeeze(nopto_mean_trf - nopto_sem)
+    nopto_sem_plus = nopto_mean_trf + nopto_sem
+    nopto_sem_minus = nopto_mean_trf - nopto_sem
     yopto_sem = sem(yes_slice, axis=2)  # calculate the yes opto sem
-    yopto_sem_plus = np.squeeze(yopto_mean_trf + yopto_sem)
-    yopto_sem_minus = np.squeeze(yopto_mean_trf - yopto_sem)
+    yopto_sem_plus = yopto_mean_trf + yopto_sem
+    yopto_sem_minus = yopto_mean_trf - yopto_sem
 
 
     if silent == False:
