@@ -7,7 +7,7 @@
 #SBATCH --output=/home/users/krave/logs/mocologs/%x.%j.out
 #SBATCH --open-mode=append
 #SBATCH --partition=trc
-#SBATCH --w --nodelist=<sh03-08n13,sh03-08n14,sh03-08n15>
+#SBATCH --w, --nodelist=<sh03-08n13,sh03-08n14,sh03-08n15>
 
 date
 
