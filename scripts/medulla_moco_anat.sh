@@ -6,7 +6,7 @@
 #SBATCH --cpus-per-task=16
 #SBATCH --output=/home/users/krave/logs/mocologs/%x.%j.out
 #SBATCH --open-mode=append
-#SBATCH --partition=trc -w sh03-08n13
+#SBATCH --partition=trc -w sh03-08n14
 
 date
 
