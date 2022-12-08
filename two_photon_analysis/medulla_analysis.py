@@ -11,7 +11,7 @@ Avery Krieger 6/6/22
 # %% Imports
 from visanalysis.analysis import imaging_data, shared_analysis
 from visanalysis.util import plot_tools
-import matplotlib.patches as mpatches 
+import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.stats import sem as sem
