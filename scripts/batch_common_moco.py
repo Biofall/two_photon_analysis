@@ -3,16 +3,14 @@ import subprocess
 import os
 import time
 
-data_directory = '/Users/mhturner/CurrentData/krieger/20230216/'
+data_directory = '/Users/mhturner/CurrentData/krieger/20230223/'
 ants_directory = '/Applications/ants-2.4.3/bin/'
 
 
 # Key: file name base of reference image
 # Value: list of file name bases for target images, to register to reference
-moco_pairs = {'TSeries-20230216-002_channel_1': ['TSeries-20230216-005_channel_1'],
-              'TSeries-20230216-006_channel_1': ['TSeries-20230216-007_channel_1'],
-              'TSeries-20230216-008_channel_1': ['TSeries-20230216-011_channel_1'],
-
+moco_pairs = {'TSeries-20230223-005_channel_2': ['TSeries-20230223-006_channel_1'],
+              'TSeries-20230223-007_channel_2': ['TSeries-20230223-008_channel_1'],
 }
 
 for fn_reference in moco_pairs:
