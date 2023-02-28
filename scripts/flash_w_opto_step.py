@@ -7,7 +7,7 @@ from matplotlib.ticker import FixedLocator, FixedFormatter
 
 import os
 import numpy as np
-
+print('fff')
 # %%
 # Opto intensity sweep w/ flash experiments (with MoCo!) 2/8/22
 
@@ -20,22 +20,30 @@ mi1_fly1_dist = [["/Volumes/ABK2TBData/data_repo/bruker/20221122.common_moco", "
 mi1_fly2_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20221129.common_moco", "2022-11-29", "4", "proximal_multiple3"]]
 mi1_fly2_medi = [["/Volumes/ABK2TBData/data_repo/bruker/20221129.common_moco", "2022-11-29", "4", "medial_multiple_sub2"]] #also 'medial_multiple_sub1", "medial_multiple_sub2"
 mi1_fly2_dist = [["/Volumes/ABK2TBData/data_repo/bruker/20221129.common_moco", "2022-11-29", "4", "distal_multiple"]]
+
+# Fly 3
+mi1_fly3_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230216", "2023-02-16", "5", "mi1_proximal_multiple"]]
+mi1_fly3_medi = [["/Volumes/ABK2TBData/data_repo/bruker/20230216", "2023-02-16", "5", "mi1_medial_multiple"]] #also 'medial_multiple_sub1", "medial_multiple_sub2"
+mi1_fly3_dist = [["/Volumes/ABK2TBData/data_repo/bruker/20230216", "2023-02-16", "5", "mi1_distal_multiple"]]
+
 mi1_prox_all = np.concatenate(
-                       (mi1_fly1_prox, mi1_fly2_prox,), 
+                       (mi1_fly1_prox, mi1_fly2_prox, mi1_fly3_prox,), 
                         axis = 0,
                       )
 mi1_medi_all = np.concatenate(
-                       (mi1_fly1_medi, mi1_fly2_medi,), 
+                       (mi1_fly1_medi, mi1_fly2_medi, mi1_fly3_medi,), 
                         axis = 0,
                       )
 mi1_dist_all = np.concatenate(
-                       (mi1_fly1_dist, mi1_fly2_dist,), 
+                       (mi1_fly1_dist, mi1_fly2_dist, mi1_fly3_dist,), 
                         axis = 0,
                       )
 mi1_all_multiple = np.concatenate(
-                                  (mi1_fly1_prox, mi1_fly2_prox, mi1_fly1_medi, mi1_fly2_medi, mi1_fly1_dist, mi1_fly2_dist,),
+                                  (mi1_fly1_prox, mi1_fly2_prox, mi1_fly3_prox, mi1_fly1_medi, mi1_fly2_medi, mi1_fly3_medi, mi1_fly1_dist, mi1_fly2_dist, mi1_fly3_dist,),
                                    axis = 0,
                                  )
+
+
 
 
 # Single ROI
@@ -91,10 +99,10 @@ all_response_max = []
 
 # Which one to plot
 # (0) mi1_fly1_prox (1) mi1_fly2_prox (2) mi1_fly1_medi (3) mi1_fly2_medi (4) mi1_fly1_dist (5) mi1_fly2_dist
-pull_ind = 0
+pull_ind = 3
 file_path = os.path.join(mi1_all_multiple[pull_ind][0], mi1_all_multiple[pull_ind][1] + ".hdf5")
 ID = imaging_data.ImagingDataObject(file_path, mi1_all_multiple[pull_ind][2], quiet=True)
-roi_data = ID.getRoiResponses(mi1_all_multiple[pull_ind][3], background_roi_name='bg_proximal', background_subtraction=False)
+roi_data = ID.getRoiResponses(mi1_all_multiple[pull_ind][3], background_roi_name='bg_mi1_proximal', background_subtraction=False)
 
 
 # %% Plot the average Traces of the whole trial followed by the avg traces of the windows
@@ -114,7 +122,7 @@ y_low = min_val-abs(0.05*min_val)
 y_high = max_val+abs(0.05*max_val)
 
 # Colormap setting
-cmap = plt.get_cmap('PRGn') # also 'cool' 'winter' 'PRGn' 'Pastel1' 'YlGnBu' 'twilight'
+cmap = plt.get_cmap('cool') # also 'cool' 'winter' 'PRGn' 'Pastel1' 'YlGnBu' 'twilight'
 colors = [cmap(i) for i in np.linspace(0.1, 1.0, len(unique_parameter_values))]
 
 # Plotting the whole trace
@@ -161,12 +169,14 @@ window_times = flash_start - window_lag
 window_frames = int(np.ceil(window_length / ID.getResponseTiming().get('sample_period')))
 windows = np.zeros((len(unique_parameter_values), len(window_times), window_frames))
 windows_sem = np.zeros((len(unique_parameter_values), len(window_times), window_frames))
+num_windows = len(window_times)
 
-fh, ax = plt.subplots(1, 5, figsize=(18, 4))
+
+fh, ax = plt.subplots(1, len(unique_parameter_values), figsize=(18, 4))
 
 # Collect windowed responses
-cmap = plt.get_cmap('cool') # also 'cool' 'winter' 'PRGn' 'Pastel1' 'YlGnBu' 'twilight'
-#colors = [cmap(i) for i in np.linspace(0.0, 1.0, len(unique_parameter_values))]
+cmap = plt.get_cmap('viridis') # also 'cool' 'winter' 'PRGn' 'Pastel1' 'YlGnBu' 'twilight'
+colors = [cmap(i) for i in np.linspace(0.0, 1.0, num_windows)]
 for up_ind, up in enumerate(unique_parameter_values): # Opto intensities
     for w_ind, w in enumerate(window_times): # windows
         start_index = np.where(roi_data.get('time_vector') > window_times[w_ind])[0][0]
@@ -183,10 +193,14 @@ fh.suptitle(f'Windows for {mi1_all_multiple[pull_ind][1]} Series: {mi1_all_multi
 
 # %% Plot each LED intensity for a given window
 
-fh, ax = plt.subplots(1, 5, figsize=(20, 4))
+fh, ax = plt.subplots(1, len(window_times), figsize=(20, 4))
 # Plot windowed responses
-cmap = plt.get_cmap('viridis') # also 'cool' 'winter' 'PRGn' 'Pastel1' 'YlGnBu' 'twilight'#colors = [cmap(i) for i in np.linspace(0.0, 1.0, len(unique_parameter_values))]
+cmap = plt.get_cmap('cool') # also 'cool' 'winter' 'PRGn' 'Pastel1' 'YlGnBu' 'twilight'#colors = [cmap(i) for i in np.linspace(0.0, 1.0, len(unique_parameter_values))]
 colors = [cmap(i) for i in np.linspace(0.0, 1.0, len(unique_parameter_values))]
+
+# Setting the values for all axes.
+custom_ylim = (y_low, y_high)
+plt.setp(ax, ylim=custom_ylim)
 
 for w_ind, w in enumerate(window_times):
     for up_ind, up in enumerate(unique_parameter_values):
@@ -201,7 +215,7 @@ fh.suptitle(f'Each LED intenisty/window for {mi1_all_multiple[pull_ind][1]} Seri
 response_max = np.max(windows, axis=-1)
 response_min = np.min(windows, axis=-1)
 
-cmap = plt.get_cmap('viridis') # also 'cool' 'winter' 'PRGn' 'Pastel1' 'YlGnBu' 'twilight'
+cmap = plt.get_cmap('cool') # also 'cool' 'winter' 'PRGn' 'Pastel1' 'YlGnBu' 'twilight'
 colors = [cmap(i) for i in np.linspace(0.0, 1.0, len(unique_parameter_values))]
 
 fh, ax = plt.subplots(2, len(window_times)-1, figsize=(16, 8))
