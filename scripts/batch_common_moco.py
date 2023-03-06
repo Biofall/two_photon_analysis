@@ -12,7 +12,7 @@ data_directory = os.path.join(imports_dir, date_dir)
 # Value: list of file name bases for target images, to register to reference
 moco_pairs = {
             #   'TSeries-20230223-005_channel_2': ['TSeries-20230223-006_channel_1'],
-            #   'TSeries-20230223-005_channel_2': ['TSeries-20230223-006_channel_1'],
+              'TSeries-20230223-005_channel_2': [],
               
              }
 
@@ -34,6 +34,7 @@ for fn_reference in moco_pairs:
         print('ERROR: {}'.format(error))
     print('Created average reference brain ({:.1f} sec)'.format(time.time()-t0))
     print('-------------------')
+    process.terminate()
 
     # Motion correct reference brain
     t0 = time.time()
@@ -46,6 +47,7 @@ for fn_reference in moco_pairs:
         print('ERROR: {}'.format(error))
     print('Motion corrected reference brain {} ({:.1f} sec)'.format(fn_ref, time.time()-t0))
     print('-------------------')
+    process.terminate()
 
     fn_targets = moco_pairs.get(fn_reference)
     for fn_target in fn_targets:
@@ -65,6 +67,7 @@ for fn_reference in moco_pairs:
             print('ERROR: {}'.format(error))
         print('Motion corrected target brain {} ({:.1f} sec)'.format(fn_targ, time.time()-t0))
         print('-------------------')
+        process.terminate()
 
     print('####### DONE WITH REF {} #######'.format(fn_reference))
 
