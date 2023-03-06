@@ -3,7 +3,7 @@
 #SBATCH --job-name=moco_common
 #SBATCH --time=48:00:00
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=2
+#SBATCH --cpus-per-task=4
 #SBATCH --output=/home/users/mhturner/mocologs/%x.%j.out
 #SBATCH --open-mode=append
 #SBATCH --partition=trc
