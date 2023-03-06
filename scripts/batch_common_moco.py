@@ -6,7 +6,7 @@ import nibabel as nib
 import numpy as np
 
 imports_dir = '/oak/stanford/groups/trc/data/krave/bruker_data/imports'
-date_dir = '20230223'
+date_dir = '20230302'
 
 data_directory = os.path.join(imports_dir, date_dir)
 
