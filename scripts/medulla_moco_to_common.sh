@@ -9,7 +9,7 @@
 #SBATCH --partition=trc
 
 # Uses command-line (basic, non-python) ANTs to motion correct
-# All params, file lists etc handled in two_photon_analysis/scripts/medulla_moco_to_common.py
+# All params, file lists etc handled in two_photon_analysis/scripts/batch_common_moco.py
 # USAGE: sbatch medulla_moco_to_common.sh
 
 date
@@ -17,4 +17,4 @@ date
 ml python/3.6 ants-base
 
 # Run moco python script
-python3 -u /home/users/mhturner/two_photon_analysis/scripts/medulla_moco_to_common.py
+python3 -u /home/users/mhturner/two_photon_analysis/scripts/batch_common_moco.py
