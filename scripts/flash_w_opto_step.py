@@ -6,6 +6,7 @@ from matplotlib import pyplot as plt
 from matplotlib.ticker import FixedLocator, FixedFormatter
 
 import os
+from pathlib import Path
 import numpy as np
 
 # %%
@@ -36,23 +37,30 @@ mi1_fly5_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230223.moco", "2023-02
 mi1_fly5_medi = [["/Volumes/ABK2TBData/data_repo/bruker/20230223.moco", "2023-02-23", "8", "mi1_medial_multiple"]] 
 mi1_fly5_dist = [["/Volumes/ABK2TBData/data_repo/bruker/20230223.moco", "2023-02-23", "8", "mi1_distal_multiple"]]
 
+# Fly 6 (currently no moco)
+mi1_fly6_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230302", "2023-03-02", "8", "mi1_proximal_multiple"]]
+mi1_fly6_medi = [["/Volumes/ABK2TBData/data_repo/bruker/20230302", "2023-03-02", "8", "mi1_medial_multiple"]]
+mi1_fly6_dist = [["/Volumes/ABK2TBData/data_repo/bruker/20230302", "2023-03-02", "8", "mi1_distal_multiple"]]
+
+
+
 
 mi1_prox_all = np.concatenate(
-                       (mi1_fly1_prox, mi1_fly2_prox, mi1_fly3_prox, mi1_fly4_prox, mi1_fly5_prox), 
+                       (mi1_fly1_prox, mi1_fly2_prox, mi1_fly3_prox, mi1_fly4_prox, mi1_fly5_prox, mi1_fly6_prox,), 
                         axis = 0,
                       )
 mi1_medi_all = np.concatenate(
-                       (mi1_fly1_medi, mi1_fly2_medi, mi1_fly3_medi,mi1_fly4_medi, mi1_fly5_medi,), 
+                       (mi1_fly1_medi, mi1_fly2_medi, mi1_fly3_medi,mi1_fly4_medi, mi1_fly5_medi, mi1_fly6_medi,), 
                         axis = 0,
                       )
 mi1_dist_all = np.concatenate(
-                       (mi1_fly1_dist, mi1_fly2_dist, mi1_fly3_dist, mi1_fly4_dist, mi1_fly5_dist,), 
+                       (mi1_fly1_dist, mi1_fly2_dist, mi1_fly3_dist, mi1_fly4_dist, mi1_fly5_dist, mi1_fly6_dist,), 
                         axis = 0,
                       )
 mi1_all_multiple = np.concatenate(
-                                  (mi1_fly1_prox, mi1_fly2_prox, mi1_fly3_prox, mi1_fly4_prox, mi1_fly5_prox, 
-                                   mi1_fly1_medi, mi1_fly2_medi, mi1_fly3_medi, mi1_fly4_medi, mi1_fly5_medi, 
-                                   mi1_fly1_dist, mi1_fly2_dist, mi1_fly3_dist, mi1_fly4_dist, mi1_fly5_dist,),
+                                  (mi1_fly1_prox, mi1_fly2_prox, mi1_fly3_prox, mi1_fly4_prox, mi1_fly5_prox, mi1_fly6_prox, 
+                                   mi1_fly1_medi, mi1_fly2_medi, mi1_fly3_medi, mi1_fly4_medi, mi1_fly5_medi, mi1_fly6_medi,
+                                   mi1_fly1_dist, mi1_fly2_dist, mi1_fly3_dist, mi1_fly4_dist, mi1_fly5_dist, mi1_fly6_dist,),
                                    axis = 0,
                                  )
 
@@ -116,7 +124,7 @@ Path(save_directory).mkdir(exist_ok=True)
 # Which one to plot
 # (0) mi1_fly1_prox (1) mi1_fly2_prox (2) mi1_fly1_medi (3) mi1_fly2_medi (4) mi1_fly1_dist (5) mi1_fly2_dist
 #pull_ind = 14
-save_fig = True
+save_fig = False
 
 for pull_ind in range(len(mi1_all_multiple)):
     file_path = os.path.join(mi1_all_multiple[pull_ind][0], mi1_all_multiple[pull_ind][1] + ".hdf5")
@@ -178,7 +186,7 @@ for pull_ind in range(len(mi1_all_multiple)):
     ax.set_ylabel('DF/F')
     ax.set_title(f'{mi1_all_multiple[pull_ind][1]} Series: {mi1_all_multiple[pull_ind][2]} | DFF=True | Conditions: {condition_name} | ROI={mi1_all_multiple[pull_ind][3]}', fontsize=20)
 
-    if savefig == True:
+    if save_fig == True:
         fh.savefig(
         save_directory
         + "AvgTraces."
@@ -226,7 +234,7 @@ for pull_ind in range(len(mi1_all_multiple)):
     fh.legend()
     fh.suptitle(f'Windows for {mi1_all_multiple[pull_ind][1]} Series: {mi1_all_multiple[pull_ind][2]} | DFF=True | Conditions: {condition_name} | ROI={mi1_all_multiple[pull_ind][3]}', fontsize=12)
 
-    if savefig == True:
+    if save_fig == True:
         fh.savefig(
         save_directory
         + "Windows."
@@ -242,7 +250,6 @@ for pull_ind in range(len(mi1_all_multiple)):
         )
 
     #%  Plot each LED intensity for a given window
-
     fh, ax = plt.subplots(1, len(window_times), figsize=(20, 4))
     # Plot windowed responses
     cmap = plt.get_cmap('cool') # also 'cool' 'winter' 'PRGn' 'Pastel1' 'YlGnBu' 'twilight'#colors = [cmap(i) for i in np.linspace(0.0, 1.0, len(unique_parameter_values))]
@@ -260,7 +267,7 @@ for pull_ind in range(len(mi1_all_multiple)):
     fh.legend()
     fh.suptitle(f'Each LED intenisty/window for {mi1_all_multiple[pull_ind][1]} Series: {mi1_all_multiple[pull_ind][2]} | DFF=True | Conditions: {condition_name} | ROI={mi1_all_multiple[pull_ind][3]}', fontsize=12)
 
-    if savefig == True:
+    if save_fig == True:
         fh.savefig(
         save_directory
         + "LED.Intensity.window."
@@ -284,8 +291,18 @@ for pull_ind in range(len(mi1_all_multiple)):
     colors = [cmap(i) for i in np.linspace(0.0, 1.0, len(unique_parameter_values))]
 
     fh, ax = plt.subplots(2, len(window_times)-1, figsize=(16, 8))
+    # Setting the values for all axes.
+    #custom_ylim = (y_low, y_high)
+    #plt.setp(ax, ylim=custom_ylim)
+
+    # temp values to be used to set axes
+    # temp_lower_max = 0
+    # temp_upper_max = 1
+    # temp_lower_min = 0
+    # temp_upper_min = 1
 
     for w_ind in range(len(window_times)-1): # w_ind = window_indicies
+
         for up_ind, up in enumerate(unique_parameter_values):
             # Maximums for top row
             ax[0, w_ind].plot(response_max[up_ind, w_ind], response_max[up_ind, w_ind+1], color=colors[up_ind], markersize=10, marker='o', label=up if w_ind==0 else '')
@@ -297,15 +314,45 @@ for pull_ind in range(len(mi1_all_multiple)):
         # Finding unity params - Max
         unity_lower_max = min(min(response_max[:, w_ind]), min(response_max[:, w_ind+1]))*0.9
         unity_upper_max = max(max(response_max[:, w_ind]), max(response_max[:, w_ind+1]))*1.1
-        ax[0, w_ind].plot([unity_lower_max, unity_upper_max], [unity_lower_max, unity_upper_max], 'k--', alpha=0.7)
+        #ax[0, w_ind].plot([unity_lower_max, unity_upper_max], [unity_lower_max, unity_upper_max], 'k--', alpha=0.7)
+        if w_ind == 0:
+            temp_lower_max = unity_lower_max
+            temp_upper_max = unity_upper_max
+
+        if temp_lower_max > unity_lower_max:
+            temp_lower_max = unity_lower_max
+        if temp_upper_max < unity_upper_max:
+            temp_upper_max = unity_upper_max
+
         # Finding unity params - Min
-        unity_lower_min = min(min(response_min[:, w_ind]), min(response_min[:, w_ind+1]))*1.1
-        unity_upper_min = max(max(response_min[:, w_ind]), max(response_min[:, w_ind+1]))*0.9
-        ax[1, w_ind].plot([unity_lower_min, unity_upper_min], [unity_lower_min, unity_upper_min], 'k--', alpha=0.7)
+        unity_lower_min_raw = min(min(response_min[:, w_ind]), min(response_min[:, w_ind+1]))
+        unity_lower_min = unity_lower_min_raw + abs(0.1*unity_lower_min_raw)
+        unity_upper_min_raw = max(max(response_min[:, w_ind]), max(response_min[:, w_ind+1]))
+        unity_upper_min = unity_upper_min_raw - 0.1*unity_upper_min_raw
+        #ax[1, w_ind].plot([unity_lower_min, unity_upper_min], [unity_lower_min, unity_upper_min], 'k--', alpha=0.7)
+        if w_ind == 0:
+            temp_lower_min = unity_lower_min
+            temp_upper_min = unity_upper_min
+        if temp_lower_min  > unity_lower_min:
+            temp_lower_min = unity_lower_min
+        if temp_upper_min < unity_upper_min:
+            temp_upper_min = unity_upper_min
 
         ax[0, w_ind].set_xlabel('Visual Flash 1 (Pre-Opto) Peak Amplitude')
         ax[1, w_ind].set_xlabel('Visual Flash 1 (Pre-Opto) Trough Amplitude')
-            
+    
+    for w_ind in range(len(window_times)-1):
+        ax[0,w_ind].set_xlim(left=temp_lower_max, right=temp_upper_max)
+        ax[0,w_ind].set_ylim(bottom=temp_lower_max, top=temp_upper_max)
+        ax[0,w_ind].plot([temp_lower_max, temp_upper_max], [temp_lower_max, temp_upper_max], 'k--', alpha=0.7)
+
+        ax[1,w_ind].set_xlim(left=temp_lower_min, right=temp_upper_min)
+        ax[1,w_ind].set_ylim(bottom=temp_lower_min, top=temp_upper_min)
+        ax[1,w_ind].plot([temp_lower_min, temp_upper_min], [temp_lower_min, temp_upper_min], 'k--', alpha=0.7)
+
+    #ax[0,0].setp(xlim=temp_upper_max, ylim=temp_upper_max)
+    #ax[0,1].setp(xlim=temp_upper_max, ylim=temp_upper_max)
+
     ax[0, 0].set_ylabel('Comparison Visual Flash Peak Amplitude')
     ax[1, 0].set_ylabel('Comparison Visual Flash Trough Amplitude')
 
@@ -314,7 +361,7 @@ for pull_ind in range(len(mi1_all_multiple)):
     fh.legend(title = 'Opto Intensities')
     fh.suptitle(f'Windows Metrics for {mi1_all_multiple[pull_ind][1]} Series: {mi1_all_multiple[pull_ind][2]} | DFF=True | Conditions: {condition_name} | ROI={mi1_all_multiple[pull_ind][3]}', fontsize=15)
 
-    if savefig == True:
+    if save_fig == True:
         fh.savefig(
         save_directory
         + "WindowsMetrics."
