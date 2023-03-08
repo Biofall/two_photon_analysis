@@ -10,7 +10,7 @@ from pathlib import Path
 import numpy as np
 from two_photon_analysis import medulla_analysis as ma
 
-# %%
+# %% Loading and concatenating all the data
 # Opto intensity sweep w/ flash experiments (with MoCo!) 2/8/22
 
 # Multiple ROIs
@@ -120,30 +120,36 @@ astar1_alt_dist_all = np.concatenate(
 #                                  )
 
 # %% Pull the trial's data based on the parameter key
-def get_spatiotemporal_responses(trials):
+def get_spatiotemporal_responses(trials, which_parameter='spatiotemporal'):
   # if opto stim
-  parameter_keys = ('current_spatial_period', 'current_temporal_frequency')
 
-  unique_parameter_values, mean_response, sem_response, trial_response_by_stimulus = ID.getTrialAverages(trials, parameter_key=parameter_keys)
-  # calc the sem + / -
-  sem_plus = mean_response + sem_response
-  sem_minus = mean_response - sem_response
+  if which_parameter == 'spatiotemporal':
+    parameter_keys = ('current_spatial_period', 'current_temporal_frequency')
 
-  # Just current_spatial_period
-  parameter_key_spatial = 'current_spatial_period'
-  unique_parameter_values_spatial, mean_response_spatial, sem_response_spatial, trial_response_by_stimulus_spatial = ID.getTrialAverages(trials, parameter_key=parameter_key_spatial)
-  # calc the sem + / -
-  sem_plus_spatial = mean_response_spatial + sem_response_spatial
-  sem_minus_spatial = mean_response_spatial - sem_response_spatial
+    unique_parameter_values, mean_response, sem_response, trial_response_by_stimulus = ID.getTrialAverages(trials, parameter_key=parameter_keys)
+    # calc the sem + / -
+    sem_plus = mean_response + sem_response
+    sem_minus = mean_response - sem_response
 
-  # Just current_temporal_temporal
-  parameter_key_temporal = 'current_temporal_temporal'
-  unique_parameter_values_temporal, mean_response_temporal, sem_response_temporal, trial_response_by_stimulus_temporal = ID.getTrialAverages(trials, parameter_key=parameter_key_temporal)
-  # calc the sem + / -
-  sem_plus_temporal = mean_response_temporal + sem_response_temporal
-  sem_minus_temporal = mean_response_temporal - sem_response_temporal
+  if which_parameter == 'spatial':
+    # Just current_spatial_period
+    parameter_key = 'current_spatial_period'
+    unique_parameter_values, mean_response, sem_response, trial_response_by_stimulus = ID.getTrialAverages(trials, parameter_key=parameter_key)
+    # calc the sem + / -
+    sem_plus = mean_response + sem_response
+    sem_minus = mean_response - sem_response
 
-  return unique_parameter_values, mean_response, sem_response, sem_plus, sem_minus, unique_parameter_values_spatial, mean_response_spatial, sem_response_spatial, sem_plus_spatial, sem_minus_spatial, unique_parameter_values_temporal, mean_response_temporal, sem_response_temporal, sem_plus_temporal, sem_minus_temporal
+  if which_parameter == 'temporal':
+    # Just current_temporal_temporal
+    parameter_key = 'current_temporal_frequency'
+    unique_parameter_values, mean_response, sem_response, trial_response_by_stimulus = ID.getTrialAverages(trials, parameter_key=parameter_key)
+    # calc the sem + / -
+    sem_plus = mean_response + sem_response
+    sem_minus = mean_response - sem_response
+
+  #return unique_parameter_values, mean_response, sem_response, sem_plus, sem_minus, unique_parameter_values_spatial, mean_response_spatial, sem_response_spatial, sem_plus_spatial, sem_minus_spatial, unique_parameter_values_temporal, mean_response_temporal, sem_response_temporal, sem_plus_temporal, sem_minus_temporal
+  return unique_parameter_values, mean_response, sem_response, sem_plus, sem_minus
+
 
 save_directory = "/Volumes/ABK2TBData/lab_repo/analysis/outputs/medulla_tuning_suite/" #+ experiment_file_name + "/"
 Path(save_directory).mkdir(exist_ok=True)
@@ -492,10 +498,10 @@ if savefig == True:
 
 
 
-def getMetricsFromExperiment(layer, alt_pre_time = 1, background_subtraction = False, background_roi_name = 'bg'):
-  file_path = os.path.join(layer[0][0], layer[0][1] + ".hdf5")
-  ID = imaging_data.ImagingDataObject(file_path, layer[0][2], quiet=True)
-  roi_data = ID.getRoiResponses(layer[0][3], background_subtraction=background_subtraction, background_roi_name='bg_distal')
+def getMetricsFromExperiment(layer, alt_pre_time = 1, which_parameter='spatiotemporal', background_subtraction = False, background_roi_name = 'bg'):
+  file_path = os.path.join(layer[0], layer[1] + ".hdf5")
+  ID = imaging_data.ImagingDataObject(file_path, layer[2], quiet=True)
+  roi_data = ID.getRoiResponses(layer[3], background_subtraction=background_subtraction, background_roi_name='bg_distal')
   # Testing opto vs no opto
   # first, get roi_data
   #epoch_response = roi_data.get('epoch_response') 
@@ -509,8 +515,13 @@ def getMetricsFromExperiment(layer, alt_pre_time = 1, background_subtraction = F
   no_opto_trials = shared_analysis.filterTrials(epoch_response, ID, query=nopto_query)
 
   # run the function
-  yopto_unique_parameter_values, yopto_mean_response, yopto_sem_response, yopto_sem_plus, yopto_sem_minus, yopto_unique_parameter_values_spatial, yopto_mean_response_spatial, yopto_sem_response_spatial, yopto_sem_plus_spatial, yopto_sem_minus_spatial, yopto_unique_parameter_values_temporal, yopto_mean_response_temporal, yopto_sem_response_temporal, yopto_sem_plus_temporal, yopto_sem_minus_temporal = get_spatiotemporal_responses(yes_opto_trials)
-  nopto_unique_parameter_values, nopto_mean_response, nopto_sem_response, nopto_sem_plus, nopto_sem_minus, nopto_unique_parameter_values_spatial, nopto_mean_response_spatial, nopto_sem_response_spatial, nopto_sem_plus_spatial, nopto_sem_minus_spatial, nopto_unique_parameter_values_temporal, nopto_mean_response_temporal, nopto_sem_response_temporal, nopto_sem_plus_temporal, nopto_sem_minus_temporal = get_spatiotemporal_responses(no_opto_trials)
+  #yopto_unique_parameter_values, yopto_mean_response, yopto_sem_response, yopto_sem_plus, yopto_sem_minus, yopto_unique_parameter_values_spatial, yopto_mean_response_spatial, yopto_sem_response_spatial, yopto_sem_plus_spatial, yopto_sem_minus_spatial, yopto_unique_parameter_values_temporal, yopto_mean_response_temporal, yopto_sem_response_temporal, yopto_sem_plus_temporal, yopto_sem_minus_temporal = get_spatiotemporal_responses(trials = yes_opto_trials, which_parameter = which_parameter)
+  #nopto_unique_parameter_values, nopto_mean_response, nopto_sem_response, nopto_sem_plus, nopto_sem_minus, nopto_unique_parameter_values_spatial, nopto_mean_response_spatial, nopto_sem_response_spatial, nopto_sem_plus_spatial, nopto_sem_minus_spatial, nopto_unique_parameter_values_temporal, nopto_mean_response_temporal, nopto_sem_response_temporal, nopto_sem_plus_temporal, nopto_sem_minus_temporal = get_spatiotemporal_responses(trials = no_opto_trials, which_parameter = which_parameter)
+  yopto_unique_parameter_values, yopto_mean_response, yopto_sem_response, yopto_sem_plus, yopto_sem_minus = get_spatiotemporal_responses(trials = yes_opto_trials, which_parameter = which_parameter)
+  nopto_unique_parameter_values, nopto_mean_response, nopto_sem_response, nopto_sem_plus, nopto_sem_minus = get_spatiotemporal_responses(trials = no_opto_trials, which_parameter = which_parameter)
+  print(f'\n\nyopto_unique_parameter_values = {yopto_unique_parameter_values}')
+  print(f'\n\nnopto_unique_parameter_values = {nopto_unique_parameter_values}')
+
 
   # Collect metrics for mean, max, min for inside stim presentation window
   vis_start = ID.getRunParameters('pre_time')
@@ -566,40 +577,41 @@ def getMetricsFromExperiment(layer, alt_pre_time = 1, background_subtraction = F
   # Calc the mean of max, min st error
   sem_PtT_nopto = abs(sem_max_nopto-sem_min_nopto)/2
   sem_PtT_yopto = abs(sem_max_yopto-sem_min_yopto)/2
+  print(f'\n\nShape of response_max_nopto = {response_max_nopto.shape}')
 
-  return response_max_nopto, response_min_nopto, response_mean_nopto, response_sem_mean_nopto, response_PtT_nopto, sem_PtT_nopto,\
+  return nopto_unique_parameter_values, response_max_nopto, response_min_nopto, response_mean_nopto, response_sem_mean_nopto, response_PtT_nopto, sem_PtT_nopto,\
          response_max_yopto, response_min_yopto, response_mean_yopto, response_sem_mean_yopto, response_PtT_yopto, sem_PtT_yopto
 
 # Plotting function
-def plotMTSMetrics(unique_parameter_values, response_max_nopto, response_min_nopto, response_mean_nopto, response_PtT_nopto,\
+def plotMTSMetrics(nopto_unique_parameter_values, response_max_nopto, response_min_nopto, response_mean_nopto, response_PtT_nopto,\
                    response_max_yopto, response_min_yopto, response_mean_yopto, response_PtT_yopto, layer_name, save_fig=True
                   ):
   # plotting those metrics
-  cmap = plt.get_cmap('tab20c') # also 'cool' 'winter' 'PRGn' 'Pastel1' 'YlGnBu' 'twilight'
+  cmap = plt.get_cmap('Spectral') # also 'cool' 'winter' 'PRGn' 'Pastel1' 'YlGnBu' 'twilight' 'tab20c' 'Spectral'
   colors = [cmap(i) for i in np.linspace(0.0, 1.0, len(nopto_unique_parameter_values))]
 
   fh, ax = plt.subplots(4, 1, figsize=(8, 24))
   for up_ind, up in enumerate(nopto_unique_parameter_values):
     ax[0].scatter(response_max_nopto[up_ind], response_max_yopto[up_ind], color=colors[up_ind], label = up)
-    #ax[0].errorbar(response_max_nopto[up_ind], response_max_yopto[up_ind], xerr=sem_max_nopto[up_ind], yerr=sem_max_yopto[up_ind], elinewidth=4, alpha=0.2)
+    ax[0].errorbar(response_max_nopto[up_ind], response_max_yopto[up_ind], xerr=sem_max_nopto[up_ind], yerr=sem_max_yopto[up_ind], color=colors[up_ind], elinewidth=4, alpha=0.2)
     ax[0].set_title('Maximum Response - No Opto v Opto')
     ax[0].set_xlabel('No Opto')
     ax[0].set_ylabel('Opto')
 
     ax[1].scatter(response_min_nopto[up_ind], response_min_yopto[up_ind], color=colors[up_ind])
-    #ax[1].errorbar(response_min_nopto[up_ind], response_min_yopto[up_ind], xerr=sem_min_nopto[up_ind], yerr=sem_min_yopto[up_ind], elinewidth=4, alpha=0.2)
+    ax[1].errorbar(response_min_nopto[up_ind], response_min_yopto[up_ind], xerr=sem_min_nopto[up_ind], yerr=sem_min_yopto[up_ind], color=colors[up_ind], elinewidth=4, alpha=0.2)
     ax[1].set_title('Minimum Response - No Opto v Opto')
     ax[1].set_xlabel('No Opto')
     ax[1].set_ylabel('Opto')
 
     ax[2].scatter(response_mean_nopto[up_ind], response_mean_yopto[up_ind], color=colors[up_ind])
-    #ax[2].errorbar(response_mean_nopto[up_ind], response_mean_yopto[up_ind], xerr=response_sem_mean_nopto[up_ind], yerr=response_sem_mean_yopto[up_ind], elinewidth=4, alpha=0.2)
+    ax[2].errorbar(response_mean_nopto[up_ind], response_mean_yopto[up_ind], xerr=response_sem_mean_nopto[up_ind], yerr=response_sem_mean_yopto[up_ind], color=colors[up_ind], elinewidth=4, alpha=0.2)
     ax[2].set_title('Mean Response - No Opto v Opto')
     ax[2].set_xlabel('No Opto')
     ax[2].set_ylabel('Opto')
 
     ax[3].scatter(response_PtT_nopto[up_ind], response_PtT_yopto[up_ind], color=colors[up_ind])
-    #ax[3].errorbar(response_PtT_nopto[up_ind], response_PtT_yopto[up_ind], xerr=sem_PtT_nopto[up_ind], yerr=sem_PtT_yopto[up_ind], elinewidth=4, alpha=0.2)
+    ax[3].errorbar(response_PtT_nopto[up_ind], response_PtT_yopto[up_ind], xerr=sem_PtT_nopto[up_ind], yerr=sem_PtT_yopto[up_ind], color=colors[up_ind], elinewidth=4, alpha=0.2)
     ax[3].set_title('Max-Min Response - No Opto v Opto')
     ax[3].set_xlabel('No Opto')
     ax[3].set_ylabel('Opto')
@@ -619,13 +631,15 @@ def plotMTSMetrics(unique_parameter_values, response_max_nopto, response_min_nop
   ax[3].plot([unity_lower_PtT, unity_upper_PtT], [unity_lower_PtT, unity_upper_PtT], 'k--', alpha=0.5, linewidth=3)
 
   fh.legend(loc='lower right')
-  fh.suptitle(f'Metrics for {layer_name}, AltPreTime={alt_pre_time} | BgSub={background_subtraction}', fontsize=13)
+  fh.suptitle(f'Metrics for {layer_name} layer, {which_parameter_type} params, AltPreTime={alt_pre_time} | BgSub={background_subtraction}', fontsize=13)
 
   if save_fig == True:
       fh.savefig(
       save_directory
       + "Metrics."
       + str(layer_name)
+      + ".Param-"
+      + which_parameter_type
       + ".AltPreTime"
       + str(alt_pre_time)
       + ".BgSub"
@@ -634,20 +648,29 @@ def plotMTSMetrics(unique_parameter_values, response_max_nopto, response_min_nop
       dpi=300,
       )
 # %% single run
-response_max_nopto, response_min_nopto, response_mean_nopto, response_sem_mean_nopto, response_PtT_nopto, sem_PtT_nopto,\
-response_max_yopto, response_min_yopto, response_mean_yopto, response_sem_mean_yopto, response_PtT_yopto, sem_PtT_yopto \
-= getMetricsFromExperiment(astar1_fly5_post_dist, alt_pre_time = 0.7)
+# nopto_unique_parameter_values, response_max_nopto, response_min_nopto, response_mean_nopto, response_sem_mean_nopto, response_PtT_nopto, sem_PtT_nopto,\
+# response_max_yopto, response_min_yopto, response_mean_yopto, response_sem_mean_yopto, response_PtT_yopto, sem_PtT_yopto \
+# = getMetricsFromExperiment(layer = astar1_fly5_post_dist, alt_pre_time = 0.7, which_parameter = 'temporal')
 
-# %% multi_run
-layer = astar1_alt_dist_all
+# %% multi_run function calls, baby
+# Initialize the fucking correct variables below:
+layer = astar1_alt_medi2_all
+layer_text = 'medi_2' # 'proximal' 'medial_1' 'medial_2' 'distal'
+which_parameter_type = 'spatiotemporal' # 'spatial' 'temporal' 'spatiotemporal'
+savefig = True
+
+# Initialize empty variables to stack em up and lay em down
 outer_response_max_nopto = []; outer_response_min_nopto = []; outer_response_mean_nopto = []; 
 outer_response_sem_mean_nopto = []; outer_response_PtT_nopto = []; outer_sem_PtT_nopto = []
 outer_response_max_yopto = []; outer_response_min_yopto = []; outer_response_mean_yopto = []
 outer_response_sem_mean_yopto = []; outer_response_PtT_yopto = []; outer_sem_PtT_yopto = []
 
+# WE LOOPIN
 for layer_ind in range(len(layer)):
+  nopto_unique_parameter_values, \
   response_max_nopto, response_min_nopto, response_mean_nopto, response_sem_mean_nopto, response_PtT_nopto, sem_PtT_nopto,\
-  response_max_yopto, response_min_yopto, response_mean_yopto, response_sem_mean_yopto, response_PtT_yopto, sem_PtT_yopto = getMetricsFromExperiment(layer, alt_pre_time = 0.7)
+  response_max_yopto, response_min_yopto, response_mean_yopto, response_sem_mean_yopto, response_PtT_yopto, sem_PtT_yopto \
+    = getMetricsFromExperiment(layer[layer_ind], alt_pre_time = 0.7, which_parameter = which_parameter_type)
   outer_response_max_nopto.append(response_max_nopto)
   outer_response_min_nopto.append(response_min_nopto)
   outer_response_mean_nopto.append(response_mean_nopto)
@@ -676,10 +699,12 @@ mean_response_sem_mean_yopto = np.mean(outer_response_sem_mean_yopto, axis = 0)
 mean_response_PtT_yopto = np.mean(outer_response_PtT_yopto, axis = 0)
 mean_sem_PtT_yopto = np.mean(outer_sem_PtT_yopto, axis = 0)
 
-# %%
 plotMTSMetrics(nopto_unique_parameter_values, mean_response_max_nopto, mean_response_min_nopto, mean_response_mean_nopto, mean_response_PtT_nopto,
                mean_response_max_yopto, mean_response_min_yopto, mean_response_mean_yopto, mean_response_PtT_yopto,
-               layer_name = 'distal',
-               save_fig = True
+               layer_name = layer_text,
+               save_fig = savefig
               )
+# %%
+nopto_unique_parameter_values
+
 # %%
