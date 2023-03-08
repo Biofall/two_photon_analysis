@@ -50,6 +50,7 @@ for fn_reference in moco_pairs:
         print('OUTPUT: {}'.format(output))
     if error is not None:
         print('ERROR: {}'.format(error))
+    process.wait()
     print('Created average reference brain ({:.1f} sec)'.format(time.time()-t0))
     print('-------------------')
     process.terminate()
@@ -63,6 +64,7 @@ for fn_reference in moco_pairs:
         print('OUTPUT: {}'.format(output))
     if error is not None:
         print('ERROR: {}'.format(error))
+    process.wait()
     print('Motion corrected reference brain {} ({:.1f} sec)'.format(fn_ref, time.time()-t0))
     print('-------------------')
     process.terminate()
@@ -86,6 +88,7 @@ for fn_reference in moco_pairs:
             print('OUTPUT: {}'.format(output))
         if error is not None:
             print('ERROR: {}'.format(error))
+        process.wait()
         print('Motion corrected target brain {} ({:.1f} sec)'.format(fn_targ, time.time()-t0))
         print('-------------------')
         process.terminate()
