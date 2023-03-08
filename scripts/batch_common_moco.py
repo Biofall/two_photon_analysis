@@ -61,7 +61,7 @@ for fn_reference in moco_pairs:
     # MI[$t1brain,$template,1,32,Regular,0.25]
     # GC[ {}, {}, 1 , 0, Random, 0.1 ]
     # GC[ {}, {}, 1 , 1, Random, 0.1 ]
-    cmd_moco_ref = 'antsMotionCorr  -d 3 -o [ {}, {}.nii.gz, {} ] -m GC[ {}, {}, 1 , 1, Random, 0.1 ] -t Rigid[ 0.1 ] -u 1 -e 1 -s 0 -f 1 -i 30 -n 30'.format(fn_aff_base, fn_aff_base, ref_avg, ref_avg, fn_ref)
+    cmd_moco_ref = 'antsMotionCorr  -d 3 -o [ {}, {}.nii.gz, {} ] -m GC[ {}, {}, 1 , 1, Random, 0.1 ] -t Rigid[ 0.005 ] -u 0 -e 1 -s 0 -f 1 -i 30 -n 30'.format(fn_aff_base, fn_aff_base, ref_avg, ref_avg, fn_ref)
 
     process = subprocess.Popen(cmd_moco_ref.split(), stdout=subprocess.PIPE)
     output, error = process.communicate()
@@ -86,7 +86,7 @@ for fn_reference in moco_pairs:
         fn_targ = os.path.join(data_directory, targ_subdir, fn_target + '.nii')
         fn_aff_targ_base = os.path.join(data_directory, targ_subdir, fn_target + '_aff')
         targ_avg = fn_aff_targ_base + '_avg.nii'
-        cmd_moco_targ = 'antsMotionCorr  -d 3 -o [ {}, {}.nii.gz, {} ] -m GC[ {}, {}, 1 , 1, Random, 0.1 ] -t Rigid[ 0.1 ] -u 1 -e 1 -s 0 -f 1 -i 30 -n 50'.format(fn_aff_targ_base, fn_aff_targ_base, targ_avg, ref_avg, fn_targ)
+        cmd_moco_targ = 'antsMotionCorr  -d 3 -o [ {}, {}.nii.gz, {} ] -m GC[ {}, {}, 1 , 1, Random, 0.1 ] -t Rigid[ 0.005 ] -u 0 -e 1 -s 0 -f 1 -i 30 -n 50'.format(fn_aff_targ_base, fn_aff_targ_base, targ_avg, ref_avg, fn_targ)
 
         process = subprocess.Popen(cmd_moco_targ.split(), stdout=subprocess.PIPE)
         output, error = process.communicate()
