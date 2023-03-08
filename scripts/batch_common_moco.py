@@ -14,8 +14,8 @@ data_directory = os.path.join(imports_dir, date_dir)
 # Value: list of file name bases for target images, to register to reference
 moco_pairs = {
               'TSeries-20230302-001_channel_2': ['TSeries-20230302-002_channel_1'],
-              'TSeries-20230302-003_channel_2': ['TSeries-20230302-006_channel_1'],
-              'TSeries-20230302-007_channel_2': ['TSeries-20230302-008_channel_1'],
+            #   'TSeries-20230302-003_channel_2': ['TSeries-20230302-006_channel_1'],
+            #   'TSeries-20230302-007_channel_2': ['TSeries-20230302-008_channel_1'],
              }
 
 
@@ -57,7 +57,9 @@ for fn_reference in moco_pairs:
 
     # Motion correct reference brain
     t0 = time.time()
-    cmd_moco_ref = 'antsMotionCorr  -d 3 -o [ {}, {}.nii.gz, {} ] -m GC[ {}, {}, 1 , 0, Random, 0.1 ] -t Affine[ 0.1 ] -u 1 -e 1 -s 1x0 -f 2x1 -i 15x3 -n 3'.format(fn_aff_base, fn_aff_base, ref_avg, ref_avg, fn_ref)
+    # MI[$t1brain,$template,1,32,Regular,0.25]
+    # GC[ {}, {}, 1 , 0, Random, 0.1 ]
+    cmd_moco_ref = 'antsMotionCorr  -d 3 -o [ {}, {}.nii.gz, {} ] -m MI[ {}, {}, 1 , 32, Regular, 0.25 ] -t Rigid[ 0.1 ] -u 1 -e 1 -s 0 -f 1 -i 30 -n 5'.format(fn_aff_base, fn_aff_base, ref_avg, ref_avg, fn_ref)
     process = subprocess.Popen(cmd_moco_ref.split(), stdout=subprocess.PIPE)
     output, error = process.communicate()
     if len(output) > 0:
@@ -81,7 +83,7 @@ for fn_reference in moco_pairs:
         fn_aff_targ_base = os.path.join(data_directory, targ_subdir, fn_target + '_aff')
         targ_avg = fn_aff_targ_base + '_avg.nii'
 
-        cmd_moco_targ = 'antsMotionCorr  -d 3 -o [ {}, {}.nii.gz, {} ] -m GC[ {}, {}, 1 , 0, Random, 0.1 ] -t Affine[ 0.1 ] -u 1 -e 1 -s 1x0 -f 2x1 -i 15x3 -n 3'.format(fn_aff_targ_base, fn_aff_targ_base, targ_avg, ref_avg, fn_targ)
+        cmd_moco_targ = 'antsMotionCorr  -d 3 -o [ {}, {}.nii.gz, {} ] -m MI[ {}, {}, 1 , 32, Regular, 0.25 ] -t Rigid[ 0.1 ] -u 1 -e 1 -s 0 -f 1 -i 30 -n 5'.format(fn_aff_targ_base, fn_aff_targ_base, targ_avg, ref_avg, fn_targ)
         process = subprocess.Popen(cmd_moco_targ.split(), stdout=subprocess.PIPE)
         output, error = process.communicate()
         if len(output) > 0:
