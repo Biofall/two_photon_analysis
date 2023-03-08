@@ -654,9 +654,9 @@ def plotMTSMetrics(nopto_unique_parameter_values, response_max_nopto, response_m
 
 # %% multi_run function calls, baby
 # Initialize the fucking correct variables below:
-layer = astar1_alt_medi2_all
-layer_text = 'medi_2' # 'proximal' 'medial_1' 'medial_2' 'distal'
-which_parameter_type = 'spatiotemporal' # 'spatial' 'temporal' 'spatiotemporal'
+layer = astar1_alt_prox_all
+layer_text = 'proximal' # 'proximal' 'medial_1' 'medial_2' 'distal'
+which_parameter_type = 'spatial' # 'spatial' 'temporal' 'spatiotemporal'
 savefig = True
 
 # Initialize empty variables to stack em up and lay em down
@@ -705,6 +705,9 @@ plotMTSMetrics(nopto_unique_parameter_values, mean_response_max_nopto, mean_resp
                save_fig = savefig
               )
 # %%
-nopto_unique_parameter_values
-
-# %%
+#TODO:
+# 1) use matplotlib colormap pickers - sequential colormaps to assign each fly its own color like 'Purples' and 'Greens'
+# 2) use outer_response_x_x to plot the individual flies  
+#   - Make function: the "WE LOOPIN" section in which outer_response_mean's are calculated. 
+#   - call the function inside of the plotting loop. Necessarily change plotMTSMetrics input parameters to outer_response_xx
+# 3) profit
