@@ -50,8 +50,9 @@ for fn_reference in moco_pairs:
         print('OUTPUT: {}'.format(output))
     if error is not None:
         print('ERROR: {}'.format(error))
+        raise Exception('ERROR in moco for reference brain {}'.format(fn_ref))
     process.wait()
-    print('Created average reference brain ({:.1f} sec)'.format(time.time()-t0))
+    print('Created average reference brain {} ({:.1f} sec)'.format(fn_ref, time.time()-t0))
     print('-------------------')
     process.terminate()
 
@@ -59,13 +60,15 @@ for fn_reference in moco_pairs:
     t0 = time.time()
     # MI[$t1brain,$template,1,32,Regular,0.25]
     # GC[ {}, {}, 1 , 0, Random, 0.1 ]
-    cmd_moco_ref = 'antsMotionCorr  -d 3 -o [ {}, {}.nii.gz, {} ] -m MI[ {}, {}, 1 , 32, Regular, 0.25 ] -t Rigid[ 0.1 ] -u 1 -e 1 -s 0 -f 1 -i 30 -n 30'.format(fn_aff_base, fn_aff_base, ref_avg, ref_avg, fn_ref)
+    # GC[ {}, {}, 1 , 1, Random, 0.1 ]
+    cmd_moco_ref = 'antsMotionCorr  -d 3 -o [ {}, {}.nii.gz, {} ] -m GC[ {}, {}, 1 , 1, Random, 0.1 ] -t Rigid[ 0.1 ] -u 0 -e 1 -s 0 -f 1 -i 30 -n 30'.format(fn_aff_base, fn_aff_base, ref_avg, ref_avg, fn_ref)
     process = subprocess.Popen(cmd_moco_ref.split(), stdout=subprocess.PIPE)
     output, error = process.communicate()
     if len(output) > 0:
         print('OUTPUT: {}'.format(output))
     if error is not None:
         print('ERROR: {}'.format(error))
+        raise Exception('ERROR in moco for reference brain {}'.format(fn_ref))
     process.wait()
     print('Motion corrected reference brain {} ({:.1f} sec)'.format(fn_ref, time.time()-t0))
     print('-------------------')
@@ -83,13 +86,14 @@ for fn_reference in moco_pairs:
         fn_aff_targ_base = os.path.join(data_directory, targ_subdir, fn_target + '_aff')
         targ_avg = fn_aff_targ_base + '_avg.nii'
 
-        cmd_moco_targ = 'antsMotionCorr  -d 3 -o [ {}, {}.nii.gz, {} ] -m MI[ {}, {}, 1 , 32, Regular, 0.25 ] -t Rigid[ 0.1 ] -u 1 -e 1 -s 0 -f 1 -i 30 -n 50'.format(fn_aff_targ_base, fn_aff_targ_base, targ_avg, ref_avg, fn_targ)
+        cmd_moco_targ = 'antsMotionCorr  -d 3 -o [ {}, {}.nii.gz, {} ] -m GC[ {}, {}, 1 , 1, Random, 0.1 ] -t Rigid[ 0.1 ] -u 0 -e 1 -s 0 -f 1 -i 30 -n 50'.format(fn_aff_targ_base, fn_aff_targ_base, targ_avg, ref_avg, fn_targ)
         process = subprocess.Popen(cmd_moco_targ.split(), stdout=subprocess.PIPE)
         output, error = process.communicate()
         if len(output) > 0:
             print('OUTPUT: {}'.format(output))
         if error is not None:
             print('ERROR: {}'.format(error))
+            raise Exception('ERROR in moco for target brain {}'.format(fn_targ))
         process.wait()
         print('Motion corrected target brain {} ({:.1f} sec)'.format(fn_targ, time.time()-t0))
         print('-------------------')

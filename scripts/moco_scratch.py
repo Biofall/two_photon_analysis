@@ -15,6 +15,8 @@ ax.plot(df['MetricPost'])
 ax.set_xlabel('Frame')
 ax.set_ylabel('MI')
 
+# ax.set_xlim([0, 250])
+
 # %%
 fh, ax = plt.subplots(len(df.keys()), figsize=(8, 18))
 for k_ind, kk in enumerate(df.keys()):
