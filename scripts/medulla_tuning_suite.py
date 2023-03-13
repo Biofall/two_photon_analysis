@@ -214,15 +214,6 @@ for fly_ind in range(len(layer)):
 
 
 #%%
-
-flies_nopto_mean_response3 = flies_nopto_mean_response 
-flies_yopto_mean_response3 = flies_yopto_mean_response
-flies_nopto_sem_response3 = flies_nopto_sem_response
-flies_yopto_sem_response3 = flies_yopto_sem_response
-
-
-
-#%%
 file_path = os.path.join(layer[0][0], layer[0][1] + ".hdf5")
 ID = imaging_data.ImagingDataObject(file_path, layer[0][2], quiet=True)
 roi_data = ID.getRoiResponses(layer[0][3], background_subtraction=background_subtraction, background_roi_name='bg_distal')
@@ -583,15 +574,56 @@ def getMetricsFromExperiment(layer, alt_pre_time = 1, which_parameter='spatiotem
          response_max_yopto, response_min_yopto, response_mean_yopto, response_sem_mean_yopto, response_PtT_yopto, sem_PtT_yopto
 
 # Plotting function
-def plotMTSMetrics(nopto_unique_parameter_values, response_max_nopto, response_min_nopto, response_mean_nopto, response_PtT_nopto,\
-                   response_max_yopto, response_min_yopto, response_mean_yopto, response_PtT_yopto, layer_name, save_fig=True
-                  ):
+# def plotMTSMetrics(nopto_unique_parameter_values, response_max_nopto, response_min_nopto, response_mean_nopto, response_PtT_nopto,\
+#                    response_max_yopto, response_min_yopto, response_mean_yopto, response_PtT_yopto, layer_name, save_fig=True
+#                   ):
+  
+def plotMTSMetrics(layers, layer_name, which_parameter, alt_pre_time = 0.7, save_fig = True):
+  
+  # Call collectMultiFlyParameters
+  outer_response_max_nopto, outer_response_min_nopto, outer_response_mean_nopto, outer_response_sem_mean_nopto, \
+  outer_response_PtT_nopto, outer_sem_PtT_nopto, \
+  outer_response_max_yopto, outer_response_min_yopto, outer_response_mean_yopto, outer_response_sem_mean_yopto, \
+  outer_response_PtT_yopto, outer_sem_PtT_yopto = \
+  collectMultiFlyParameters(layers, alt_pre_time = 0.7, which_parameter = which_parameter)
+
+  # calculate the means
+  response_max_nopto = np.mean(outer_response_max_nopto, axis = 0)
+  response_min_nopto = np.mean(outer_response_min_nopto, axis = 0)
+  response_mean_nopto = np.mean(outer_response_mean_nopto, axis = 0)
+  response_sem_mean_nopto = np.mean(outer_response_sem_mean_nopto, axis = 0)
+  response_PtT_nopto = np.mean(outer_response_PtT_nopto, axis = 0)
+  sem_PtT_nopto = np.mean(outer_sem_PtT_nopto, axis = 0)
+
+  response_max_yopto = np.mean(outer_response_max_yopto, axis = 0)
+  response_min_yopto = np.mean(outer_response_min_yopto, axis = 0)
+  response_mean_yopto = np.mean(outer_response_mean_yopto, axis = 0)
+  response_sem_mean_yopto = np.mean(outer_response_sem_mean_yopto, axis = 0)
+  response_PtT_yopto = np.mean(outer_response_PtT_yopto, axis = 0)
+  sem_PtT_yopto = np.mean(outer_sem_PtT_yopto, axis = 0)
+
   # plotting those metrics
   cmap = plt.get_cmap('Spectral') # also 'cool' 'winter' 'PRGn' 'Pastel1' 'YlGnBu' 'twilight' 'tab20c' 'Spectral'
   colors = [cmap(i) for i in np.linspace(0.0, 1.0, len(nopto_unique_parameter_values))]
+  num_flies = len(outer_response_max_nopto)
+  fly_color_list = ['Purples', 'Blues', 'Greens', 'Oranges', 'Reds', 'YlOrBr', 'YlOrRd', 'OrRd', 'PuRd', 'RdPu', 'BuPu', 'GnBu', 'PuBu', 'YlGnBu', 'PrBuGn', 'BuGn', 'YlGn']
 
   fh, ax = plt.subplots(4, 1, figsize=(8, 24))
   for up_ind, up in enumerate(nopto_unique_parameter_values):
+    # TODO make a loop that plots the individual flies
+    for fly_ind in range(num_flies):
+      cmap = plt.get_cmap(fly_color_list[fly_ind])
+      fly_colors = [cmap(c) for c in np.linspace(0.0, 1.0, num_flies)]
+      ax[0].scatter(outer_response_max_nopto[fly_ind][up_ind], outer_response_max_yopto[fly_ind][up_ind], color=fly_colors[fly_ind], label = fly_ind)
+      ax[0].errorbar()
+      ax[1].scatter()
+      ax[1].errorbar()
+      ax[2].scatter()
+      ax[2].errorbar()
+      ax[3].scatter()
+      ax[3].errorbar()
+
+
     ax[0].scatter(response_max_nopto[up_ind], response_max_yopto[up_ind], color=colors[up_ind], label = up)
     ax[0].errorbar(response_max_nopto[up_ind], response_max_yopto[up_ind], xerr=sem_max_nopto[up_ind], yerr=sem_max_yopto[up_ind], color=colors[up_ind], elinewidth=4, alpha=0.2)
     ax[0].set_title('Maximum Response - No Opto v Opto')
@@ -653,57 +685,48 @@ def plotMTSMetrics(nopto_unique_parameter_values, response_max_nopto, response_m
 # = getMetricsFromExperiment(layer = astar1_fly5_post_dist, alt_pre_time = 0.7, which_parameter = 'temporal')
 
 # %% multi_run function calls, baby
+# Make a function that calculates the means per fly and also the averages of the metrics
+def collectMultiFlyParameters(layers, alt_pre_time = 0.7, which_parameter = which_parameter_type):
+  # Initialize empty variables to stack em up and lay em down
+  outer_response_max_nopto = []; outer_response_min_nopto = []; outer_response_mean_nopto = []; 
+  outer_response_sem_mean_nopto = []; outer_response_PtT_nopto = []; outer_sem_PtT_nopto = []
+  outer_response_max_yopto = []; outer_response_min_yopto = []; outer_response_mean_yopto = []
+  outer_response_sem_mean_yopto = []; outer_response_PtT_yopto = []; outer_sem_PtT_yopto = []
+
+  # WE LOOPIN
+  for layer_ind in range(len(layer)):
+    nopto_unique_parameter_values, \
+    response_max_nopto, response_min_nopto, response_mean_nopto, response_sem_mean_nopto, response_PtT_nopto, sem_PtT_nopto,\
+    response_max_yopto, response_min_yopto, response_mean_yopto, response_sem_mean_yopto, response_PtT_yopto, sem_PtT_yopto \
+      = getMetricsFromExperiment(layers[layer_ind], alt_pre_time = 0.7, which_parameter = which_parameter_type)
+    outer_response_max_nopto.append(response_max_nopto)
+    outer_response_min_nopto.append(response_min_nopto)
+    outer_response_mean_nopto.append(response_mean_nopto)
+    outer_response_sem_mean_nopto.append(response_sem_mean_nopto)
+    outer_response_PtT_nopto.append(response_PtT_nopto)
+    outer_sem_PtT_nopto.append(sem_PtT_nopto)
+    outer_response_max_yopto.append(response_max_yopto)
+    outer_response_min_yopto.append(response_min_yopto)
+    outer_response_mean_yopto.append(response_mean_yopto)
+    outer_response_sem_mean_yopto.append(response_sem_mean_yopto)
+    outer_response_PtT_yopto.append(response_PtT_yopto)
+    outer_sem_PtT_yopto.append(sem_PtT_yopto)
+
+
+
+  return outer_response_max_nopto, outer_response_min_nopto, outer_response_mean_nopto, outer_response_sem_mean_nopto, \
+         outer_response_PtT_nopto, outer_sem_PtT_nopto, \
+         outer_response_max_yopto, outer_response_min_yopto, outer_response_mean_yopto, outer_response_sem_mean_yopto, \
+         outer_response_PtT_yopto, outer_sem_PtT_yopto
+
+# %% Running it all after intitialilzing 
 # Initialize the fucking correct variables below:
-layer = astar1_alt_prox_all
-layer_text = 'proximal' # 'proximal' 'medial_1' 'medial_2' 'distal'
+layers = astar1_alt_prox_all
+layer_name = 'proximal' # 'proximal' 'medial_1' 'medial_2' 'distal'
 which_parameter_type = 'spatial' # 'spatial' 'temporal' 'spatiotemporal'
 savefig = True
 
-# Initialize empty variables to stack em up and lay em down
-outer_response_max_nopto = []; outer_response_min_nopto = []; outer_response_mean_nopto = []; 
-outer_response_sem_mean_nopto = []; outer_response_PtT_nopto = []; outer_sem_PtT_nopto = []
-outer_response_max_yopto = []; outer_response_min_yopto = []; outer_response_mean_yopto = []
-outer_response_sem_mean_yopto = []; outer_response_PtT_yopto = []; outer_sem_PtT_yopto = []
-
-# WE LOOPIN
-for layer_ind in range(len(layer)):
-  nopto_unique_parameter_values, \
-  response_max_nopto, response_min_nopto, response_mean_nopto, response_sem_mean_nopto, response_PtT_nopto, sem_PtT_nopto,\
-  response_max_yopto, response_min_yopto, response_mean_yopto, response_sem_mean_yopto, response_PtT_yopto, sem_PtT_yopto \
-    = getMetricsFromExperiment(layer[layer_ind], alt_pre_time = 0.7, which_parameter = which_parameter_type)
-  outer_response_max_nopto.append(response_max_nopto)
-  outer_response_min_nopto.append(response_min_nopto)
-  outer_response_mean_nopto.append(response_mean_nopto)
-  outer_response_sem_mean_nopto.append(response_sem_mean_nopto)
-  outer_response_PtT_nopto.append(response_PtT_nopto)
-  outer_sem_PtT_nopto.append(sem_PtT_nopto)
-  outer_response_max_yopto.append(response_max_yopto)
-  outer_response_min_yopto.append(response_min_yopto)
-  outer_response_mean_yopto.append(response_mean_yopto)
-  outer_response_sem_mean_yopto.append(response_sem_mean_yopto)
-  outer_response_PtT_yopto.append(response_PtT_yopto)
-  outer_sem_PtT_yopto.append(sem_PtT_yopto)
-
-# average those suckers
-mean_response_max_nopto = np.mean(outer_response_max_nopto, axis = 0)
-mean_response_min_nopto = np.mean(outer_response_min_nopto, axis = 0)
-mean_response_mean_nopto = np.mean(outer_response_mean_nopto, axis = 0)
-mean_response_sem_mean_nopto = np.mean(outer_response_sem_mean_nopto, axis = 0)
-mean_response_PtT_nopto = np.mean(outer_response_PtT_nopto, axis = 0)
-mean_sem_PtT_nopto = np.mean(outer_sem_PtT_nopto, axis = 0)
-
-mean_response_max_yopto = np.mean(outer_response_max_yopto, axis = 0)
-mean_response_min_yopto = np.mean(outer_response_min_yopto, axis = 0)
-mean_response_mean_yopto = np.mean(outer_response_mean_yopto, axis = 0)
-mean_response_sem_mean_yopto = np.mean(outer_response_sem_mean_yopto, axis = 0)
-mean_response_PtT_yopto = np.mean(outer_response_PtT_yopto, axis = 0)
-mean_sem_PtT_yopto = np.mean(outer_sem_PtT_yopto, axis = 0)
-
-plotMTSMetrics(nopto_unique_parameter_values, mean_response_max_nopto, mean_response_min_nopto, mean_response_mean_nopto, mean_response_PtT_nopto,
-               mean_response_max_yopto, mean_response_min_yopto, mean_response_mean_yopto, mean_response_PtT_yopto,
-               layer_name = layer_text,
-               save_fig = savefig
-              )
+plotMTSMetrics(layers, layer_name, which_parameter = which_parameter_type, alt_pre_time = 0.7, save_fig = True)
 # %%
 #TODO:
 # 1) use matplotlib colormap pickers - sequential colormaps to assign each fly its own color like 'Purples' and 'Greens'
@@ -711,3 +734,4 @@ plotMTSMetrics(nopto_unique_parameter_values, mean_response_max_nopto, mean_resp
 #   - Make function: the "WE LOOPIN" section in which outer_response_mean's are calculated. 
 #   - call the function inside of the plotting loop. Necessarily change plotMTSMetrics input parameters to outer_response_xx
 # 3) profit
+\
