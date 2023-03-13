@@ -1,10 +1,29 @@
 # %%
 import numpy as np
 import os
-import nibabel as nib
-import argparse
+import pandas as pd
+import matplotlib.pyplot as plt
 
+filename = 'TSeries-20230302-001_channel_2_affMOCOparams.csv'
+data_dir = '/Users/mhturner/CurrentData'
 
+df = pd.read_csv(os.path.join(data_dir, filename))
+
+# %%
+fh, ax = plt.subplots(1, 1, figsize=(6, 2))
+ax.plot(df['MetricPost'])
+ax.set_xlabel('Frame')
+ax.set_ylabel('MI')
+
+# ax.set_xlim([0, 250])
+
+# %%
+fh, ax = plt.subplots(len(df.keys()), figsize=(8, 18))
+for k_ind, kk in enumerate(df.keys()):
+    ax[k_ind].plot(df[kk])
+    ax[k_ind].set_title(kk)
+
+# %%
 
 filename = 'TSeries-20230223-006_channel_1_aff.nii.gz'
 data_dir = '/Users/mhturner/CurrentData/krieger/20230223'
