@@ -34,13 +34,20 @@ mi1_fly4_dist = [["/Volumes/ABK2TBData/data_repo/bruker/20230223.moco", "2023-02
 
 # Fly 5 #less good
 mi1_fly5_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230223.moco", "2023-02-23", "8", "mi1_proximal_multiple"]]
+mi_fly5_prox_double = [["/Volumes/ABK2TBData/data_repo/bruker/20230223.moco", "2023-02-23", "8", "mi1_proximal_multiple_double"]]
 mi1_fly5_medi = [["/Volumes/ABK2TBData/data_repo/bruker/20230223.moco", "2023-02-23", "8", "mi1_medial_multiple"]] 
 mi1_fly5_dist = [["/Volumes/ABK2TBData/data_repo/bruker/20230223.moco", "2023-02-23", "8", "mi1_distal_multiple"]]
 
-# Fly 6 (currently no moco)
-mi1_fly6_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230302", "2023-03-02", "8", "mi1_proximal_multiple"]]
+# Fly 6 (only prox, kind of medial)
+mi1_fly6_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230302", "2023-03-02", "2", "mi1_proximal_multiple"]]
+mi1_fly6_prox_edges = [["/Volumes/ABK2TBData/data_repo/bruker/20230302", "2023-03-02", "3", "mi1_proximal_multiple_edges"]]
 mi1_fly6_medi = [["/Volumes/ABK2TBData/data_repo/bruker/20230302", "2023-03-02", "8", "mi1_medial_multiple"]]
-mi1_fly6_dist = [["/Volumes/ABK2TBData/data_repo/bruker/20230302", "2023-03-02", "8", "mi1_distal_multiple"]]
+
+
+# Fly 6 (currently no moco)
+mi1_fly7_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230302", "2023-03-02", "8", "mi1_proximal_multiple"]]
+mi1_fly7_medi = [["/Volumes/ABK2TBData/data_repo/bruker/20230302", "2023-03-02", "8", "mi1_medial_multiple"]]
+mi1_fly7_dist = [["/Volumes/ABK2TBData/data_repo/bruker/20230302", "2023-03-02", "8", "mi1_distal_multiple"]]
 
 
 
@@ -286,11 +293,12 @@ for pull_ind in range(len(mi1_all_multiple)):
 
     response_max = np.max(windows, axis=-1)
     response_min = np.min(windows, axis=-1)
+    response_PtT = response_max - response_min
 
     cmap = plt.get_cmap('cool') # also 'cool' 'winter' 'PRGn' 'Pastel1' 'YlGnBu' 'twilight'
     colors = [cmap(i) for i in np.linspace(0.0, 1.0, len(unique_parameter_values))]
 
-    fh, ax = plt.subplots(2, len(window_times)-1, figsize=(16, 8))
+    fh, ax = plt.subplots(3, len(window_times)-1, figsize=(16, 12))
     # Setting the values for all axes.
     #custom_ylim = (y_low, y_high)
     #plt.setp(ax, ylim=custom_ylim)
@@ -306,14 +314,17 @@ for pull_ind in range(len(mi1_all_multiple)):
         for up_ind, up in enumerate(unique_parameter_values):
             # Maximums for top row
             ax[0, w_ind].plot(response_max[up_ind, w_ind], response_max[up_ind, w_ind+1], color=colors[up_ind], markersize=10, marker='o', label=up if w_ind==0 else '')
-            # Minimums for bottom row
+            # Minimums for middle row
             ax[1, w_ind].plot(response_min[up_ind, w_ind], response_min[up_ind, w_ind+1], color=colors[up_ind], markersize=10, marker='o')
+            # Peak to trough for bottom row
+            ax[2, w_ind].plot(response_PtT[up_ind, w_ind], response_PtT[up_ind, w_ind+1], color=colors[up_ind], markersize=10, marker='o')
+            #ax[2, w_ind].plot(response_PtT[up_ind, w_ind], response_PtT(up_ind, w_ind+1), color=colors[up_ind], markersize=10, marker='o')
 
             ax[0, w_ind].set_title(f'Visual Flash {w_ind+2} | Window Time: {window_times[w_ind+1]}')
 
         # Finding unity params - Max
-        unity_lower_max = min(min(response_max[:, w_ind]), min(response_max[:, w_ind+1]))*0.9
-        unity_upper_max = max(max(response_max[:, w_ind]), max(response_max[:, w_ind+1]))*1.1
+        unity_lower_max = min(min(response_max[:, w_ind]), min(response_max[:, w_ind+1]))*0.8
+        unity_upper_max = max(max(response_max[:, w_ind]), max(response_max[:, w_ind+1]))*1.2
         #ax[0, w_ind].plot([unity_lower_max, unity_upper_max], [unity_lower_max, unity_upper_max], 'k--', alpha=0.7)
         if w_ind == 0:
             temp_lower_max = unity_lower_max
@@ -326,9 +337,9 @@ for pull_ind in range(len(mi1_all_multiple)):
 
         # Finding unity params - Min
         unity_lower_min_raw = min(min(response_min[:, w_ind]), min(response_min[:, w_ind+1]))
-        unity_lower_min = unity_lower_min_raw + abs(0.1*unity_lower_min_raw)
+        unity_lower_min = unity_lower_min_raw - abs(0.2*unity_lower_min_raw)
         unity_upper_min_raw = max(max(response_min[:, w_ind]), max(response_min[:, w_ind+1]))
-        unity_upper_min = unity_upper_min_raw - 0.1*unity_upper_min_raw
+        unity_upper_min = unity_upper_min_raw + abs(0.2*unity_upper_min_raw)
         #ax[1, w_ind].plot([unity_lower_min, unity_upper_min], [unity_lower_min, unity_upper_min], 'k--', alpha=0.7)
         if w_ind == 0:
             temp_lower_min = unity_lower_min
@@ -338,10 +349,25 @@ for pull_ind in range(len(mi1_all_multiple)):
         if temp_upper_min < unity_upper_min:
             temp_upper_min = unity_upper_min
 
+        # Finding unity params - PtT
+        unity_lower_PtT = min(min(response_PtT[:, w_ind]), min(response_PtT[:, w_ind+1]))*0.8
+        unity_upper_PtT = max(max(response_PtT[:, w_ind]), max(response_PtT[:, w_ind+1]))*1.2
+        #ax[0, w_ind].plot([unity_lower_PtT, unity_upper_PtT], [unity_lower_PtT, unity_upper_PtT], 'k--', alpha=0.7)
+        if w_ind == 0:
+            temp_lower_PtT = unity_lower_PtT
+            temp_upper_PtT = unity_upper_PtT
+
+        if temp_lower_PtT > unity_lower_PtT:
+            temp_lower_PtT = unity_lower_PtT
+        if temp_upper_PtT < unity_upper_PtT:
+            temp_upper_PtT = unity_upper_PtT
+
+
         ax[0, w_ind].set_xlabel('Visual Flash 1 (Pre-Opto) Peak Amplitude')
         ax[1, w_ind].set_xlabel('Visual Flash 1 (Pre-Opto) Trough Amplitude')
+        ax[2, w_ind].set_xlabel('Visual Flash 1 (Pre-Opto) Peak-Trough')
     
-    for w_ind in range(len(window_times)-1):
+    for w_ind in range(len(window_times)-1): # sets all the axes to be the same
         ax[0,w_ind].set_xlim(left=temp_lower_max, right=temp_upper_max)
         ax[0,w_ind].set_ylim(bottom=temp_lower_max, top=temp_upper_max)
         ax[0,w_ind].plot([temp_lower_max, temp_upper_max], [temp_lower_max, temp_upper_max], 'k--', alpha=0.7)
@@ -350,11 +376,16 @@ for pull_ind in range(len(mi1_all_multiple)):
         ax[1,w_ind].set_ylim(bottom=temp_lower_min, top=temp_upper_min)
         ax[1,w_ind].plot([temp_lower_min, temp_upper_min], [temp_lower_min, temp_upper_min], 'k--', alpha=0.7)
 
+        ax[2,w_ind].set_xlim(left=temp_lower_PtT, right=temp_upper_PtT)
+        ax[2,w_ind].set_ylim(bottom=temp_lower_PtT, top=temp_upper_PtT)
+        ax[2,w_ind].plot([temp_lower_PtT, temp_upper_PtT], [temp_lower_PtT, temp_upper_PtT], 'k--', alpha=0.7)
+
     #ax[0,0].setp(xlim=temp_upper_max, ylim=temp_upper_max)
     #ax[0,1].setp(xlim=temp_upper_max, ylim=temp_upper_max)
 
     ax[0, 0].set_ylabel('Comparison Visual Flash Peak Amplitude')
     ax[1, 0].set_ylabel('Comparison Visual Flash Trough Amplitude')
+    ax[2, 0].set_ylabel('Comparison Visual Flash Peak-Trough')
 
     #ax.set_ylabel(row, rotation=0, size='large
     #fh.tight_layout()
@@ -376,6 +407,7 @@ for pull_ind in range(len(mi1_all_multiple)):
         dpi=300,
         )
 
+#plt.close('all')
 
 # %%
 all_response_max.append(response_max)
