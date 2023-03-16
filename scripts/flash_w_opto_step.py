@@ -38,17 +38,16 @@ mi_fly5_prox_double = [["/Volumes/ABK2TBData/data_repo/bruker/20230223.moco", "2
 mi1_fly5_medi = [["/Volumes/ABK2TBData/data_repo/bruker/20230223.moco", "2023-02-23", "8", "mi1_medial_multiple"]] 
 mi1_fly5_dist = [["/Volumes/ABK2TBData/data_repo/bruker/20230223.moco", "2023-02-23", "8", "mi1_distal_multiple"]]
 
-# Fly 6 (only prox, kind of medial)
-mi1_fly6_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230302", "2023-03-02", "2", "mi1_proximal_multiple"]]
-mi1_fly6_prox_edges = [["/Volumes/ABK2TBData/data_repo/bruker/20230302", "2023-03-02", "3", "mi1_proximal_multiple_edges"]]
+# Fly 6 (moco)
+mi1_fly6_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230302", "2023-03-02", "8", "mi1_proximal_multiple"]]
 mi1_fly6_medi = [["/Volumes/ABK2TBData/data_repo/bruker/20230302", "2023-03-02", "8", "mi1_medial_multiple"]]
+mi1_fly6_dist = [["/Volumes/ABK2TBData/data_repo/bruker/20230302", "2023-03-02", "8", "mi1_distal_multiple"]]
 
+# Fly 7 (only prox, kind of medial)
+mi1_fly7_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230302", "2023-03-02", "2", "mi1_proximal_multiple"]]
 
-# Fly 6 (currently no moco)
-mi1_fly7_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230302", "2023-03-02", "8", "mi1_proximal_multiple"]]
-mi1_fly7_medi = [["/Volumes/ABK2TBData/data_repo/bruker/20230302", "2023-03-02", "8", "mi1_medial_multiple"]]
-mi1_fly7_dist = [["/Volumes/ABK2TBData/data_repo/bruker/20230302", "2023-03-02", "8", "mi1_distal_multiple"]]
-
+# Fly 8 (prox only) lotta motion
+mi1_fly8_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230302", "2023-03-02", "6", "mi1_proximal_multiple"]]
 
 
 
@@ -56,6 +55,12 @@ mi1_prox_all = np.concatenate(
                        (mi1_fly1_prox, mi1_fly2_prox, mi1_fly3_prox, mi1_fly4_prox, mi1_fly5_prox, mi1_fly6_prox,), 
                         axis = 0,
                       )
+
+mi1_prox_max = np.concatenate(
+                       (mi1_fly4_prox, mi1_fly5_prox, mi1_fly6_prox, mi1_fly7_prox, mi1_fly8_prox,), 
+                        axis = 0,
+                      )
+
 mi1_medi_all = np.concatenate(
                        (mi1_fly1_medi, mi1_fly2_medi, mi1_fly3_medi,mi1_fly4_medi, mi1_fly5_medi, mi1_fly6_medi,), 
                         axis = 0,
@@ -132,11 +137,12 @@ Path(save_directory).mkdir(exist_ok=True)
 # (0) mi1_fly1_prox (1) mi1_fly2_prox (2) mi1_fly1_medi (3) mi1_fly2_medi (4) mi1_fly1_dist (5) mi1_fly2_dist
 #pull_ind = 14
 save_fig = False
+which_layer = mi1_prox_max
 
-for pull_ind in range(len(mi1_all_multiple)):
-    file_path = os.path.join(mi1_all_multiple[pull_ind][0], mi1_all_multiple[pull_ind][1] + ".hdf5")
-    ID = imaging_data.ImagingDataObject(file_path, mi1_all_multiple[pull_ind][2], quiet=True)
-    roi_data = ID.getRoiResponses(mi1_all_multiple[pull_ind][3], background_roi_name='bg_mi1_proximal', background_subtraction=False)
+for pull_ind in range(len(which_layer)):
+    file_path = os.path.join(which_layer[pull_ind][0], which_layer[pull_ind][1] + ".hdf5")
+    ID = imaging_data.ImagingDataObject(file_path, which_layer[pull_ind][2], quiet=True)
+    roi_data = ID.getRoiResponses(which_layer[pull_ind][3], background_roi_name='bg_mi1_proximal', background_subtraction=False)
 
 
     # Plot the average Traces of the whole trial followed by the avg traces of the windows
@@ -239,17 +245,17 @@ for pull_ind in range(len(mi1_all_multiple)):
 
 
     fh.legend()
-    fh.suptitle(f'Windows for {mi1_all_multiple[pull_ind][1]} Series: {mi1_all_multiple[pull_ind][2]} | DFF=True | Conditions: {condition_name} | ROI={mi1_all_multiple[pull_ind][3]}', fontsize=12)
+    fh.suptitle(f'Windows for {which_layer[pull_ind][1]} Series: {which_layer[pull_ind][2]} | DFF=True | Conditions: {condition_name} | ROI={which_layer[pull_ind][3]}', fontsize=12)
 
     if save_fig == True:
         fh.savefig(
         save_directory
         + "Windows."
-        + str(mi1_all_multiple[pull_ind][1])
+        + str(which_layer[pull_ind][1])
         + ".Series"
-        + str(mi1_all_multiple[pull_ind][2])
+        + str(which_layer[pull_ind][2])
         + ".ROI"
-        + str(mi1_all_multiple[pull_ind][3])
+        + str(which_layer[pull_ind][3])
         + ".Conditions:"
         + str(condition_name)
         + ".pdf",
@@ -272,17 +278,17 @@ for pull_ind in range(len(mi1_all_multiple)):
             ax[w_ind].set_title('Visual Flash at: {}s'.format(w))
 
     fh.legend()
-    fh.suptitle(f'Each LED intenisty/window for {mi1_all_multiple[pull_ind][1]} Series: {mi1_all_multiple[pull_ind][2]} | DFF=True | Conditions: {condition_name} | ROI={mi1_all_multiple[pull_ind][3]}', fontsize=12)
+    fh.suptitle(f'Each LED intenisty/window for {which_layer[pull_ind][1]} Series: {which_layer[pull_ind][2]} | DFF=True | Conditions: {condition_name} | ROI={which_layer[pull_ind][3]}', fontsize=12)
 
     if save_fig == True:
         fh.savefig(
         save_directory
         + "LED.Intensity.window."
-        + str(mi1_all_multiple[pull_ind][1])
+        + str(which_layer[pull_ind][1])
         + ".Series"
-        + str(mi1_all_multiple[pull_ind][2])
+        + str(which_layer[pull_ind][2])
         + ".ROI"
-        + str(mi1_all_multiple[pull_ind][3])
+        + str(which_layer[pull_ind][3])
         + ".Conditions:"
         + str(condition_name)
         + ".pdf",
@@ -390,17 +396,17 @@ for pull_ind in range(len(mi1_all_multiple)):
     #ax.set_ylabel(row, rotation=0, size='large
     #fh.tight_layout()
     fh.legend(title = 'Opto Intensities')
-    fh.suptitle(f'Windows Metrics for {mi1_all_multiple[pull_ind][1]} Series: {mi1_all_multiple[pull_ind][2]} | DFF=True | Conditions: {condition_name} | ROI={mi1_all_multiple[pull_ind][3]}', fontsize=15)
+    fh.suptitle(f'Windows Metrics for {which_layer[pull_ind][1]} Series: {which_layer[pull_ind][2]} | DFF=True | Conditions: {condition_name} | ROI={which_layer[pull_ind][3]}', fontsize=15)
 
     if save_fig == True:
         fh.savefig(
         save_directory
         + "WindowsMetrics."
-        + str(mi1_all_multiple[pull_ind][1])
+        + str(which_layer[pull_ind][1])
         + ".Series"
-        + str(mi1_all_multiple[pull_ind][2])
+        + str(which_layer[pull_ind][2])
         + ".ROI"
-        + str(mi1_all_multiple[pull_ind][3])
+        + str(which_layer[pull_ind][3])
         + ".Conditions:"
         + str(condition_name)
         + ".pdf",
