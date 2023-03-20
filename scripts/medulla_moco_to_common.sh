@@ -5,7 +5,7 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=24
 #SBATCH --mem=100GB
-#SBATCH --output=/home/users/mhturner/mocologs/%x.%j.out
+#SBATCH --output=/home/users/krave/logs/mocologs/%x.%j.out
 #SBATCH --open-mode=append
 #SBATCH --partition=trc
 
@@ -18,4 +18,4 @@ date
 ml python/3.6 ants-base
 
 # Run moco python script
-python3 -u /home/users/mhturner/two_photon_analysis/scripts/batch_common_moco.py
+python3 -u /home/users/krave/github_repos/two_photon_analysis/scripts/batch_common_moco.py
