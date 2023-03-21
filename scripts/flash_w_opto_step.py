@@ -21,45 +21,72 @@ mi1_fly1_dist = [["/Volumes/ABK2TBData/data_repo/bruker/20221122.common_moco", "
 mi1_fly2_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20221129.common_moco", "2022-11-29", "4", "proximal_multiple3"]]
 mi1_fly2_medi = [["/Volumes/ABK2TBData/data_repo/bruker/20221129.common_moco", "2022-11-29", "4", "medial_multiple_sub2"]] #also 'medial_multiple_sub1", "medial_multiple_sub2"
 mi1_fly2_dist = [["/Volumes/ABK2TBData/data_repo/bruker/20221129.common_moco", "2022-11-29", "4", "distal_multiple"]]
-
 # Fly 3
 mi1_fly3_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230216", "2023-02-16", "5", "mi1_proximal_multiple"]]
 mi1_fly3_medi = [["/Volumes/ABK2TBData/data_repo/bruker/20230216", "2023-02-16", "5", "mi1_medial_multiple"]] #also 'medial_multiple_sub1", "medial_multiple_sub2"
 mi1_fly3_dist = [["/Volumes/ABK2TBData/data_repo/bruker/20230216", "2023-02-16", "5", "mi1_distal_multiple"]]
-
 # Fly 4 #less good
 mi1_fly4_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230223.moco", "2023-02-23", "6", "mi1_proximal_multiple"]]
 mi1_fly4_medi = [["/Volumes/ABK2TBData/data_repo/bruker/20230223.moco", "2023-02-23", "6", "mi1_medial_multiple"]] 
 mi1_fly4_dist = [["/Volumes/ABK2TBData/data_repo/bruker/20230223.moco", "2023-02-23", "6", "mi1_distal_multiple"]]
-
 # Fly 5 #less good
 mi1_fly5_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230223.moco", "2023-02-23", "8", "mi1_proximal_multiple"]]
 mi_fly5_prox_double = [["/Volumes/ABK2TBData/data_repo/bruker/20230223.moco", "2023-02-23", "8", "mi1_proximal_multiple_double"]]
 mi1_fly5_medi = [["/Volumes/ABK2TBData/data_repo/bruker/20230223.moco", "2023-02-23", "8", "mi1_medial_multiple"]] 
 mi1_fly5_dist = [["/Volumes/ABK2TBData/data_repo/bruker/20230223.moco", "2023-02-23", "8", "mi1_distal_multiple"]]
-
 # Fly 6 (moco)
 mi1_fly6_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230302", "2023-03-02", "8", "mi1_proximal_multiple"]]
 mi1_fly6_medi = [["/Volumes/ABK2TBData/data_repo/bruker/20230302", "2023-03-02", "8", "mi1_medial_multiple"]]
 mi1_fly6_dist = [["/Volumes/ABK2TBData/data_repo/bruker/20230302", "2023-03-02", "8", "mi1_distal_multiple"]]
-
 # Fly 7 (only prox, kind of medial)
 mi1_fly7_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230302", "2023-03-02", "2", "mi1_proximal_multiple"]]
-
 # Fly 8 (prox only) lotta motion
 mi1_fly8_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230302", "2023-03-02", "6", "mi1_proximal_multiple"]]
+# Fly 9
+mi1_fly9_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230316", "2023-03-16", "4", "mi1_proximal_multiple"]]
+mi1_fly9_medi = [["/Volumes/ABK2TBData/data_repo/bruker/20230316", "2023-03-16", "4", "mi_medial_multiple"]]
+mi1_fly9_dist = [["/Volumes/ABK2TBData/data_repo/bruker/20230316", "2023-03-16", "4", "mi1_distal_multiple"]]
+# Fly 10
+mi1_fly10_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230316", "2023-03-16", "6", "mi1_proximal_multiple"]]
+mi1_fly10_medi = [["/Volumes/ABK2TBData/data_repo/bruker/20230316", "2023-03-16", "6", "mi_medial_multiple"]]
+mi1_fly10_dist = [["/Volumes/ABK2TBData/data_repo/bruker/20230316", "2023-03-16", "6", "mi1_distal_multiple_lowcon"]]
+# Fly 11
+mi1_fly11_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230316", "2023-03-16", "7", "mi1_proximal_multiple"]]
+# Fly 12
+mi1_fly12_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230317", "2023-03-17", "1", "mi1_proximal_multiple"]]
+mi1_fly12_medi = [["/Volumes/ABK2TBData/data_repo/bruker/20230317", "2023-03-17", "1", "mi_medial_multiple"]]
+mi1_fly12_dist = [["/Volumes/ABK2TBData/data_repo/bruker/20230317", "2023-03-17", "1", "mi1_distal_multiple"]]
+# Fly 13 # kinda shitty b/c motion
+mi1_fly13_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230317", "2023-03-17", "2", "mi1_proximal_multiple"]]
+# Fly 14 # kinda shitty b/c motion
+mi1_fly14_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230317", "2023-03-17", "3", "mi1_proximal_multiple"]]
+
+# CONTROL FLIES
+# control fly 1 - several ROI name options here: mi1_proximal_multiple_lessbi mi1_proximal_multiple_morebi
+mi1_control1_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230317", "2023-03-17", "4", "mi1_proximal_multiple_morebi"]]
+mi1_control1_medi = [["/Volumes/ABK2TBData/data_repo/bruker/20230317", "2023-03-17", "4", "mi1_medial_multiple"]]
+mi1_control1_dist = [["/Volumes/ABK2TBData/data_repo/bruker/20230317", "2023-03-17", "4", "mi1_distal_multiple"]]
+# control fly 2
+mi1_control2_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230317", "2023-03-17", "5", "mi1_proximal_multiple"]]
 
 
 
 mi1_prox_all = np.concatenate(
-                       (mi1_fly1_prox, mi1_fly2_prox, mi1_fly3_prox, mi1_fly4_prox, mi1_fly5_prox, mi1_fly6_prox,), 
-                        axis = 0,
-                      )
+                             (mi1_fly1_prox, mi1_fly2_prox, mi1_fly3_prox, 
+                             mi1_fly4_prox, mi1_fly5_prox, mi1_fly6_prox,
+                             mi1_fly7_prox, mi1_fly8_prox, mi1_fly9_prox,
+                             mi1_fly10_prox, mi1_fly11_prox, mi1_fly12_prox,
+                             mi1_fly13_prox, mi1_fly14_prox,), 
+                             axis = 0,
+                            )
 
 mi1_prox_max = np.concatenate(
-                       (mi1_fly4_prox, mi1_fly5_prox, mi1_fly6_prox, mi1_fly7_prox, mi1_fly8_prox,), 
-                        axis = 0,
-                      )
+                             (mi1_fly4_prox, mi1_fly5_prox, mi1_fly6_prox,
+                             mi1_fly7_prox, mi1_fly8_prox, mi1_fly9_prox,
+                             mi1_fly10_prox, mi1_fly11_prox, mi1_fly12_prox,
+                             mi1_fly13_prox, mi1_fly14_prox,),
+                             axis = 0,
+                             )
 
 mi1_medi_all = np.concatenate(
                        (mi1_fly1_medi, mi1_fly2_medi, mi1_fly3_medi,mi1_fly4_medi, mi1_fly5_medi, mi1_fly6_medi,), 
@@ -76,7 +103,10 @@ mi1_all_multiple = np.concatenate(
                                    axis = 0,
                                  )
 
-
+mi1_control_prox = np.concatenate(
+                                  (mi1_control1_prox, mi1_control2_prox,),
+                                  axis = 0,
+                                 )
 
 
 # Single ROI
@@ -88,6 +118,7 @@ mi1_fly1_dist_single = [["/Volumes/ABK2TBData/data_repo/bruker/20221122.common_m
 mi1_fly2_prox_single = [["/Volumes/ABK2TBData/data_repo/bruker/20221129.common_moco", "2022-11-29", "4", "proximal_single"]]
 mi1_fly2_medi_single = [["/Volumes/ABK2TBData/data_repo/bruker/20221129.common_moco", "2022-11-29", "4", "medial_single"]] 
 mi1_fly2_dist_single = [["/Volumes/ABK2TBData/data_repo/bruker/20221129.common_moco", "2022-11-29", "4", "distal_single"]]
+
 mi1_prox_all_single = np.concatenate(
                        (mi1_fly1_prox_single, mi1_fly2_prox_single,), 
                         axis = 0,
@@ -139,10 +170,24 @@ Path(save_directory).mkdir(exist_ok=True)
 save_fig = False
 which_layer = mi1_prox_max
 
+# Make the metric arrays - each will be experiment x unique opto params x visual flash window
+n_exps = len(which_layer)
+n_vis_flashes = 4 #hardcoded, sorry
+n_opto_params = 3
+mean_matrix = np.empty((n_exps, n_opto_params, n_vis_flashes))
+mean_matrix[:] = np.nan
+max_matrix = np.empty((n_exps, n_opto_params, n_vis_flashes))
+max_matrix[:] = np.nan
+min_matrix = np.empty((n_exps, n_opto_params, n_vis_flashes))
+min_matrix[:] = np.nan
+ptt_matrix = np.empty((n_exps, n_opto_params, n_vis_flashes))
+ptt_matrix[:] = np.nan
+
+
 for pull_ind in range(len(which_layer)):
     file_path = os.path.join(which_layer[pull_ind][0], which_layer[pull_ind][1] + ".hdf5")
     ID = imaging_data.ImagingDataObject(file_path, which_layer[pull_ind][2], quiet=True)
-    roi_data = ID.getRoiResponses(which_layer[pull_ind][3], background_roi_name='bg_mi1_proximal', background_subtraction=False)
+    roi_data = ID.getRoiResponses(which_layer[pull_ind][3], background_roi_name='bg_proximal_lessbi', background_subtraction=False)
 
 
     # Plot the average Traces of the whole trial followed by the avg traces of the windows
@@ -197,17 +242,17 @@ for pull_ind in range(len(which_layer)):
     ax.grid(axis="y", color="k", alpha=.1, linewidth=.5)
     ax.set_xlabel('Time in Seconds')
     ax.set_ylabel('DF/F')
-    ax.set_title(f'{mi1_all_multiple[pull_ind][1]} Series: {mi1_all_multiple[pull_ind][2]} | DFF=True | Conditions: {condition_name} | ROI={mi1_all_multiple[pull_ind][3]}', fontsize=20)
+    ax.set_title(f'{which_layer[pull_ind][1]} Series: {which_layer[pull_ind][2]} | DFF=True | Conditions: {condition_name} | ROI={which_layer[pull_ind][3]}', fontsize=20)
 
     if save_fig == True:
         fh.savefig(
         save_directory
         + "AvgTraces."
-        + str(mi1_all_multiple[pull_ind][1])
+        + str(which_layer[pull_ind][1])
         + ".Series"
-        + str(mi1_all_multiple[pull_ind][2])
+        + str(which_layer[pull_ind][2])
         + ".ROI"
-        + str(mi1_all_multiple[pull_ind][3])
+        + str(which_layer[pull_ind][3])
         + ".Conditions:"
         + str(condition_name)
         + ".pdf",
@@ -295,11 +340,16 @@ for pull_ind in range(len(which_layer)):
         dpi=300,
         )
 
-    # % Plotting the metrics for the windows
-
-    response_max = np.max(windows, axis=-1)
-    response_min = np.min(windows, axis=-1)
+    # % Plotting the metrics for the windows and then store those values
+    response_mean = np.mean(windows, axis = -1)
+    response_max = np.max(windows, axis = -1)
+    response_min = np.min(windows, axis = -1)
     response_PtT = response_max - response_min
+    # storage time!
+    mean_matrix[pull_ind] = response_mean
+    max_matrix[pull_ind] = response_max
+    min_matrix[pull_ind] = response_min
+    ptt_matrix[pull_ind] = response_PtT
 
     cmap = plt.get_cmap('cool') # also 'cool' 'winter' 'PRGn' 'Pastel1' 'YlGnBu' 'twilight'
     colors = [cmap(i) for i in np.linspace(0.0, 1.0, len(unique_parameter_values))]
@@ -415,11 +465,48 @@ for pull_ind in range(len(which_layer)):
 
 #plt.close('all')
 
-# %%
-all_response_max.append(response_max)
-all_response_max = np.stack(response_max, axis=-1)  # shape = param values, window times, flies
+# %% Plotting the cross-animal data
 
+# first make a function that gives normalized differences for each metric
+def metricDifNormalizer(metric_in):
+    # initialize nan-filled output matrix
+    metric_out = np.empty((metric_in.shape[0], metric_in.shape[1], metric_in.shape[2]-1))
+    metric_out[:] = np.nan
 
+    for win_ind in range(mean_matrix.shape[-1] - 1):
 
+        metric_out[:, :, win_ind] = (metric_in[:, :, win_ind + 1] - metric_in[:, :, 0]) / (metric_in[:, :, win_ind + 1] + metric_in[:, :, 0])
+
+    return metric_out
+
+mean_diff_matrix = metricDifNormalizer(mean_matrix)
+max_diff_matrix = metricDifNormalizer(max_matrix)
+min_diff_matrix = metricDifNormalizer(min_matrix)
+ptt_diff_matrix = metricDifNormalizer(ptt_matrix)
+
+# Histograms of these values
+# reminder: each matrix be experiment x unique opto params x visual flash window
+# NOTE: this needs unique_parameter_values
+fh_mean, ax_mean = plt.subplots(3, len(window_times)-1, figsize=(16, 12))
+fh_max, ax_max = plt.subplots(3, len(window_times)-1, figsize=(16, 12))
+fh_min, ax_min = plt.subplots(3, len(window_times)-1, figsize=(16, 12))
+fh_ptt, ax_ptt = plt.subplots(3, len(window_times)-1, figsize=(16, 12))
+
+for win_ind in range(mean_dif_matrix.shape[2]):
+    for opto_ind in range(mean_dif_matrix.shape[1]):
+        ax_mean[opto_ind, win_ind].hist(mean_diff_matrix[:, opto_ind, win_ind])
+        ax_max[opto_ind, win_ind].hist(max_diff_matrix[:, opto_ind, win_ind])
+        ax_min[opto_ind, win_ind].hist(min_diff_matrix[:, opto_ind, win_ind])
+        ax_ptt[opto_ind, win_ind].hist(ptt_diff_matrix[:, opto_ind, win_ind])
+
+        ax_mean[opto_ind, win_ind].set_title(f'Opto intensity = {unique_parameter_values[opto_ind]} | Vis Flash {win_ind+2} - Vis Flash 1')
+        ax_max[opto_ind, win_ind].set_title(f'Opto intensity = {unique_parameter_values[opto_ind]} | Vis Flash {win_ind+2} - Vis Flash 1')
+        ax_min[opto_ind, win_ind].set_title(f'Opto intensity = {unique_parameter_values[opto_ind]} | Vis Flash {win_ind+2} - Vis Flash 1')
+        ax_ptt[opto_ind, win_ind].set_title(f'Opto intensity = {unique_parameter_values[opto_ind]} | Vis Flash {win_ind+2} - Vis Flash 1')
+
+fh_mean.suptitle(f'Mean Value of X Window - Mean Value of First Window')
+fh_max.suptitle(f'Max Value of X Window - Max Value of First Window')
+fh_min.suptitle(f'Min Value of X Window - Min Value of First Window')
+fh_ptt.suptitle(f'Peak-to-Trough Value of X Window - Peak-to-Trough Value of First Window')
 
 # %%
