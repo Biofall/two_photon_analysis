@@ -8,6 +8,8 @@ from matplotlib.ticker import FixedLocator, FixedFormatter
 import os
 from pathlib import Path
 import numpy as np
+import seaborn as sns
+import Pandas as pd
 
 # %%
 # Opto intensity sweep w/ flash experiments (with MoCo!) 2/8/22
@@ -80,7 +82,7 @@ mi1_prox_all = np.concatenate(
                              axis = 0,
                             )
 
-mi1_prox_max = np.concatenate(
+mi1_prox_good = np.concatenate(
                              (mi1_fly4_prox, mi1_fly5_prox, mi1_fly6_prox,
                              mi1_fly7_prox, mi1_fly8_prox, mi1_fly9_prox,
                              mi1_fly10_prox, mi1_fly11_prox, mi1_fly12_prox,
@@ -88,6 +90,18 @@ mi1_prox_max = np.concatenate(
                              axis = 0,
                              )
 
+mi1_dist_good = np.concatenate(
+                             (mi1_fly4_dist, mi1_fly5_dist, mi1_fly6_dist,
+                             mi1_fly9_dist, mi1_fly10_dist, mi1_fly12_dist,),
+                             axis = 0,
+                             )
+
+mi1_medi_good = np.concatenate(
+                             (mi1_fly4_medi, mi1_fly5_medi, mi1_fly6_medi,
+                             mi1_fly9_medi, mi1_fly10_medi, mi1_fly12_medi,),
+                             axis = 0,
+                             )
+                             
 mi1_medi_all = np.concatenate(
                        (mi1_fly1_medi, mi1_fly2_medi, mi1_fly3_medi,mi1_fly4_medi, mi1_fly5_medi, mi1_fly6_medi,), 
                         axis = 0,
@@ -108,41 +122,8 @@ mi1_control_prox = np.concatenate(
                                   axis = 0,
                                  )
 
+##  Function definitions
 
-# Single ROI
-# Fly 1
-mi1_fly1_prox_single = [["/Volumes/ABK2TBData/data_repo/bruker/20221122.common_moco", "2022-11-22", "3", "proximal_single"]]
-mi1_fly1_medi_single = [["/Volumes/ABK2TBData/data_repo/bruker/20221122.common_moco", "2022-11-22", "3", "medial_single"]]
-mi1_fly1_dist_single = [["/Volumes/ABK2TBData/data_repo/bruker/20221122.common_moco", "2022-11-22", "3", "distal_single"]]
-# Fly 2
-mi1_fly2_prox_single = [["/Volumes/ABK2TBData/data_repo/bruker/20221129.common_moco", "2022-11-29", "4", "proximal_single"]]
-mi1_fly2_medi_single = [["/Volumes/ABK2TBData/data_repo/bruker/20221129.common_moco", "2022-11-29", "4", "medial_single"]] 
-mi1_fly2_dist_single = [["/Volumes/ABK2TBData/data_repo/bruker/20221129.common_moco", "2022-11-29", "4", "distal_single"]]
-
-mi1_prox_all_single = np.concatenate(
-                       (mi1_fly1_prox_single, mi1_fly2_prox_single,), 
-                        axis = 0,
-                       )
-
-mi1_medi_all_single = np.concatenate(
-                       (mi1_fly1_medi_single, mi1_fly2_medi_single,), 
-                        axis = 0,
-                      )
-
-mi1_dist_all_single = np.concatenate(
-                       (mi1_fly1_dist_single, mi1_fly2_dist_single,), 
-                        axis = 0,
-                      )
-mi1_all_single = np.concatenate(
-                                (mi1_fly1_prox_single, mi1_fly2_prox_single, mi1_fly1_medi_single, mi1_fly2_medi_single,
-                                 mi1_fly1_dist_single, mi1_fly2_dist_single,),
-                                 axis = 0,
-                               )
-
-
-condition_name = 'current_led_intensity'
-
-# %% Functions
 # find the visual flash locations (for plotting)
 def visFlash(ID):
     pre_time = ID.getRunParameters('pre_time')
@@ -154,21 +135,38 @@ def visFlash(ID):
     
     return flash_start, flash_end
 
+# first make a function that gives normalized differences for each metric
+def metricDifNormalizer(metric_in):
+    # initialize nan-filled output matrix
+    metric_out = np.empty((metric_in.shape[0], metric_in.shape[1], metric_in.shape[2]-1))
+    metric_out[:] = np.nan
+
+    for win_ind in range(mean_matrix.shape[-1] - 1):
+
+        metric_out[:, :, win_ind] = (metric_in[:, :, win_ind + 1] - metric_in[:, :, 0]) / (metric_in[:, :, win_ind + 1] + metric_in[:, :, 0])
+
+    return metric_out
+
+# Setting some important things:
+condition_name = 'current_led_intensity'
 save_directory = "/Volumes/ABK2TBData/lab_repo/analysis/outputs/flash_w_opto_step/" #+ experiment_file_name + "/"
 Path(save_directory).mkdir(exist_ok=True)
 
-# %%
+# %% RUN ALL THE SHIT
 
-# do outer loop here...
-
-#all_response_max = []
-
-
-# Which one to plot
-# (0) mi1_fly1_prox (1) mi1_fly2_prox (2) mi1_fly1_medi (3) mi1_fly2_medi (4) mi1_fly1_dist (5) mi1_fly2_dist
-#pull_ind = 14
+#--------------------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------------
+#------------------------------------------START Set me!-------------------------------------------------
+#--------------------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------------
 save_fig = False
-which_layer = mi1_prox_max
+which_layer = mi1_dist_good
+layer_name = 'mi1_dist_good'
+#--------------------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------------
+#------------------------------------------END Set me!---------------------------------------------------
+#--------------------------------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------------
 
 # Make the metric arrays - each will be experiment x unique opto params x visual flash window
 n_exps = len(which_layer)
@@ -351,6 +349,9 @@ for pull_ind in range(len(which_layer)):
     min_matrix[pull_ind] = response_min
     ptt_matrix[pull_ind] = response_PtT
 
+    #pd DataFrame storage attempt
+
+
     cmap = plt.get_cmap('cool') # also 'cool' 'winter' 'PRGn' 'Pastel1' 'YlGnBu' 'twilight'
     colors = [cmap(i) for i in np.linspace(0.0, 1.0, len(unique_parameter_values))]
 
@@ -466,25 +467,141 @@ for pull_ind in range(len(which_layer)):
 #plt.close('all')
 
 # %% Plotting the cross-animal data
-
-# first make a function that gives normalized differences for each metric
-def metricDifNormalizer(metric_in):
-    # initialize nan-filled output matrix
-    metric_out = np.empty((metric_in.shape[0], metric_in.shape[1], metric_in.shape[2]-1))
-    metric_out[:] = np.nan
-
-    for win_ind in range(mean_matrix.shape[-1] - 1):
-
-        metric_out[:, :, win_ind] = (metric_in[:, :, win_ind + 1] - metric_in[:, :, 0]) / (metric_in[:, :, win_ind + 1] + metric_in[:, :, 0])
-
-    return metric_out
+#savefig = True
 
 mean_diff_matrix = metricDifNormalizer(mean_matrix)
 max_diff_matrix = metricDifNormalizer(max_matrix)
 min_diff_matrix = metricDifNormalizer(min_matrix)
 ptt_diff_matrix = metricDifNormalizer(ptt_matrix)
 
-# Histograms of these values
+# flatten everything, have list of names, add it all as row with columns in pd?
+m_shape = max_diff_matrix.shape
+flattened_means = np.reshape(mean_diff_matrix, (m_shape[0], m_shape[1]*m_shape[2]))
+mean_labels = ['Mean_opto0_win01', 'Mean_opto0_win02', 'Mean_opto0_win03', 
+               'Mean_opto1_win01', 'Mean_opto1_win02', 'Mean_opto1_win03',
+               'Mean_opto2_win01', 'Mean_opto2_win02', 'Mean_opto2_win03']
+flattened_maxes = np.reshape(max_diff_matrix, (m_shape[0], m_shape[1]*m_shape[2]))
+max_labels = ['Max_opto0_win01', 'Max_opto0_win02', 'Max_opto0_win03', 
+               'Max_opto1_win01', 'Max_opto1_win02', 'Max_opto1_win03',
+               'Max_opto2_win01', 'Max_opto2_win02', 'Max_opto2_win03']
+flattened_mins = np.reshape(min_diff_matrix, (m_shape[0], m_shape[1]*m_shape[2]))
+min_labels = ['Min_opto0_win01', 'Min_opto0_win02', 'Min_opto0_win03', 
+               'Min_opto1_win01', 'Min_opto1_win02', 'Min_opto1_win03',
+               'Min_opto2_win01', 'Min_opto2_win02', 'Min_opto2_win03']
+flattened_ptts = np.reshape(ptt_diff_matrix, (m_shape[0], m_shape[1]*m_shape[2]))
+PtT_labels = ['PtT_opto0_win01', 'PtT_opto0_win02', 'PtT_opto0_win03', 
+               'PtT_opto1_win01', 'PtT_opto1_win02', 'PtT_opto1_win03',
+               'PtT_opto2_win01', 'PtT_opto2_win02', 'PtT_opto2_win03']
+# Set it all up to be made into DF
+concat_met = np.concatenate((flattened_means, flattened_maxes, flattened_mins, flattened_ptts), axis=1)
+concat_labels = mean_labels + max_labels + min_labels + PtT_labels
+# Make that DataFrame
+big_daddy_df = pd.DataFrame(data=concat_met, columns=concat_labels)
+
+
+############################################################################################################
+#               Seaborn plots of all metrics in histogram form for:                                        #
+############################################################################################################
+
+# Initialize some shit:
+kde = True
+element = 'poly' # bars | poly | step
+multiple = 'stack' # dodge | stack | layer | fill
+bins = 10
+binwidth = 0.05 #0.025 # supercedes bins |  0.025
+savefig = False
+
+# Second window - First Window
+fig2, axes2 = plt.subplots(2, 2, figsize = (12,9))
+fig2.suptitle(f'{layer_name} Metrics for Comparing The First and Second Visual Rsponses Across Flies')
+# Maxes
+df_maxes = big_daddy_df[['Max_opto0_win01', 'Max_opto1_win01', 'Max_opto2_win01']]
+sns.histplot(ax=axes2[0,0], data=df_maxes, element=element, kde=kde, multiple=multiple, binwidth=binwidth, bins=bins)
+axes2[0,0].set_title(f'Max Value of Second Window - Max Value of First Window')
+# Mins
+df_mins = big_daddy_df[['Min_opto0_win01', 'Min_opto1_win01', 'Min_opto2_win01']]
+sns.histplot(ax=axes2[0,1], data=df_mins, element=element, kde=kde, multiple=multiple, bins=bins)
+axes2[0,1].set_title(f'Min Value of Second Window - Min Value of First Window')
+# Peak to Troughs
+df_ptt = big_daddy_df[['PtT_opto0_win01', 'PtT_opto1_win01', 'PtT_opto2_win01']]
+sns.histplot(ax=axes2[1,0], data=df_ptt, element=element, kde=kde, multiple=multiple, binwidth=binwidth, bins=bins)
+axes2[1,0].set_title(f'PtT Value of Second Window - PtT Value of First Window')
+# Means
+df_means = big_daddy_df[['Mean_opto0_win01', 'Mean_opto1_win01', 'Mean_opto2_win01']]
+sns.histplot(ax=axes2[1,1], data=df_means, element=element, kde=kde, multiple=multiple, bins=bins)
+axes2[1,1].set_title(f'Mean Value of Second Window - Mean Value of First Window')
+
+# Third window - First Window
+fig3, axes3 = plt.subplots(2, 2, figsize = (12,9))
+fig3.suptitle(f'{layer_name} Metrics for Comparing The First and Third Visual Rsponses Across Flies')
+# Maxes
+df_maxes = big_daddy_df[['Max_opto0_win02', 'Max_opto1_win02', 'Max_opto2_win02']]
+sns.histplot(ax=axes3[0,0], data=df_maxes, element=element, kde=kde, multiple=multiple, binwidth=binwidth, bins=bins)
+axes3[0,0].set_title(f'Max Value of Third Window - Max Value of First Window')
+# Mins
+df_mins = big_daddy_df[['Min_opto0_win02', 'Min_opto1_win02', 'Min_opto2_win02']]
+sns.histplot(ax=axes3[0,1], data=df_mins, element=element, kde=kde, multiple=multiple, bins=bins)
+axes3[0,1].set_title(f'Min Value of Third Window - Min Value of First Window')
+# Peak to Troughs
+df_ptt = big_daddy_df[['PtT_opto0_win02', 'PtT_opto1_win02', 'PtT_opto2_win02']]
+sns.histplot(ax=axes3[1,0], data=df_ptt, element=element, kde=kde, multiple=multiple, binwidth=binwidth, bins=bins)
+axes3[1,0].set_title(f'PtT Value of Third Window - PtT Value of First Window')
+# Means
+df_means = big_daddy_df[['Mean_opto0_win02', 'Mean_opto1_win02', 'Mean_opto2_win02']]
+sns.histplot(ax=axes3[1,1], data=df_means, element=element, kde=kde, multiple=multiple, bins=bins)
+axes3[1,1].set_title(f'Mean Value of Third Window - Mean Value of First Window')
+
+# Fourth window - First Window
+fig4, axes4 = plt.subplots(2, 2, figsize = (12,9))
+fig4.suptitle(f'{layer_name} Metrics for Comparing The First and Fourth Visual Rsponses Across Flies')
+# Maxes
+df_maxes = big_daddy_df[['Max_opto0_win03', 'Max_opto1_win03', 'Max_opto2_win03']]
+sns.histplot(ax=axes4[0,0], data=df_maxes, element=element, kde=kde, multiple=multiple, binwidth=binwidth, bins=bins)
+axes4[0,0].set_title(f'Max Value of Fourth Window - Max Value of First Window')
+# Mins
+df_mins = big_daddy_df[['Min_opto0_win03', 'Min_opto1_win03', 'Min_opto2_win03']]
+sns.histplot(ax=axes4[0,1], data=df_mins, element=element, kde=kde, multiple=multiple, bins=bins)
+axes4[0,1].set_title(f'Min Value of Fourth Window - Min Value of First Window')
+# Peak to Troughs
+df_ptt = big_daddy_df[['PtT_opto0_win03', 'PtT_opto1_win03', 'PtT_opto2_win03']]
+sns.histplot(ax=axes4[1,0], data=df_ptt, element=element, kde=kde, multiple=multiple, binwidth=binwidth, bins=bins)
+axes4[1,0].set_title(f'PtT Value of Fourth Window - PtT Value of First Window')
+# Means
+df_means = big_daddy_df[['Mean_opto0_win03', 'Mean_opto1_win03', 'Mean_opto2_win03']]
+sns.histplot(ax=axes4[1,1], data=df_means, element=element, kde=kde, multiple=multiple, bins=bins)
+axes4[1,1].set_title(f'Mean Value of Fourth Window - Mean Value of First Window')
+
+if save_fig == True:
+    fig2.savefig(
+    save_directory
+    + "Cross-FlyMetricHistograms."
+    + layer_name
+    + ".2Minus1"
+    + ".pdf",
+    dpi=300,
+    )
+    fig3.savefig(
+    save_directory
+    + "Cross-FlyMetricHistograms."
+    + layer_name
+    + ".3Minus1"
+    + ".pdf",
+    dpi=300,
+    )
+    fig4.savefig(
+    save_directory
+    + "Cross-FlyMetricHistograms."
+    + layer_name
+    + ".4Minus1"
+    + ".pdf",
+    dpi=300,
+    )
+# %% Close the figs after
+
+plt.close('all')
+
+
+# %% Deprecated: Histograms of these values
 # reminder: each matrix be experiment x unique opto params x visual flash window
 # NOTE: this needs unique_parameter_values
 fh_mean, ax_mean = plt.subplots(3, len(window_times)-1, figsize=(16, 12))
@@ -495,7 +612,10 @@ fh_ptt, ax_ptt = plt.subplots(3, len(window_times)-1, figsize=(16, 12))
 for win_ind in range(mean_dif_matrix.shape[2]):
     for opto_ind in range(mean_dif_matrix.shape[1]):
         ax_mean[opto_ind, win_ind].hist(mean_diff_matrix[:, opto_ind, win_ind])
-        ax_max[opto_ind, win_ind].hist(max_diff_matrix[:, opto_ind, win_ind])
+        ax_mean
+        #ax_mean.plot(kind = "hist", density = True)
+        #ax_mean.plot(kind = "kde")
+        ax_max[opto_ind, win_ind].hist(max_diff_matrix[:, opto_ind, win_ind], density = True)
         ax_min[opto_ind, win_ind].hist(min_diff_matrix[:, opto_ind, win_ind])
         ax_ptt[opto_ind, win_ind].hist(ptt_diff_matrix[:, opto_ind, win_ind])
 
