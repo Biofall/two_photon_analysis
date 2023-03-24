@@ -121,14 +121,24 @@ mi1_all_multiple = np.concatenate(
                                    axis = 0,
                                  )
 
+# control flies
 mi1_control_prox = np.concatenate(
                                   (mi1_control1_prox, mi1_control2_prox,),
                                   axis = 0,
                                  )
+fly_list_control_prox = [1, 2]
+fly_list_control_medi = [1]
+fly_list_control_dist = [1]
+
+# all good flies
 mi1_all_good = [mi1_prox_good, mi1_medi_good, mi1_dist_good]
 
+#all flies for mi1_control
+mi1_control_all = [mi1_control_prox, mi1_control1_medi, mi1_control1_dist]
+
 # Hardcoded fly indecies. Must be updated above when fly identies added/changed:
-fly_list = [fly_list_prox, fly_list_medi, fly_list_dist]
+fly_list_exp = [fly_list_prox, fly_list_medi, fly_list_dist]
+fly_list_control = [fly_list_control_prox, fly_list_control_medi, fly_list_control_dist]
 layer_list = ('Proximal', 'Medial', 'Distal')
 
 # Housekeeping:
@@ -159,6 +169,9 @@ def metricDifNormalizer(metric_in, normalize_to = "sum"):
     # initialize nan-filled output matrix
     metric_out = np.empty((metric_in.shape[0], metric_in.shape[1], metric_in.shape[2]-1))
     metric_out[:] = np.nan
+
+    #take the absolute of the metric. This helps catch the min case. Everything else should be pos all the time anyway
+    metric_in = np.absolute(metric_in)
 
     for win_ind in range(mean_matrix.shape[-1] - 1):
         if normalize_to == "sum":
@@ -497,7 +510,8 @@ def getWindowMetricsFromLayer(layer, condition_name, normalize_to=False, plot_tr
 #--------------------------------------------------------------------------------------------------------#
 #--------------------------------------------------------------------------------------------------------#
 # Set meeeeeeeeeeee
-data_list = mi1_all_good
+data_list = mi1_control_all # mi1_all_good | mi1_control_all
+list_to_use = fly_list_control # fly_lis_exp | fly_list_control
 
 # Making a data frame the way it's supposed to be....
 # Currently have:
@@ -513,8 +527,8 @@ metric_df = pd.DataFrame(columns=['Fly', 'Layer', 'Mean', 'SEM_Mean', 'Min', 'Ma
 # Adds all metrics to dataframe one row at a time
 row_idx = 0
 for layer_ind in range(len(layer_list)):
-    mean_diff_matrix, sem_mean_diff_matrix, max_diff_matrix, min_diff_matrix, ptt_diff_matrix = getWindowMetricsFromLayer(data_list[layer_ind], layer_list[layer_ind], normalize_to='first', plot_trial_figs=False, save_fig=False)
-    fly_indicies = fly_list[layer_ind]
+    mean_diff_matrix, sem_mean_diff_matrix, max_diff_matrix, min_diff_matrix, ptt_diff_matrix = getWindowMetricsFromLayer(data_list[layer_ind], layer_list[layer_ind], normalize_to='first', plot_trial_figs=True, save_fig=False)
+    fly_indicies = list_to_use[layer_ind]
     # Gets dimensions of metric arrays 
     num_flies, num_opto, num_windows = mean_diff_matrix.shape   
     for fly in range(num_flies):
@@ -542,18 +556,90 @@ print('-------------------------------------------------------------------------
 
 
 # %% Seaborn plots for values over windows (Fig 4)
+#save_fig=True
+# Subplot grid where each row is a metric and each column is a layer
+bigfig, bigaxes = plt.subplots(4,3, figsize=(36,27))
+bigfig.suptitle(f'PLACEHOLDER SUPERTITLE')
 
-
-#line_fig, line_axes = plt.subplots(figsize = (12,9))
-#line_fig.suptitle(f'{layer_name} Trajectory of diff between Flashes 2-4 and Flash 1')
+# Proximal = Col 1
 # Mean
 prox_df = metric_df[metric_df.Layer=='Proximal']
-sns.relplot(
-    x="Window", y="Mean", hue="Opto", data=prox_df, kind="line",
+sns.lineplot(
+    ax=bigaxes[0,0], x="Window", y="Mean", hue="Opto", data=prox_df, palette="pastel", 
     )
-#line_axes.set_title(f'test')
+bigaxes[0,0].set(title='Proximal - Mean')
+# Max
+sns.lineplot(
+    ax=bigaxes[1,0], x="Window", y="Max", hue="Opto", data=prox_df, palette="pastel"
+    )
+bigaxes[1,0].set(title='Proximal - Max')
+# Min
+sns.lineplot(
+    ax=bigaxes[2,0], x="Window", y="Min", hue="Opto", data=prox_df, palette="pastel"
+    )
+bigaxes[2,0].set(title='Proximal - Min')
+# PtT
+sns.lineplot(
+    ax=bigaxes[3,0], x="Window", y="PtT", hue="Opto", data=prox_df, palette="pastel"
+    )
+bigaxes[3,0].set(title='Proximal - Peak-to-Trough')
 
+# Medial = Col 2
+# Mean
+med_df = metric_df[metric_df.Layer=='Medial']
+sns.lineplot(
+    ax=bigaxes[0,1], x="Window", y="Mean", hue="Opto", data=med_df, palette="pastel"
+    )
+bigaxes[0,1].set(title='Medial - Mean')
+# Max
+sns.lineplot(
+    ax=bigaxes[1,1], x="Window", y="Max", hue="Opto", data=med_df, palette="pastel"
+    )
+bigaxes[1,1].set(title='Medial - Max')
+# Min
+sns.lineplot(
+    ax=bigaxes[2,1], x="Window", y="Min", hue="Opto", data=med_df, palette="pastel"
+    )
+bigaxes[2,1].set(title='Medial - Min')
+# PtT
+sns.lineplot(
+    ax=bigaxes[3,1], x="Window", y="PtT", hue="Opto", data=med_df, palette="pastel"
+    )
+bigaxes[3,1].set(title='Medial - Peak-to-Trough')
 
+# Distal = Col 3
+# Mean
+dist_df = metric_df[metric_df.Layer=='Medial']
+sns.lineplot(
+    ax=bigaxes[0,2], x="Window", y="Mean", hue="Opto", data=dist_df, palette="pastel"
+    )
+bigaxes[0,2].set(title='Distal - Mean')
+# Max
+sns.lineplot(
+    ax=bigaxes[1,2], x="Window", y="Max", hue="Opto", data=dist_df, palette="pastel"
+    )
+bigaxes[1,2].set(title='Distal - Max')
+# Min
+sns.lineplot(
+    ax=bigaxes[2,2], x="Window", y="Min", hue="Opto", data=dist_df, palette="pastel"
+    )
+bigaxes[2,2].set(title='Distal - Min')
+# PtT
+sns.lineplot(
+    ax=bigaxes[3,2], x="Window", y="PtT", hue="Opto", data=dist_df, palette="pastel"
+    )
+bigaxes[3,2].set(title='Distal - Peak-to-Trough')
+
+# Set for whole plot
+plt.setp(bigaxes, xticks=[0, 1, 2], xticklabels=['Second-First', 'Third-First', 'Fourth-First'])
+
+if save_fig == True:
+    bigfig.savefig(
+    save_directory
+    + "Cross-Fly.Cross-Layer.control.LinePlot."
+    + ".pdf",
+    dpi=300,
+    )
 
 
 
