@@ -6,7 +6,7 @@ import nibabel as nib
 import numpy as np
 
 imports_dir = '/oak/stanford/groups/trc/data/krave/bruker_data/imports'
-date_dir = '20230316'
+date_dir = '20230327__queue__'
 
 data_directory = os.path.join(imports_dir, date_dir)
 
@@ -27,10 +27,13 @@ data_directory = os.path.join(imports_dir, date_dir)
 #               }
 
 moco_pairs = {
-              'TSeries-20230316-004_channel_1': [],
-              'TSeries-20230316-006_channel_1': [],
-              'TSeries-20230316-007_channel_1': [],
+              'TSeries-20230327-001_channel_1': ['TSeries-20230327-002_channel_1', 'TSeries-20230327-003_channel_1'],
+              'TSeries-20230327-004_channel_1': ['TSeries-20230327-005_channel_1', 'TSeries-20230327-006_channel_1'],
+              'TSeries-20230327-007_channel_1': ['TSeries-20230327-008_channel_1', 'TSeries-20230327-009_channel_1'],
+              'TSeries-20230327-010_channel_1': ['TSeries-20230327-011_channel_1', 'TSeries-20230327-012_channel_1'],
+              'TSeries-20230327-013_channel_1': ['TSeries-20230327-014_channel_1'],
               }
+
 
 def saveAs16Bit(filepath_base):
 
