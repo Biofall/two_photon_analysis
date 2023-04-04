@@ -187,36 +187,42 @@ def getMetrics(which_experiment):
 
     return time_vector, mean_response, sem_plus, sem_minus, mean_across_rois, max_across_rois, min_across_rois
 # %% Plot individual traces by layer
-save_figures = False
+save_figures = True
 
 which_layer = mi1_all_good 
+layer = 0
+
 # Plotting the whole trace
 exp_count = len(which_layer[0][0]) # number of experiments
+
+# set the color map
+cmap = plt.get_cmap('Set3') # also 'cool' 'winter' 'PRGn' 'Pastel1' 'YlGnBu' 'twilight'
+colors = [cmap(i) for i in np.linspace(0.0, 1.0, 12)]
 
 fh, ax = plt.subplots(exp_count, 1, figsize=(16, 8*exp_count))
 for block_ind in range(len(exp_block_type)):
     for exp_ind in range(exp_count):
-        time_vector, mean_response, sem_plus, sem_minus, mean_across_rois, max_across_rois, min_across_rois = getMetrics(which_layer[block_ind][1][exp_ind])
+        time_vector, mean_response, sem_plus, sem_minus, mean_across_rois, max_across_rois, min_across_rois = getMetrics(which_layer[block_ind][layer][exp_ind])
         # Mean it
         mean_across_rois = np.squeeze(mean_response.mean(axis=0))
         sem_plus_across_rois = np.squeeze(sem_plus.mean(axis=0))
         sem_minus_across_rois = np.squeeze(sem_minus.mean(axis=0))
 
-        ax[exp_ind].plot(time_vector, mean_across_rois, label=exp_block_type[block_ind])
-        ax[exp_ind].fill_between(time_vector, sem_plus_across_rois, sem_minus_across_rois, alpha=0.1)
+        ax[exp_ind].plot(time_vector, mean_across_rois, color=colors[block_ind], label=exp_block_type[block_ind])
+        ax[exp_ind].fill_between(time_vector, sem_plus_across_rois, sem_minus_across_rois, color=colors[block_ind], alpha=0.1)
 
         # title for subfigure
-        ax[exp_ind].set_title(f'Fly {mi1_all_good_list[block_ind][0][exp_ind]}')
-# show legends
-ax[0].legend()
-ax[1].legend()
-ax[2].legend()
+        ax[exp_ind].set_title(f'Fly {mi1_all_good_list[block_ind][layer][exp_ind]}')
+        # set the subplot facecolor to black and add a white grid with alpha 0.2
+        ax[exp_ind].set_facecolor('black')
+        ax[exp_ind].grid(color='white', alpha=0.2)
+        ax[exp_ind].legend(facecolor='black', edgecolor='black', labelcolor='white')
 
 # Title for whole figure
-fh.suptitle(f'All {exp_layer[0]} Traces Averaged Across ROIs')
+fh.suptitle(f'All {exp_layer[layer]} Traces Averaged Across ROIs')
 
 if save_figures:
-    save_name = f'All_{exp_layer[0]}_Traces_Averaged_Across_ROIs.png'
+    save_name = f'All_{exp_layer[layer]}_Traces_Averaged_Across_ROIs.pdf'
     save_path = os.path.join(save_directory, save_name)
     fh.savefig(save_path, dpi=300)
 
@@ -224,7 +230,9 @@ if save_figures:
 # %% Plot max values using ID.getResponseAmplitude across all ROIs
 # Proximal, Medial, or Distal (0, 1, or 2)
 layer = 0
-save_figures = False
+save_figures = True
+which_layer = mi1_all_good 
+
 exp_count = len(which_layer[0][layer]) # number of experiments
 
 met_fig, met_ax = plt.subplots(exp_count, 3, figsize=(16*3, 8*exp_count))
@@ -272,7 +280,7 @@ met_fig.suptitle(f'All {exp_layer[0]} Metrics Averaged Across ROIs')
 
 # Save the figure
 if save_figures:
-    save_name = f'All_{exp_layer[0]}_Metrics_Averaged_Across_ROIs.png'
+    save_name = f'All_{exp_layer[0]}_Metrics_Averaged_Across_ROIs.pdf'
     save_path = os.path.join(save_directory, save_name)
     met_fig.savefig(save_path, dpi=300)
 
@@ -373,8 +381,43 @@ for block_ind in range(len(exp_block_type)):
 
 # Save the figure
 if save_figures:
-    save_name = f'MaxMinMean_Value_for_{which_layer[0][0][3]}_Across_Blocks.png'
+    save_name = f'MaxMinMean_Value_for_{which_layer[0][0][3]}_Across_Blocks.pdf'
     save_path = os.path.join(save_directory, save_name)
     fig.savefig(save_path, dpi=300)
 
-# %%
+
+
+
+# %% To demo for Tom
+
+all_prox = [mi1_prox_pre_total, mi1_prox_perf_total, mi1_prox_post_total]
+all_prox_list = [mi1_prox_pre_total_list, mi1_prox_perf_total_list, mi1_prox_post_total_list]
+which_layer = all_prox # mi1_prox_pre_total | mi1_prox_perf_total | mi1_prox_post_total
+which_list = all_prox_list
+
+# choose a value to start from, skipping weird initial artifacts
+start_val = 1
+save_figures = False
+
+# set the color map
+cmap = plt.get_cmap('Pastel2') # also 'cool' 'winter' 'PRGn' 'Pastel1' 'YlGnBu' 'twilight'
+colors = [cmap(i) for i in np.linspace(0.0, 1.0, 8)]
+
+# Create figure
+fig, ax = plt.subplots(len(all_prox), 3, figsize=(14*3, 6*len(all_prox)))
+
+# loop through exp_block_type
+for block_ind in range(len(exp_block_type)):
+    # loop through the flies
+    for fly_ind in range(len(which_layer[block_ind])):
+        time_vector, mean_response, sem_plus, sem_minus, mean_across_rois, max_across_rois, min_across_rois = getMetrics(which_layer[block_ind][fly_ind])
+
+        # plot the max_across_rois
+        
+
+
+    # For all subfigures, set axis parameters and show legend
+
+# Title for whole figure
+
+# Save the figure

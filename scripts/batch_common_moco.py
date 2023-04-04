@@ -6,33 +6,26 @@ import nibabel as nib
 import numpy as np
 
 imports_dir = '/oak/stanford/groups/trc/data/krave/bruker_data/imports'
-date_dir = '20230327__queue__'
+date_dir = '20230403'
 
 data_directory = os.path.join(imports_dir, date_dir)
 
 # Key: file name base of reference image
 # Value: list of file name bases for target images, to register to reference
 # For non-paired moco, put the key and an empty list for value
-# moco_pairs = {
-#               'TSeries-20230302-001_channel_2': ['TSeries-20230302-002_channel_1'],
-#               # 'TSeries-20230302-003_channel_2': ['TSeries-20230302-006_channel_1'],
-#               # 'TSeries-20230302-007_channel_2': ['TSeries-20230302-008_channel_1'],
-#              }
-# moco_pairs = {
-#               'TSeries-20230317-001_channel_1': [],
-#               'TSeries-20230317-002_channel_1': [],
-#               'TSeries-20230317-003_channel_1': [],
-#               'TSeries-20230317-004_channel_1': [],
-#               'TSeries-20230317-005_channel_1': [],
-#               }
-
 moco_pairs = {
-              'TSeries-20230327-001_channel_1': ['TSeries-20230327-002_channel_1', 'TSeries-20230327-003_channel_1'],
-              'TSeries-20230327-004_channel_1': ['TSeries-20230327-005_channel_1', 'TSeries-20230327-006_channel_1'],
-              'TSeries-20230327-007_channel_1': ['TSeries-20230327-008_channel_1', 'TSeries-20230327-009_channel_1'],
-              'TSeries-20230327-010_channel_1': ['TSeries-20230327-011_channel_1', 'TSeries-20230327-012_channel_1'],
-              'TSeries-20230327-013_channel_1': ['TSeries-20230327-014_channel_1'],
-              }
+              'TSeries-20230403-001_channel_1': [],
+              'TSeries-20230403-003_channel_1': [],
+              'TSeries-20230403-004_channel_1': [],
+             }
+
+# moco_pairs = {
+#               'TSeries-20230327-001_channel_1': ['TSeries-20230327-002_channel_1', 'TSeries-20230327-003_channel_1'],
+#               'TSeries-20230327-004_channel_1': ['TSeries-20230327-005_channel_1', 'TSeries-20230327-006_channel_1'],
+#               'TSeries-20230327-007_channel_1': ['TSeries-20230327-008_channel_1', 'TSeries-20230327-009_channel_1'],
+#               'TSeries-20230327-010_channel_1': ['TSeries-20230327-011_channel_1', 'TSeries-20230327-012_channel_1'],
+#               'TSeries-20230327-013_channel_1': ['TSeries-20230327-014_channel_1'],
+#               }
 
 
 def saveAs16Bit(filepath_base):
