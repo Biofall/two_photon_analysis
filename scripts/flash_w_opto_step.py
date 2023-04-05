@@ -63,6 +63,13 @@ mi1_fly12_dist = [["/Volumes/ABK2TBData/data_repo/bruker/20230317", "2023-03-17"
 mi1_fly13_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230317", "2023-03-17", "2", "mi1_proximal_multiple"]]
 # Fly 14 # kinda shitty b/c motion
 mi1_fly14_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230317", "2023-03-17", "3", "mi1_proximal_multiple"]]
+# Fly 15
+mi1_fly15_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230403.moco", "2023-04-03", "1", "mi1_proximal_multiple"]]
+# Fly 16
+mi1_fly16_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230403.moco", "2023-04-03", "3", "mi1_proximal_multiple"]]
+# Fly 17
+mi1_fly17_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230403.moco", "2023-04-03", "4", "mi1_proximal_multiple"]]
+
 
 # CONTROL FLIES
 # control fly 1 - several ROI name options here: mi1_proximal_multiple_lessbi mi1_proximal_multiple_morebi
@@ -79,7 +86,7 @@ mi1_prox_all = np.concatenate(
                              mi1_fly4_prox, mi1_fly5_prox, mi1_fly6_prox,
                              mi1_fly7_prox, mi1_fly8_prox, mi1_fly9_prox,
                              mi1_fly10_prox, mi1_fly11_prox, mi1_fly12_prox,
-                             mi1_fly13_prox, mi1_fly14_prox,), 
+                             mi1_fly13_prox, mi1_fly14_prox, mi1_fly15_prox,), 
                              axis = 0,
                             )
 
@@ -87,10 +94,11 @@ mi1_prox_good = np.concatenate(
                              (mi1_fly4_prox, mi1_fly5_prox, mi1_fly6_prox,
                              mi1_fly7_prox, mi1_fly8_prox, mi1_fly9_prox,
                              mi1_fly10_prox, mi1_fly11_prox, mi1_fly12_prox,
-                             mi1_fly13_prox, mi1_fly14_prox,),
+                             mi1_fly13_prox, mi1_fly14_prox, mi1_fly15_prox, 
+                             mi1_fly16_prox, mi1_fly17_prox,),
                              axis = 0,
                              )
-fly_list_prox = [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+fly_list_prox = [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]
 
 mi1_dist_good = np.concatenate(
                              (mi1_fly4_dist, mi1_fly5_dist, mi1_fly6_dist,
@@ -171,11 +179,11 @@ def metricDifNormalizer(metric_in, normalize_to = "sum"):
     metric_out[:] = np.nan
 
     #take the absolute of the metric. This helps catch the min case. Everything else should be pos all the time anyway
-    metric_in = np.absolute(metric_in)
+    #metric_in = np.absolute(metric_in)
 
-    for win_ind in range(mean_matrix.shape[-1] - 1):
+    for win_ind in range(metric_in.shape[-1] - 1):
         if normalize_to == "sum":
-            metric_out[:, :, win_ind] = (metric_in[:, :, win_ind + 1] - metric_in[:, :, 0]) / (metric_in[:, :, win_ind + 1] + metric_in[:, :, 0])
+            metric_out[:, :, win_ind] = (metric_in[:, :, win_ind + 1] - metric_in[:, :, 0]) / (np.absolute(metric_in[:, :, win_ind + 1]) +np.absolute(metric_in[:, :, 0]))
         elif normalize_to == "first":
             metric_out[:, :, win_ind] = (metric_in[:, :, win_ind + 1] - metric_in[:, :, 0]) / (metric_in[:, :, 0])
     return metric_out
@@ -392,11 +400,11 @@ def getWindowMetricsFromLayer(layer, condition_name, normalize_to=False, plot_tr
 
                 for up_ind, up in enumerate(unique_parameter_values):
                     # Maximums for top row
-                    ax[0, w_ind].plot(response_max[up_ind, w_ind], response_max[up_ind, w_ind+1], color=colors[up_ind], markersize=10, marker='o', label=up if w_ind==0 else '')
+                    ax[0, w_ind].plot(response_max[up_ind, 0], response_max[up_ind, w_ind+1], color=colors[up_ind], markersize=10, marker='o', label=up if w_ind==0 else '')
                     # Minimums for middle row
-                    ax[1, w_ind].plot(response_min[up_ind, w_ind], response_min[up_ind, w_ind+1], color=colors[up_ind], markersize=10, marker='o')
+                    ax[1, w_ind].plot(response_min[up_ind, 0], response_min[up_ind, w_ind+1], color=colors[up_ind], markersize=10, marker='o')
                     # Peak to trough for bottom row
-                    ax[2, w_ind].plot(response_PtT[up_ind, w_ind], response_PtT[up_ind, w_ind+1], color=colors[up_ind], markersize=10, marker='o')
+                    ax[2, w_ind].plot(response_PtT[up_ind, 0], response_PtT[up_ind, w_ind+1], color=colors[up_ind], markersize=10, marker='o')
                     #ax[2, w_ind].plot(response_PtT[up_ind, w_ind], response_PtT(up_ind, w_ind+1), color=colors[up_ind], markersize=10, marker='o')
 
                     ax[0, w_ind].set_title(f'Visual Flash {w_ind+2} | Window Time: {window_times[w_ind+1]}')
@@ -511,7 +519,7 @@ def getWindowMetricsFromLayer(layer, condition_name, normalize_to=False, plot_tr
 #--------------------------------------------------------------------------------------------------------#
 # Set meeeeeeeeeeee
 data_list = mi1_control_all # mi1_all_good | mi1_control_all
-list_to_use = fly_list_control # fly_lis_exp | fly_list_control
+list_to_use = fly_list_control # fly_list_exp | fly_list_control
 
 # Making a data frame the way it's supposed to be....
 # Currently have:
@@ -526,14 +534,18 @@ metric_df = pd.DataFrame(columns=['Fly', 'Layer', 'Mean', 'SEM_Mean', 'Min', 'Ma
 
 # Adds all metrics to dataframe one row at a time
 row_idx = 0
+# Print statement that explains loop is starting
+print(f"\nBeginning Loops for extracting data.")
 for layer_ind in range(len(layer_list)):
-    mean_diff_matrix, sem_mean_diff_matrix, max_diff_matrix, min_diff_matrix, ptt_diff_matrix = getWindowMetricsFromLayer(data_list[layer_ind], layer_list[layer_ind], normalize_to='first', plot_trial_figs=True, save_fig=False)
+    mean_diff_matrix, sem_mean_diff_matrix, max_diff_matrix, min_diff_matrix, ptt_diff_matrix = getWindowMetricsFromLayer(data_list[layer_ind], layer_list[layer_ind], normalize_to='sum', plot_trial_figs=True, save_fig=False)
     fly_indicies = list_to_use[layer_ind]
     # Gets dimensions of metric arrays 
     num_flies, num_opto, num_windows = mean_diff_matrix.shape   
     for fly in range(num_flies):
         for opto in range(num_opto):
             for window in range(num_windows):
+                # print progress
+                print(f'Fly: {fly} of {num_flies} | Opto: {opto} | Window: {window}')
                 metric_df.loc[row_idx] = [
                     fly_indicies[fly], layer_list[layer_ind], mean_diff_matrix[fly, opto, window], sem_mean_diff_matrix[fly, opto, window],
                     min_diff_matrix[fly, opto, window], max_diff_matrix[fly, opto, window], 
@@ -553,6 +565,7 @@ print('---------------------------------FUCKING DONE----------------------------
 print('------------------------------------------------------------------------------------------')
 print('------------------------------------------------------------------------------------------')
 print('------------------------------------------------------------------------------------------')
+
 
 
 # %% Seaborn plots for values over windows (Fig 4)
