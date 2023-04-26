@@ -9,6 +9,7 @@ import os
 from pathlib import Path
 import numpy as np
 from two_photon_analysis import medulla_analysis as ma
+from scipy import interpolate
 
 # %% Loading and concatenating all the data
 # Opto intensity sweep w/ flash experiments (with MoCo!) 2/8/22
@@ -54,18 +55,19 @@ astar1_fly3_pre_dist = [["/Volumes/ABK2TBData/data_repo/bruker/20220527.common_m
 astar1_fly3_alt_dist = [["/Volumes/ABK2TBData/data_repo/bruker/20220527.common_moco", "2022-05-27", "2", "distal_multiple"]]
 astar1_fly3_post_dist = [["/Volumes/ABK2TBData/data_repo/bruker/20220527.common_moco", "2022-05-27", "3", "distal_multiple"]]
 # Fly 4
-# astar1_fly4_pre_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20220527.common_moco", "2022-05-27", "9", "proximal_multiple"]]
-# astar1_fly4_alt_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20220527.common_moco", "2022-05-27", "10", "proximal_multiple"]]
-# astar1_fly4_post_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20220527.common_moco", "2022-05-27", "11", "proximal_multiple"]]
-# astar1_fly4_pre_medi1 = [["/Volumes/ABK2TBData/data_repo/bruker/20220527.common_moco", "2022-05-27", "9", "medial_1_multiple"]]
-# astar1_fly4_alt_medi1 = [["/Volumes/ABK2TBData/data_repo/bruker/20220527.common_moco", "2022-05-27", "10", "medial_1_multiple"]]
-# astar1_fly4_post_medi1 = [["/Volumes/ABK2TBData/data_repo/bruker/20220527.common_moco", "2022-05-27", "11", "medial_1_multiple"]]
-# astar1_fly4_pre_medi2 = [["/Volumes/ABK2TBData/data_repo/bruker/20220527.common_moco", "2022-05-27", "9", "medial_2_multiple"]]
-# astar1_fly4_alt_medi2 = [["/Volumes/ABK2TBData/data_repo/bruker/20220527.common_moco", "2022-05-27", "10", "medial_2_multiple"]]
-# astar1_fly4_post_medi2 = [["/Volumes/ABK2TBData/data_repo/bruker/20220527.common_moco", "2022-05-27", "11", "medial_2_multiple"]]
-# astar1_fly4_pre_dist = [["/Volumes/ABK2TBData/data_repo/bruker/20220527.common_moco", "2022-05-27", "9", "distal_multiple"]]
-# astar1_fly4_alt_dist = [["/Volumes/ABK2TBData/data_repo/bruker/20220527.common_moco", "2022-05-27", "10", "distal_multiple"]]
-# astar1_fly4_post_dist = [["/Volumes/ABK2TBData/data_repo/bruker/20220527.common_moco", "2022-05-27", "11", "distal_multiple"]]
+# Something is wrong with Fly 4
+astar1_fly4_pre_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20220527.common_moco", "2022-05-27", "9", "proximal_multiple"]]
+astar1_fly4_alt_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20220527.common_moco", "2022-05-27", "10", "proximal_multiple"]]
+astar1_fly4_post_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20220527.common_moco", "2022-05-27", "11", "proximal_multiple"]]
+astar1_fly4_pre_medi1 = [["/Volumes/ABK2TBData/data_repo/bruker/20220527.common_moco", "2022-05-27", "9", "medial_1_multiple"]]
+astar1_fly4_alt_medi1 = [["/Volumes/ABK2TBData/data_repo/bruker/20220527.common_moco", "2022-05-27", "10", "medial_1_multiple"]]
+astar1_fly4_post_medi1 = [["/Volumes/ABK2TBData/data_repo/bruker/20220527.common_moco", "2022-05-27", "11", "medial_1_multiple"]]
+astar1_fly4_pre_medi2 = [["/Volumes/ABK2TBData/data_repo/bruker/20220527.common_moco", "2022-05-27", "9", "medial_2_multiple"]]
+astar1_fly4_alt_medi2 = [["/Volumes/ABK2TBData/data_repo/bruker/20220527.common_moco", "2022-05-27", "10", "medial_2_multiple"]]
+astar1_fly4_post_medi2 = [["/Volumes/ABK2TBData/data_repo/bruker/20220527.common_moco", "2022-05-27", "11", "medial_2_multiple"]]
+astar1_fly4_pre_dist = [["/Volumes/ABK2TBData/data_repo/bruker/20220527.common_moco", "2022-05-27", "9", "distal_multiple"]]
+astar1_fly4_alt_dist = [["/Volumes/ABK2TBData/data_repo/bruker/20220527.common_moco", "2022-05-27", "10", "distal_multiple"]]
+astar1_fly4_post_dist = [["/Volumes/ABK2TBData/data_repo/bruker/20220527.common_moco", "2022-05-27", "11", "distal_multiple"]]
 # Fly 5
 astar1_fly5_pre_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20220527.common_moco", "2022-05-27", "14", "proximal_multiple"]]
 astar1_fly5_alt_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20220527.common_moco", "2022-05-27", "16", "proximal_multiple"]]
@@ -81,13 +83,13 @@ astar1_fly5_alt_dist = [["/Volumes/ABK2TBData/data_repo/bruker/20220527.common_m
 astar1_fly5_post_dist = [["/Volumes/ABK2TBData/data_repo/bruker/20220527.common_moco", "2022-05-27", "17", "distal_multiple"]]
 
 
-#Concatenate those suckers
+# Concatenate those suckers
 
 astar1_alt_prox_1_2 = np.concatenate((astar1_fly1_alt_prox, astar1_fly2_alt_prox,), axis=0, )
 astar1_alt_prox_3_5 = np.concatenate((astar1_fly5_alt_prox,), axis=0, )
 
 astar1_alt_prox_all = np.concatenate(
-                                      (astar1_fly1_alt_prox, astar1_fly2_alt_prox, astar1_fly3_alt_prox, astar1_fly5_alt_prox,), axis=0
+                                      (astar1_fly1_alt_prox, astar1_fly2_alt_prox, astar1_fly3_alt_prox, astar1_fly4_alt_prox, astar1_fly5_alt_prox,), axis=0
                                       #(astar1_fly2_alt_prox, astar1_fly3_alt_prox, astar1_fly5_alt_prox,), axis=0
                                     )
 
@@ -127,6 +129,12 @@ Path(save_directory).mkdir(exist_ok=True)
 
 # Function to Pull the trial's data based on the parameter key
 def get_spatiotemporal_responses(ID, trials, which_parameter='spatiotemporal'):
+  # which_parameter can be 'spatiotemporal', 'spatial', 'temporal'
+  # ID is the ID object
+  # trials is the trials object
+  # returns the unique parameter values, mean response, sem response, and trial response by stimulus
+  # also returns the sem plus and sem minus for plotting
+
   # if opto stim
 
   if which_parameter == 'spatiotemporal':
@@ -156,12 +164,38 @@ def get_spatiotemporal_responses(ID, trials, which_parameter='spatiotemporal'):
     #return unique_parameter_values, mean_response, sem_response, sem_plus, sem_minus, unique_parameter_values_spatial, mean_response_spatial, sem_response_spatial, sem_plus_spatial, sem_minus_spatial, unique_parameter_values_temporal, mean_response_temporal, sem_response_temporal, sem_plus_temporal, sem_minus_temporal
   return unique_parameter_values, mean_response, sem_response, sem_plus, sem_minus
 
+# %% Interpolation function
+
+def interpolate_to_common_trial_length(ID, original_values):
+  # Get run parameters (in s)
+  pre_time = ID.getRunParameters("pre_time")
+  stim_time = ID.getRunParameters("stim_time")
+  tail_time = ID.getRunParameters("tail_time")
+  trial_len = pre_time + stim_time + tail_time
+  sample_period = ID.getAcquisitionMetadata("sample_period")
+  interp_len = int(trial_len * 10)
+
+  interp_value = np.zeros((original_values.shape[0], yopto_mean_response.shape[1], interp_len))
+  # len of trial in frames
+  frame_count = len(original_values[0, 0, :])
+  old_time_vector = np.linspace(0, frame_count-1, num=frame_count)
+  new_time_vector = np.linspace(0, frame_count-1, num=interp_len)
+
+  # Loop through ROI and unique parameter values
+  for roi_ind in range(len(original_values)):
+    for up in range(original_values.shape[1]):
+      # Interpolate the sample period into time vector
+      # interpolate yopto_mean_response[roi_data, up, :] into interp_len
+      interp_value[roi_ind, up, :] = np.interp(new_time_vector, old_time_vector, original_values[roi_ind, up, :])
+
+  return interp_value
+
 #%% Individual Trace Plotting - Mostly deprecated
 # Which one to plot
-layer = astar1_alt_prox_3_5
+layer = astar1_alt_prox_all
 background_subtraction = False
 alt_pre_time = .7
-savefig = True
+savefig = False
 
 print('\n\n\n')
 print('======================================================================================')
@@ -181,7 +215,19 @@ flies_yopto_sem_response = []
 for fly_ind in range(len(layer)):
   file_path = os.path.join(layer[fly_ind][0], layer[fly_ind][1] + ".hdf5")
   ID = imaging_data.ImagingDataObject(file_path, layer[fly_ind][2], quiet=True)
+  if fly_ind == 3: # this is to fix the timing channel for the 4th fly
+    cfg_dict = {'timing_channel_ind': 1}
+    ID = imaging_data.ImagingDataObject(file_path, layer[fly_ind][2], quiet=True, cfg_dict = cfg_dict)
+  
   roi_data = ID.getRoiResponses(layer[fly_ind][3], background_subtraction=background_subtraction, background_roi_name='bg_distal')
+
+  # Test DEBUG:
+  print(f'FLY = {str(layer[fly_ind])}')
+  print(f'Sample Period = {ID.getAcquisitionMetadata("sample_period")}')
+  print(f'PRE TIME: = {ID.getRunParameters("pre_time")}')
+  print(f'STIM TIME: = {ID.getRunParameters("stim_time")}')
+  print(f'TAIL TIME: = {ID.getRunParameters("tail_time")}')
+
   # Testing opto vs no opto
   # first, get roi_data
   # getAltEpochResponseMatrix b/c opto comes on during typical pre-time
@@ -192,40 +238,49 @@ for fly_ind in range(len(layer)):
   yes_opto_trials = shared_analysis.filterTrials(test_epoch_response, ID, query=yopto_query)
   no_opto_trials = shared_analysis.filterTrials(test_epoch_response, ID, query=nopto_query)
   # run the function
-  yopto_unique_parameter_values, yopto_mean_response, yopto_sem_response, yopto_sem_plus, yopto_sem_minus, yopto_unique_parameter_values_spatial, yopto_mean_response_spatial, yopto_sem_response_spatial, yopto_sem_plus_spatial, yopto_sem_minus_spatial, yopto_unique_parameter_values_temporal, yopto_mean_response_temporal, yopto_sem_response_temporal, yopto_sem_plus_temporal, yopto_sem_minus_temporal = get_spatiotemporal_responses(yes_opto_trials)
-  nopto_unique_parameter_values, nopto_mean_response, nopto_sem_response, nopto_sem_plus, nopto_sem_minus, nopto_unique_parameter_values_spatial, nopto_mean_response_spatial, nopto_sem_response_spatial, nopto_sem_plus_spatial, nopto_sem_minus_spatial, nopto_unique_parameter_values_temporal, nopto_mean_response_temporal, nopto_sem_response_temporal, nopto_sem_plus_temporal, nopto_sem_minus_temporal = get_spatiotemporal_responses(no_opto_trials)
+  # yopto_unique_parameter_values, yopto_mean_response, yopto_sem_response, yopto_sem_plus, yopto_sem_minus, yopto_unique_parameter_values_spatial, yopto_mean_response_spatial, yopto_sem_response_spatial, yopto_sem_plus_spatial, yopto_sem_minus_spatial, yopto_unique_parameter_values_temporal, yopto_mean_response_temporal, yopto_sem_response_temporal, yopto_sem_plus_temporal, yopto_sem_minus_temporal = get_spatiotemporal_responses(ID, yes_opto_trials)
+  # nopto_unique_parameter_values, nopto_mean_response, nopto_sem_response, nopto_sem_plus, nopto_sem_minus, nopto_unique_parameter_values_spatial, nopto_mean_response_spatial, nopto_sem_response_spatial, nopto_sem_plus_spatial, nopto_sem_minus_spatial, nopto_unique_parameter_values_temporal, nopto_mean_response_temporal, nopto_sem_response_temporal, nopto_sem_plus_temporal, nopto_sem_minus_temporal = get_spatiotemporal_responses(ID, no_opto_trials)
+  yopto_unique_parameter_values, yopto_mean_response, yopto_sem_response,yopto_sem_plus, yopto_sem_minus = get_spatiotemporal_responses(ID, yes_opto_trials)
+  nopto_unique_parameter_values, nopto_mean_response, nopto_sem_response, nopto_sem_plus, nopto_sem_minus = get_spatiotemporal_responses(ID, no_opto_trials)
+
+  interp_yopto_mean = interpolate_to_common_trial_length(ID, yopto_mean_response)
+  interp_nopto_mean = interpolate_to_common_trial_length(ID, nopto_mean_response)
+  interp_yopto_sem = interpolate_to_common_trial_length(ID, yopto_sem_response)
+  interp_nopto_sem = interpolate_to_common_trial_length(ID, nopto_sem_response)
+
 
   # add fly_ind into flies big boi
   if fly_ind == 0:
-    flies_nopto_mean_response = nopto_mean_response
-    flies_yopto_mean_response = yopto_mean_response
-    flies_nopto_sem_response = nopto_sem_response
-    flies_yopto_sem_response = yopto_sem_response
+    flies_nopto_mean_response = interp_nopto_mean
+    flies_yopto_mean_response = interp_yopto_mean
+    flies_nopto_sem_response = interp_nopto_sem
+    flies_yopto_sem_response = interp_yopto_sem
 
   else:
-    flies_nopto_mean_response = np.append(flies_nopto_mean_response, nopto_mean_response, axis=0)
-    flies_yopto_mean_response = np.append(flies_yopto_mean_response, yopto_mean_response, axis=0)
-    flies_nopto_sem_response = np.append(flies_nopto_sem_response, nopto_sem_response, axis=0)
-    flies_yopto_sem_response = np.append(flies_yopto_sem_response, yopto_sem_response, axis=0)
+    flies_nopto_mean_response = np.append(flies_nopto_mean_response, interp_nopto_mean, axis=0)
+    flies_yopto_mean_response = np.append(flies_yopto_mean_response, interp_yopto_mean, axis=0)
+    flies_nopto_sem_response = np.append(flies_nopto_sem_response, interp_nopto_sem, axis=0)
+    flies_yopto_sem_response = np.append(flies_yopto_sem_response, interp_yopto_sem, axis=0)
 
-file_path = os.path.join(layer[0][0], layer[0][1] + ".hdf5")
-ID = imaging_data.ImagingDataObject(file_path, layer[0][2], quiet=True)
-roi_data = ID.getRoiResponses(layer[0][3], background_subtraction=background_subtraction, background_roi_name='bg_distal')
-# Testing opto vs no opto
-# first, get roi_data
-#epoch_response = roi_data.get('epoch_response') 
-# getAltEpochResponseMatrix b/c opto comes on during typical pre-time
-test_time_vector, test_epoch_response = ma.getAltEpochResponseMatrix(ID, np.vstack(roi_data['roi_response']), alt_pre_time=alt_pre_time)
 
-# second, filter by opto
-yopto_query = {'opto_stim': True}
-nopto_query = {'opto_stim': False}
-yes_opto_trials = shared_analysis.filterTrials(test_epoch_response, ID, query=yopto_query)
-no_opto_trials = shared_analysis.filterTrials(test_epoch_response, ID, query=nopto_query)
+# file_path = os.path.join(layer[0][0], layer[0][1] + ".hdf5")
+# ID = imaging_data.ImagingDataObject(file_path, layer[0][2], quiet=True)
+# roi_data = ID.getRoiResponses(layer[0][3], background_subtraction=background_subtraction, background_roi_name='bg_distal')
+# # Testing opto vs no opto
+# # first, get roi_data
+# #epoch_response = roi_data.get('epoch_response') 
+# # getAltEpochResponseMatrix b/c opto comes on during typical pre-time
+# test_time_vector, test_epoch_response = ma.getAltEpochResponseMatrix(ID, np.vstack(roi_data['roi_response']), alt_pre_time=alt_pre_time)
 
-# run the function
-yopto_unique_parameter_values, yopto_mean_response, yopto_sem_response, yopto_sem_plus, yopto_sem_minus, yopto_unique_parameter_values_spatial, yopto_mean_response_spatial, yopto_sem_response_spatial, yopto_sem_plus_spatial, yopto_sem_minus_spatial, yopto_unique_parameter_values_temporal, yopto_mean_response_temporal, yopto_sem_response_temporal, yopto_sem_plus_temporal, yopto_sem_minus_temporal = get_spatiotemporal_responses(yes_opto_trials)
-nopto_unique_parameter_values, nopto_mean_response, nopto_sem_response, nopto_sem_plus, nopto_sem_minus, nopto_unique_parameter_values_spatial, nopto_mean_response_spatial, nopto_sem_response_spatial, nopto_sem_plus_spatial, nopto_sem_minus_spatial, nopto_unique_parameter_values_temporal, nopto_mean_response_temporal, nopto_sem_response_temporal, nopto_sem_plus_temporal, nopto_sem_minus_temporal = get_spatiotemporal_responses(no_opto_trials)
+# # second, filter by opto
+# yopto_query = {'opto_stim': True}
+# nopto_query = {'opto_stim': False}
+# yes_opto_trials = shared_analysis.filterTrials(test_epoch_response, ID, query=yopto_query)
+# no_opto_trials = shared_analysis.filterTrials(test_epoch_response, ID, query=nopto_query)
+
+# # run the function
+# yopto_unique_parameter_values, yopto_mean_response, yopto_sem_response, yopto_sem_plus, yopto_sem_minus, yopto_unique_parameter_values_spatial, yopto_mean_response_spatial, yopto_sem_response_spatial, yopto_sem_plus_spatial, yopto_sem_minus_spatial, yopto_unique_parameter_values_temporal, yopto_mean_response_temporal, yopto_sem_response_temporal, yopto_sem_plus_temporal, yopto_sem_minus_temporal = get_spatiotemporal_responses(yes_opto_trials)
+# nopto_unique_parameter_values, nopto_mean_response, nopto_sem_response, nopto_sem_plus, nopto_sem_minus, nopto_unique_parameter_values_spatial, nopto_mean_response_spatial, nopto_sem_response_spatial, nopto_sem_plus_spatial, nopto_sem_minus_spatial, nopto_unique_parameter_values_temporal, nopto_mean_response_temporal, nopto_sem_response_temporal, nopto_sem_plus_temporal, nopto_sem_minus_temporal = get_spatiotemporal_responses(no_opto_trials)
 
 # plotting the raw traces
 # Plotting nopto on top of opto
