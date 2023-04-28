@@ -903,7 +903,7 @@ def getTrialTrfs(ID, response_trace, filter_duration, dff=True, trial_subset_fra
         new_stim = np.array([getRandVal(rand_min, rand_max, start_seed, update_rate, t) for t in stim_times])
         current_frame_times = stimulus_start_times[epoch_ind] + stim_times - sample_period  # In Prairie View time (sec)
 
-        baseline_time = 0.5 # (sec) generally could be pre_time, but for opto only take previous n sec
+        baseline_time = 1 # (sec) generally could be pre_time, but for opto only take previous n sec
         baseline_times = np.linspace(current_frame_times[0]-baseline_time, current_frame_times[0], int(baseline_time/sample_period))
         baseline = np.mean(f_interp_response(baseline_times))
 

@@ -42,7 +42,7 @@ for s_ind, ser in enumerate(matching_series):
     time_vec, erm = ma.getAltEpochResponseMatrix(ID, 
                                                 roi_data.get('roi_response')[0], 
                                                 alt_pre_time=0, 
-                                                dff=True, 
+                                                dff=False, 
                                                 df=False)
 
     # Opto trials
@@ -60,7 +60,7 @@ for s_ind, ser in enumerate(matching_series):
     diff = opto_trials - nopto_trials  # difference of subsequent trials (same seed)
 
     filter_duration = 1.5 # sec
-    filter_results = ma.getTrialTrfs(ID, response_trace, filter_duration, dff=True, trial_subset_fraction=0.25)
+    filter_results = ma.getTrialTrfs(ID, response_trace, filter_duration, dff=False, trial_subset_fraction=0.25)
 
     filter_time = filter_results.get('filter_time')
     trial_trfs = filter_results.get('trial_trfs')
