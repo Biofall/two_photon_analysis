@@ -869,152 +869,79 @@ def getAltEpochResponseMatrix(ID, region_response, alt_pre_time=0, dff=True, df=
         return time_vector, response_matrix
 
 # TRF Utils Below:
+def getTrialTrfs(ID, response_trace, filter_duration, dff=True, trial_subset_fraction=0.5):
 
-def trfMaker(
-             experiment_file_directory, experiment_file_name,
-             series_number, roi_set_name, filter_length, dff, savefig = True, silent = False
-            ):
-    # join path to proper format for ImagingDataObject()
-    file_path = os.path.join(experiment_file_directory, experiment_file_name + ".hdf5")
-    print(file_path)
-    # create save directory
-    save_directory = "/Volumes/ROG2TBAK/data/bruker/trfs/" + experiment_file_name + "/"
-    print(save_directory)
-    Path(save_directory).mkdir(exist_ok=True)
-    # create ImagingDataObject (wants a path to an hdf5 file and a series number from that file)
-    ID = imaging_data.ImagingDataObject(file_path, series_number, quiet=True)
-    # get ROI timecourses and stimulus parameters
-    roi_data = ID.getRoiResponses(roi_set_name)
-    ID.getRoiSetNames()
-
-    # Interpolation of the ROI response trace into sample period time
-    roi_ind = 0
-    response_trace = roi_data.get('roi_response')[roi_ind][0, :]
     response_time = np.arange(1, len(response_trace)+1) * ID.getAcquisitionMetadata('sample_period')
     # Interpolation function to interpolate response. Fxn built using sample period
     f_interp_response = interpolate.interp1d(response_time, response_trace)
 
-    # Establish relevant variables
+    # Get relevant params
     epoch_parameters = ID.getEpochParameters()
     ideal_frame_rate = 120  # Hz
     sample_period = ID.getAcquisitionMetadata('sample_period') # (sec), bruker imaging acquisition period
-    filter_len = filter_length * ideal_frame_rate
+    filter_len = int(filter_duration * ideal_frame_rate)
     stimulus_timing = ID.getStimulusTiming(plot_trace_flag=False)
     stimulus_start_times = stimulus_timing['stimulus_start_times']
-    run_parameters = ID.getRunParameters
-    stim_frames = run_parameters('stim_time') * ideal_frame_rate
-
+    stim_time = ID.getRunParameters('stim_time')
+    num_epochs = int(ID.getRunParameters('num_epochs'))
+    stim_frames = stim_time * ideal_frame_rate
     # frame flip times in a stimulus presentation:
     stim_times = np.arange(1, stim_frames+1) * 1/ideal_frame_rate
 
-    # Initialize roi_trfs - ROI x Filter x Trials
-    roi_trfs = np.zeros(
-        (
-            roi_data["epoch_response"].shape[0],
-            int(filter_len),
-            int(run_parameters("num_epochs")),
-        )
-    )
-    all_stims = []
-    all_responses = []
+    # Initialize roi_trfs - Filter x Trials
+    trial_trfs = np.zeros((filter_len, num_epochs))
+    start_trfs = np.zeros((filter_len, num_epochs))
+    end_trfs = np.zeros((filter_len, num_epochs))
 
-    if silent == False:
-        print('\n----------------------------------------------------------------------------------')
-        print('Initializing: (1) visual stim recreation (2) fft responses (3) generate filters...\n')
+    for epoch_ind in range(num_epochs):
+        # Regenerate the stimulus
+        start_seed = epoch_parameters[epoch_ind]['start_seed']
+        rand_min = eval(epoch_parameters[epoch_ind]['distribution_data'])['kwargs']['rand_min']
+        rand_max = eval(epoch_parameters[epoch_ind]['distribution_data'])['kwargs']['rand_max']
+        update_rate = epoch_parameters[epoch_ind]['update_rate']
 
-    for epoch_ind in range(int(ID.getRunParameters('num_epochs'))):
-        if (epoch_ind%10 == 0) and silent == False:
-            print(f'...Starting Trial {epoch_ind} of {int(ID.getRunParameters("num_epochs"))}...')
-        for roi_ind in range(0, roi_data["epoch_response"].shape[0]):
-            # initalize trf by trial array (T, trial)
-            roi_trf = np.zeros((int(filter_len), int(run_parameters("num_epochs"))))
+        new_stim = np.array([getRandVal(rand_min, rand_max, start_seed, update_rate, t) for t in stim_times])
+        current_frame_times = stimulus_start_times[epoch_ind] + stim_times - sample_period  # In Prairie View time (sec)
 
-            response_trace = roi_data.get('roi_response')[roi_ind][0, :]
-            response_time = np.arange(1, len(response_trace)+1) * ID.getAcquisitionMetadata('sample_period')
-            # Interpolation function to interpolate response. Fxn built using sample period
-            f_interp_response = interpolate.interp1d(response_time, response_trace)
+        baseline_time = 0.5 # (sec) generally could be pre_time, but for opto only take previous n sec
+        baseline_times = np.linspace(current_frame_times[0]-baseline_time, current_frame_times[0], int(baseline_time/sample_period))
+        baseline = np.mean(f_interp_response(baseline_times))
 
-            # Regenerate the stimulus
-            start_seed = epoch_parameters[epoch_ind]['start_seed']
-            rand_min = eval(epoch_parameters[epoch_ind]['distribution_data'])['kwargs']['rand_min']
-            rand_max = eval(epoch_parameters[epoch_ind]['distribution_data'])['kwargs']['rand_max']
-            update_rate = epoch_parameters[epoch_ind]['update_rate']
+        if dff == True:
+            # Convert to dF/F
+            current_interp_response = (f_interp_response(current_frame_times) - baseline) / baseline
+        else: # don't df/f
+            current_interp_response = f_interp_response(current_frame_times)
 
-            new_stim = np.array([getRandVal(rand_min, rand_max, start_seed, update_rate, t) for t in stim_times])
-            current_frame_times = stimulus_start_times[epoch_ind] + stim_times  # In Prairie View time (sec)
+        # Use the entire trial to compute the filter
+        trial_trfs[:, epoch_ind] = filterFinder(new_stim,
+                                                current_interp_response,
+                                                filter_len)
 
-            baseline_time = 1 # (sec) generally could be pre_time, but for opto only take previous 1 sec
-            baseline_times = np.linspace(current_frame_times[0]-baseline_time, current_frame_times[0], int(1/sample_period))
-            baseline = np.mean(f_interp_response(baseline_times))
+        start_trfs[:, epoch_ind] = filterFinder(new_stim[:int(trial_subset_fraction*len(new_stim))],
+                                                current_interp_response[:int(trial_subset_fraction*len(new_stim))],
+                                                filter_len)
+        end_trfs[:, epoch_ind] = filterFinder(new_stim[int((1-trial_subset_fraction)*len(new_stim)):],
+                                                current_interp_response[int((1-trial_subset_fraction)*len(new_stim)):],
+                                                filter_len)
+            
+        filter_time = np.flip(np.arange(0, filter_len) * 1/ideal_frame_rate) # sec
 
-            if dff == True:
-                # Convert to dF/F
-                current_interp_response = (f_interp_response(current_frame_times) - baseline) / baseline
-            else: # don't df/f
-                current_interp_response = f_interp_response(current_frame_times)
+        filter_results = {'filter_time': filter_time,
+                          'trial_trfs': trial_trfs,
+                          'start_trfs': start_trfs,
+                          'end_trfs': end_trfs}
 
-            filter_fft = np.fft.fft(current_interp_response - np.mean(current_interp_response)) * np.conj(
-              np.fft.fft(new_stim - np.mean(new_stim)))
-
-            filt = np.real(np.fft.ifft(filter_fft))[0 : int(filter_len)]
-
-            trf = np.flip(filt)
-
-            #roi_trf[:, epoch_ind] = trf
-            roi_trfs[roi_ind, :, epoch_ind] = trf
-    if silent == False:
-    #all_trfs = np.stack(all_trfs, axis=-1)
-        print('\n-------')
-        print('DONE!')
-        print('-------\n')
-
-    # Run optoSplit
-    (roi_mean_trf, nopto_mean_trf, nopto_sem_plus, nopto_sem_minus,
-     yopto_mean_trf, yopto_sem_plus, yopto_sem_minus) = optoSplitAndMean(roi_trfs)
-
-    return (roi_mean_trf, nopto_mean_trf, nopto_sem_plus, nopto_sem_minus,
-            yopto_mean_trf, yopto_sem_plus, yopto_sem_minus)
-
-def optoSplitAndMean(roi_trfs, silent = True):
-    # SPLIT into NO Opto and YES Opto trials (alternating)
-    no_slice = roi_trfs[:, :, 0::2]  # Every 2 trials, starting at 0
-    yes_slice = roi_trfs[:, :, 1::2]  # Every 2 trials, starting at 1
-
-    # compute mean TRF across trials
-    # We go from ROI x TRF x Trial --> ROI x TRF
-    roi_mean_trf = np.mean(roi_trfs, 2)
-    nopto_mean_trf = np.mean(no_slice, 2)
-    yopto_mean_trf = np.mean(yes_slice, 2)
-
-    # Standard Error of the Mean calculations
-    nopto_sem = sem(no_slice, axis=2)  # calculate the no opto sem
-    nopto_sem_plus = nopto_mean_trf + nopto_sem
-    nopto_sem_minus = nopto_mean_trf - nopto_sem
-    yopto_sem = sem(yes_slice, axis=2)  # calculate the yes opto sem
-    yopto_sem_plus = yopto_mean_trf + yopto_sem
-    yopto_sem_minus = yopto_mean_trf - yopto_sem
+    return filter_results
 
 
-    if silent == False:
-        # Checking ouputs for separating no opto from opto trials
-        print("\n----------------------------------------------------------------------------")
-        print("----------------------------------------------------------------------------")
-        print("||    Checking the shape of the various trfs to ensure opto/no opto split:!")
-        print("||    Shape of roi_trfs is: " + str(roi_trfs.shape))
-        print("||    Shape of no_slice is: " + str(no_slice.shape))
-        print("||    Shape of yes_slice is: " + str(yes_slice.shape))
-        print("||")
-        print("||    Shape of roi_mean_trf is: " + str(roi_mean_trf.shape))
-        print("||    Shape of nopto_mean_trf is: " + str(nopto_mean_trf.shape))
-        print("||    Shape of yopto_mean_trf is: " + str(yopto_mean_trf.shape))
-        print("----------------------------------------------------------------------------")
-        print("----------------------------------------------------------------------------\n")
+def filterFinder(stim, resp, filter_len):
+    filter_fft = np.fft.fft(resp - np.mean(resp)) * np.conj(
+        np.fft.fft(stim - np.mean(stim)))
+    filt = np.real(np.fft.ifft(filter_fft))[0 : int(filter_len)]
+    trf = np.flip(filt)
+    return trf
 
-        print(f'shape of std error is {nopto_sem_plus.shape}')
-
-    return (roi_mean_trf, nopto_mean_trf, nopto_sem_plus, nopto_sem_minus,
-            yopto_mean_trf, yopto_sem_plus, yopto_sem_minus
-           )
 
 def avgAcrossROIs(nopto_mean_trf, nopto_sem_plus, nopto_sem_minus, yopto_mean_trf, yopto_sem_plus, yopto_sem_minus):
     # We go from ROI x TRF --> TRF
