@@ -832,7 +832,7 @@ def getAltEpochResponseMatrix(ID, region_response, alt_pre_time=0, dff=True, df=
                 elif alt_pre_time > 0:
                     samplePeriod = response_timing['sample_period']
                     alt_pre_frames = int(alt_pre_time/samplePeriod)
-                    baseline = np.mean(new_resp_chunk[:, 0:alt_pre_frames], axis=1, keepdims=True)
+                    baseline = np.mean(new_resp_chunk[:, (pre_frames-alt_pre_frames):pre_frames], axis=1, keepdims=True)
 
                 # to dF/F
                 with warnings.catch_warnings():  # Warning to catch divide by zero or nan. Will return nan or inf
