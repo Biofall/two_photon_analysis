@@ -147,6 +147,8 @@ mi1_perf_all_list = [mi1_prox_perf_list, mi1_medi_perf_list, mi1_dist_perf_list]
 mi1_post_all = [mi1_prox_post_all, mi1_medi_post_all, mi1_dist_post_all] 
 mi1_post_all_list = [mi1_prox_post_list, mi1_medi_post_list, mi1_dist_post_list]
 
+mi1_fly5 = [mi1_fly5_pre_prox, mi1_fly5_perf_prox]
+
 # Concatenate all together
 mi1_all_good = [mi1_pre_all, mi1_perf_all, mi1_post_all]
 mi1_all_good_list = [mi1_pre_all_list, mi1_perf_all_list, mi1_post_all_list]
@@ -226,7 +228,6 @@ if save_figures:
     save_path = os.path.join(save_directory, save_name)
     fh.savefig(save_path, dpi=300)
 
-
 # %% Plot max values using ID.getResponseAmplitude across all ROIs
 # Proximal, Medial, or Distal (0, 1, or 2)
 layer = 0
@@ -285,13 +286,81 @@ if save_figures:
     met_fig.savefig(save_path, dpi=300)
 
 
+
+
+
+
+ #%%
+
+
+# %% Plot max values using ID.getResponseAmplitude across all ROIs. End to end across blocks
+# Proximal, Medial, or Distal (0, 1, or 2)
+layer = 0
+save_figures = False
+# which_layer = mi1_all_good 
+which_layer = mi1_fly5
+
+exp_count = len(which_layer[0][layer]) # number of experiments
+
+met_fig, met_ax = plt.subplots(exp_count, 3, figsize=(16*3, 8*exp_count))
+# set the color map
+cmap = plt.get_cmap('Pastel2') # also 'cool' 'winter' 'PRGn' 'Pastel1' 'YlGnBu' 'twilight'
+colors = [cmap(i) for i in np.linspace(0.0, 1.0, 8)]
+
+for block_ind in range(len(exp_block_type)):
+    for exp_ind in range(exp_count):
+        # debug print the indecies
+        print(f'block_ind: {block_ind}, exp_ind: {exp_ind}')
+
+        time_vector, mean_response, sem_plus, sem_minus, mean_across_rois, max_across_rois, min_across_rois = getMetrics(which_layer[block_ind][layer][exp_ind])
+
+        xx = np.arange(len(max_across_rois)) + (block_ind * len(max_across_rois))
+        # plot the max_across_rois
+        met_ax[exp_ind, 0].plot(xx, max_across_rois, color=colors[block_ind], label=exp_block_type[block_ind])
+        # plot the min_across_rois
+        met_ax[exp_ind, 1].plot(xx, min_across_rois, color=colors[block_ind], label=exp_block_type[block_ind])
+        # plot the mean_across_rois
+        met_ax[exp_ind, 2].plot(xx, mean_across_rois, color=colors[block_ind], label=exp_block_type[block_ind])
+
+        # title for subfigure
+        met_ax[exp_ind, 0].set_title(f'Fly {mi1_all_good_list[block_ind][0][exp_ind]} Max Response')
+        met_ax[exp_ind, 1].set_title(f'Fly {mi1_all_good_list[block_ind][0][exp_ind]} Min Response')
+        met_ax[exp_ind, 2].set_title(f'Fly {mi1_all_good_list[block_ind][0][exp_ind]} Mean Response')
+        # X axis label
+        met_ax[exp_ind, 0].set_xlabel('Trials')
+        # Y axis label
+        met_ax[exp_ind, 0].set_ylabel('Max Response')
+        met_ax[exp_ind, 1].set_ylabel('Min Response')
+        met_ax[exp_ind, 2].set_ylabel('Mean Response')
+
+# show legend for all subplots and set the legend alpha to white
+for i in range(3):
+    # set every subplot background to have a grid with an alpha of 0.5 and white
+    for j in range(exp_count):
+        # set the legend to a white background
+        met_ax[j, i].legend(facecolor='white', framealpha=1)
+        met_ax[j, i].grid(alpha=0.5, color='white')
+        # set the plots to have a black background
+        met_ax[j, i].set_facecolor('black')
+    
+# Title for whole figure
+met_fig.suptitle(f'All {exp_layer[0]} Metrics Averaged Across ROIs')
+
+# Save the figure
+if save_figures:
+    save_name = f'All_{exp_layer[0]}_Metrics_Averaged_Across_ROIs.pdf'
+    save_path = os.path.join(save_directory, save_name)
+    met_fig.savefig(save_path, dpi=300)
+
+
+
 # %% Plot max, min, mean values for a specific layer across all condtions
 # concatenate all the mi1_fly4 conditions
 mi1_fly4_medi = np.concatenate((mi1_fly4_pre_medi, mi1_fly4_perf_medi, mi1_fly4_post_medi,), axis=0)
 mi1_fly4_dist = np.concatenate((mi1_fly4_pre_dist, mi1_fly4_perf_dist, mi1_fly4_post_dist,), axis=0)
 
-which_layer = mi1_fly4_dist
-save_figures = True
+which_layer = mi1_fly4_prox
+save_figures = False
 
 # Create figure
 fig, ax = plt.subplots(1, 3, figsize=(16*3, 8))
@@ -328,6 +397,7 @@ if save_figures:
     save_name = f'All_Metrics_Averaged_Across_ROIs_for_{which_layer[0][3]}.png'
     save_path = os.path.join(save_directory, save_name)
     fig.savefig(save_path, dpi=300)
+
 
 
 # %% Plot every single fly's Max Value over time for a specific layer
