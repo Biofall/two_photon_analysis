@@ -156,12 +156,12 @@ def interpolate_to_common_trial_length(ID, original_values):
 
 
 #%% Pulling Traces separated by opto and unique parameter values
-layer = astar1_alt_prox_all  #astar1_alt_prox_all, astar1_fly5_alt_prox
+layer = astar1_fly3_alt_prox  #astar1_alt_prox_all, astar1_fly5_alt_prox
 background_subtraction = False
-alt_pre_time = 0.2 # this now is backwards from the vis stim time
+alt_pre_time = 2 # this now is backwards from the vis stim time
 dff = False
 display_fix = True
-layer_name = 'astar1_alt_prox_all'
+layer_name = 'astar1_fly3_alt_prox'
 
 print('\n\n\n')
 print('======================================================================================')
@@ -174,7 +174,6 @@ flies_nopto_mean_response = []
 flies_yopto_mean_response = []
 flies_nopto_sem_response = []
 flies_yopto_sem_response = []
-
 
 spatial_periods = [10, 20, 40, 80]
 temporal_frequencies = [0.5, 1, 2, 4]
@@ -194,11 +193,6 @@ for fly_ind in range(len(layer)):
   # first, get roi_data
   # getAltEpochResponseMatrix b/c opto comes on during typical pre-time
   time_vector, epoch_response = ma.getAltEpochResponseMatrix(ID, np.vstack(roi_data['roi_response']), dff=dff, alt_pre_time=alt_pre_time)
-  # second, filter by opto
-  yopto_query = {'opto_stim': True}
-  nopto_query = {'opto_stim': False}
-  yes_opto_trials = shared_analysis.filterTrials(epoch_response, ID, query=yopto_query)
-  no_opto_trials = shared_analysis.filterTrials(epoch_response, ID, query=nopto_query)
   
   parameter_keys = ('opto_stim', 'current_spatial_period', 'current_temporal_frequency')
   unique_parameter_values, mean_response, sem_response, _ = ID.getTrialAverages(epoch_response,
@@ -247,33 +241,122 @@ for fly_ind in range(len(layer)):
     flies_nopto_sem_response = np.append(flies_nopto_sem_response, reordered_sem[:, 0, :, :, :], axis=0)
     flies_yopto_sem_response = np.append(flies_yopto_sem_response, reordered_sem[:, 1, :, :, :], axis=0)
 
-# creating sem plus and minus
-flies_yopto_sem_plus = flies_yopto_mean_response + flies_yopto_sem_response
-flies_yopto_sem_minus = flies_yopto_mean_response - flies_yopto_sem_response
+# calculate the sem plus and minus
 flies_nopto_sem_plus = flies_nopto_mean_response + flies_nopto_sem_response
 flies_nopto_sem_minus = flies_nopto_mean_response - flies_nopto_sem_response
+flies_yopto_sem_plus = flies_yopto_mean_response + flies_yopto_sem_response
+flies_yopto_sem_minus = flies_yopto_mean_response - flies_yopto_sem_response
+
+
+# Now, working in the average space. Must recalculate sem here because the mean is across ROIs
+# calculate mean and sem across ROIs
+across_roi_mean_nopto = np.nanmean(flies_nopto_mean_response, axis=0)
+across_roi_mean_yopto = np.nanmean(flies_yopto_mean_response, axis=0)
+# calculate the standard error of the mean across ROIs
+across_roi_sem_nopto = np.nanstd(flies_nopto_mean_response, axis=0) / np.sqrt(flies_nopto_mean_response.shape[0])
+across_roi_sem_yopto = np.nanstd(flies_yopto_mean_response, axis=0) / np.sqrt(flies_yopto_mean_response.shape[0])
+# calculate the mean plus sem and mean minus sem
+across_roi_mean_plus_sem_nopto = across_roi_mean_nopto + across_roi_sem_nopto
+across_roi_mean_minus_sem_nopto = across_roi_mean_nopto - across_roi_sem_nopto
+across_roi_mean_plus_sem_yopto = across_roi_mean_yopto + across_roi_sem_yopto
+across_roi_mean_minus_sem_yopto = across_roi_mean_yopto - across_roi_sem_yopto
 
 # Find unique parameter values with opto column removed and np.unique to remove duplications
 optoless_unique_parameter_values = np.unique(np.delete((unique_parameter_values), 0, axis=1), axis=0)
 
 
+# %% Separate pipeline just for looking at pre and post conditions for individual flies
+fly_id = astar1_fly1_pre_prox
+layer_name = 'astar1_fly1_pre_prox'
+display_fix = False
+save_fig = True
 
-# %%  Plot the whole trace averaging across ROIs
-savefig = True
+spatial_periods = [10, 20, 40, 80]
+temporal_frequencies = [0.5, 1, 2, 4]
+
+file_path = os.path.join(fly_id[0][0], fly_id[0][1] + ".hdf5")
+if display_fix == True:
+  cfg_dict = {'timing_channel_ind': 1}
+  ID = imaging_data.ImagingDataObject(file_path, fly_id[0][2], quiet=True, cfg_dict = cfg_dict)
+else:  
+  ID = imaging_data.ImagingDataObject(file_path, fly_id[0][2], quiet=True)
+roi_data = ID.getRoiResponses(fly_id[0][3])
+time_vector, epoch_response = ID.getEpochResponseMatrix(np.vstack(roi_data['roi_response']))
+parameter_keys = ('current_spatial_period', 'current_temporal_frequency')
+unique_parameter_values, mean_response, sem_response, _ = ID.getTrialAverages(epoch_response, parameter_key=parameter_keys)
+unique_parameter_values = np.array(unique_parameter_values)
+# instantiate empty arrays
+reordered_fly_mean = np.zeros((mean_response.shape[0], len(spatial_periods), len(temporal_frequencies), mean_response.shape[-1]))
+reordered_fly_mean[:] = np.nan
+reordered_fly_sem = np.zeros((sem_response.shape[0], len(spatial_periods), len(temporal_frequencies), sem_response.shape[-1]))
+reordered_fly_sem[:] = np.nan
+
+# Put mean responses into reordered_mean based on spatial_periods and temporal_frequencies
+for spatial_ind, spatial in enumerate(spatial_periods):
+  for temporal_ind, temporal in enumerate(temporal_frequencies):
+    tmp_ind = np.intersect1d(np.where(spatial == unique_parameter_values[:, 0]),
+                              np.where(temporal == unique_parameter_values[:, 1]))
+    if len(tmp_ind) == 0:
+      pass # skip
+    elif len(tmp_ind) == 1:
+      reordered_fly_mean[:, spatial_ind, temporal_ind, :] = mean_response[:, tmp_ind[0], :]
+      reordered_fly_sem[:, spatial_ind, temporal_ind, :] = sem_response[:, tmp_ind[0], :]
+    else:
+      print('This should never happen')
+if np.any(np.isnan(reordered_fly_mean)):
+  print('Nans found - missing param combo')
+
+# calculate the number of ROIs
+num_rois = len(reordered_fly_mean)
+# calculate the mean and sem across ROIs
+fly_mean = np.nanmean(reordered_fly_mean, axis=0)
+# calculate the standard error of the mean across ROIs
+fly_sem = np.nanstd(reordered_fly_mean, axis=0) / np.sqrt(np.sum(~np.isnan(reordered_fly_mean), axis=0))
+# calculate the sem_plus and sem_minus
+fly_sem_plus = fly_mean + fly_sem
+fly_sem_minus = fly_mean - fly_sem
+
+# Plot the average trace across ROIs for each spatial_period and temporal_frequency
+# define the plot color
+c = [193/255, 70/255, 255/255]
 
 fh, ax = plt.subplots(len(spatial_periods), len(temporal_frequencies), figsize=(8*len(spatial_periods), 8*len(temporal_frequencies)))
 for sp_ind, spatial in enumerate(spatial_periods):
   for tf_ind, temporal in enumerate(temporal_frequencies):
 
-    ax[sp_ind, tf_ind].plot(interp_time, np.nanmean(flies_yopto_mean_response[:, sp_ind, tf_ind, :], axis=0), color='red', alpha=0.9, label='opto')
-    ax[sp_ind, tf_ind].plot(interp_time, np.nanmean(flies_nopto_mean_response[:, sp_ind, tf_ind, :], axis=0), color='black', alpha=0.9, label='no opto')
+    ax[sp_ind, tf_ind].plot(time_vector, fly_mean[sp_ind, tf_ind, :], color='black')
+    ax[sp_ind, tf_ind].fill_between(time_vector, fly_sem_plus[sp_ind, tf_ind, :], fly_sem_minus[sp_ind, tf_ind, :], color=c, alpha=0.5)
+    
+    ax[sp_ind, tf_ind].set_title('Spatial Period = ' + str(spatial) + ' Temporal Frequency = ' + str(temporal))
+    ax[sp_ind, tf_ind].set_xlabel('time (s)')
+    ax[sp_ind, tf_ind].set_ylabel('dF/F')
+fh.suptitle(f'{layer_name} Mean Response Across {str(num_rois)} ROIs')
 
-    ax[sp_ind, tf_ind].fill_between(interp_time, np.nanmean(flies_yopto_sem_plus[:, sp_ind, tf_ind, :], axis=0), 
-                    np.nanmean(flies_yopto_sem_minus[:, sp_ind, tf_ind, :], axis=0),
-                    color='red', alpha=0.1)
-    ax[sp_ind, tf_ind].fill_between(interp_time, np.nanmean(flies_nopto_sem_plus[:, sp_ind, tf_ind, :], axis=0),
-                    np.nanmean(flies_nopto_sem_minus[:, sp_ind, tf_ind, :], axis=0),
-                    color='black', alpha=0.1)
+# save figure
+if save_fig == True:
+  fh.savefig(os.path.join(save_directory, f'{layer_name}_mean_response_across_{str(num_rois)}_ROIs.pdf'), dpi=300, bbox_inches='tight')
+plt.close('all')
+ 
+
+
+
+
+
+
+
+# %%  Plot the whole trace averaging across ROIs
+savefig = False
+
+fh, ax = plt.subplots(len(spatial_periods), len(temporal_frequencies), figsize=(8*len(spatial_periods), 8*len(temporal_frequencies)))
+for sp_ind, spatial in enumerate(spatial_periods):
+  for tf_ind, temporal in enumerate(temporal_frequencies):
+
+    ax[sp_ind, tf_ind].plot(interp_time, across_roi_mean_nopto[sp_ind, tf_ind, :], color='black', alpha=0.9, label='no opto')
+    ax[sp_ind, tf_ind].plot(interp_time, across_roi_mean_yopto[sp_ind, tf_ind, :], color='red', alpha=0.9, label='opto')
+    ax[sp_ind, tf_ind].fill_between(interp_time, across_roi_mean_plus_sem_nopto[sp_ind, tf_ind, :], across_roi_mean_minus_sem_nopto[sp_ind, tf_ind, :],
+                                     color='black', alpha=0.1) 
+    ax[sp_ind, tf_ind].fill_between(interp_time, across_roi_mean_plus_sem_yopto[sp_ind, tf_ind, :], across_roi_mean_minus_sem_yopto[sp_ind, tf_ind, :],
+                                      color='red', alpha=0.1)
     
     # Legend, Grid, Axis
     ax[sp_ind, tf_ind].legend()
@@ -485,21 +568,23 @@ def compareMetrics(nopto_windows_mean, yopto_windows_mean, nopto_windows_max, yo
   return mean_diff_norm, mean_diff_norm_ROI_avg, mean_diff_norm_ROI_sem, max_diff_norm, max_diff_norm_ROI_avg, max_diff_norm_ROI_sem
 
 # %% testing getMetricsFromROIs and compareMetrics
-
 # get the windows and metrics
+peek_at_progress = False
+
 nopto_windows, yopto_windows, nopto_windows_mean, yopto_windows_mean, nopto_windows_max, yopto_windows_max = getMetricsFromROIs(flies_nopto_mean_response, flies_yopto_mean_response)
 
-# create a new figure
-fh, ax = plt.subplots(1, figsize=(16, 8))
-ax.plot(flies_nopto_mean_response[0, 2, 2, :])
-ax.plot(nopto_windows[0, 2, 2, :])
+  if peek_at_progress == True:
+  # create a new figure
+  fh, ax = plt.subplots(1, figsize=(16, 8))
+  ax.plot(flies_nopto_mean_response[0, 2, 2, :])
+  ax.plot(nopto_windows[0, 2, 2, :])
 
-# create a new figure
-fh, ax = plt.subplots(1, figsize=(16, 8))
-ax.plot(flies_nopto_mean_response[2, 1, 1, :])
-ax.plot(nopto_windows[1, 1, 1, :])
+  # create a new figure
+  fh, ax = plt.subplots(1, figsize=(16, 8))
+  ax.plot(flies_nopto_mean_response[2, 1, 1, :])
+  ax.plot(nopto_windows[1, 1, 1, :])
 
-# compare the metrics
+# Run compareMetrics
 mean_diff_norm, mean_diff_norm_ROI_avg, mean_diff_norm_ROI_sem, max_diff_norm, max_diff_norm_ROI_avg, max_diff_norm_ROI_sem = compareMetrics(nopto_windows_mean, yopto_windows_mean, nopto_windows_max, yopto_windows_max)
 
 # %% Plot the metrics
@@ -515,6 +600,7 @@ for sp_ind in range(len(spatial_periods)):
     ax[sp_ind, tf_ind].set_xticks([0, 1])
     ax[sp_ind, tf_ind].set_xticklabels(['mean', 'max'])
     ax[sp_ind, tf_ind].set_ylabel('normalized difference')
+fh.suptitle('Mean and max normalized difference between opto and no opto windows')
 
 
 # Loop through spatial_periods and temporal_frequences, and for each parameter, make a boxplot for mean_diff_norm and max_diff_norm
@@ -577,14 +663,6 @@ if save_fig == True:
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-
-
-
-#=============================================================================================================================================
-#=============================================================================================================================================
-#=============================================================================================================================================
-#=============================================================================================================================================
-#=============================================================================================================================================
 
 # %%
 #TODO: 
