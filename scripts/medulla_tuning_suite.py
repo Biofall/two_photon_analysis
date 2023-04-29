@@ -130,43 +130,6 @@ astar1_alt_dist_all = np.concatenate(
 save_directory = "/Volumes/ABK2TBData/lab_repo/analysis/outputs/medulla_tuning_suite/" #+ experiment_file_name + "/"
 Path(save_directory).mkdir(exist_ok=True)
 
-# # Function to Pull the trial's data based on the parameter key
-# def get_spatiotemporal_responses(ID, trials, which_parameter='spatiotemporal'):
-#   # which_parameter can be 'spatiotemporal', 'spatial', 'temporal'
-#   # ID is the ID object
-#   # trials is the trials object
-#   # returns the unique parameter values, mean response, sem response, and trial response by stimulus
-#   # also returns the sem plus and sem minus for plotting
-
-#   # if opto stim
-
-#   if which_parameter == 'spatiotemporal':
-#     parameter_keys = ('current_spatial_period', 'current_temporal_frequency')
-
-#     unique_parameter_values, mean_response, sem_response, trial_response_by_stimulus = ID.getTrialAverages(epoch_response_matrix=trials, parameter_key=parameter_keys)
-#     # calc the sem + / -
-#     sem_plus = mean_response + sem_response
-#     sem_minus = mean_response - sem_response
-
-#   if which_parameter == 'spatial':
-#     # Just current_spatial_period
-#     parameter_key = 'current_spatial_period'
-#     unique_parameter_values, mean_response, sem_response, trial_response_by_stimulus = ID.getTrialAverages(epoch_response_matrix=trials, parameter_key=parameter_key)
-#     # calc the sem + / -
-#     sem_plus = mean_response + sem_response
-#     sem_minus = mean_response - sem_response
-
-#   if which_parameter == 'temporal':
-#     # Just current_temporal_temporal
-#     parameter_key = 'current_temporal_frequency'
-#     unique_parameter_values, mean_response, sem_response, trial_response_by_stimulus = ID.getTrialAverages(epoch_response_matrix=trials, parameter_key=parameter_key)
-#     # calc the sem + / -
-#     sem_plus = mean_response + sem_response
-#     sem_minus = mean_response - sem_response
-
-#     #return unique_parameter_values, mean_response, sem_response, sem_plus, sem_minus, unique_parameter_values_spatial, mean_response_spatial, sem_response_spatial, sem_plus_spatial, sem_minus_spatial, unique_parameter_values_temporal, mean_response_temporal, sem_response_temporal, sem_plus_temporal, sem_minus_temporal
-#   return unique_parameter_values, mean_response, sem_response, sem_plus, sem_minus
-
 #  Interpolation function
 def interpolate_to_common_trial_length(ID, original_values):
   # Get run parameters (in s)
@@ -236,12 +199,7 @@ for fly_ind in range(len(layer)):
   nopto_query = {'opto_stim': False}
   yes_opto_trials = shared_analysis.filterTrials(epoch_response, ID, query=yopto_query)
   no_opto_trials = shared_analysis.filterTrials(epoch_response, ID, query=nopto_query)
-  # run the function
-  # yopto_unique_parameter_values, yopto_mean_response, yopto_sem_response, yopto_sem_plus, yopto_sem_minus, yopto_unique_parameter_values_spatial, yopto_mean_response_spatial, yopto_sem_response_spatial, yopto_sem_plus_spatial, yopto_sem_minus_spatial, yopto_unique_parameter_values_temporal, yopto_mean_response_temporal, yopto_sem_response_temporal, yopto_sem_plus_temporal, yopto_sem_minus_temporal = get_spatiotemporal_responses(ID, yes_opto_trials)
-  # nopto_unique_parameter_values, nopto_mean_response, nopto_sem_response, nopto_sem_plus, nopto_sem_minus, nopto_unique_parameter_values_spatial, nopto_mean_response_spatial, nopto_sem_response_spatial, nopto_sem_plus_spatial, nopto_sem_minus_spatial, nopto_unique_parameter_values_temporal, nopto_mean_response_temporal, nopto_sem_response_temporal, nopto_sem_plus_temporal, nopto_sem_minus_temporal = get_spatiotemporal_responses(ID, no_opto_trials)
-  # yopto_unique_parameter_values, yopto_mean_response, yopto_sem_response,yopto_sem_plus, yopto_sem_minus = get_spatiotemporal_responses(ID, yes_opto_trials, which_parameter='spatiotemporal')
-  # nopto_unique_parameter_values, nopto_mean_response, nopto_sem_response, nopto_sem_plus, nopto_sem_minus = get_spatiotemporal_responses(ID, no_opto_trials, which_parameter='spatiotemporal')
-
+  
   parameter_keys = ('opto_stim', 'current_spatial_period', 'current_temporal_frequency')
   unique_parameter_values, mean_response, sem_response, _ = ID.getTrialAverages(epoch_response,
                                                                                 parameter_key=parameter_keys)
@@ -509,7 +467,7 @@ def compareMetrics(nopto_windows_mean, yopto_windows_mean, nopto_windows_max, yo
   # The order of operations is such that each ROI is processed individually. 
   # For each ROI, the opto value and the no opto value are compared, and the difference is normalized by the no opto value.
   # Then, the mean and SEM of the normalized differences are calculated across ROIs.
-  
+
 
   # calculate the differences between the metrics and normalize the difference
   mean_diff = yopto_windows_mean - nopto_windows_mean
@@ -544,512 +502,80 @@ ax.plot(nopto_windows[1, 1, 1, :])
 # compare the metrics
 mean_diff_norm, mean_diff_norm_ROI_avg, mean_diff_norm_ROI_sem, max_diff_norm, max_diff_norm_ROI_avg, max_diff_norm_ROI_sem = compareMetrics(nopto_windows_mean, yopto_windows_mean, nopto_windows_max, yopto_windows_max)
 
+# %% Plot the metrics
+
+# Create a new figure for the mean metric, with a subplot for each spatial_period and temporal_frequency
+fh, ax = plt.subplots(len(spatial_periods), len(temporal_frequencies), figsize=(24, 16))
+# Loop through spatial_periods and temporal_frequences, and for each parameter, plot the mean metric as a barplot
+for sp_ind in range(len(spatial_periods)):
+  for tf_ind in range(len(temporal_frequencies)):
+    ax[sp_ind, tf_ind].bar([0, 1], [mean_diff_norm_ROI_avg[sp_ind, tf_ind], max_diff_norm_ROI_avg[sp_ind, tf_ind]], yerr=[mean_diff_norm_ROI_sem[sp_ind, tf_ind], max_diff_norm_ROI_sem[sp_ind, tf_ind]])
+    ax[sp_ind, tf_ind].set_title('spatial_period: ' + str(spatial_periods[sp_ind]) + ', temporal_frequency: ' + str(temporal_frequencies[tf_ind]))
+    # create labels
+    ax[sp_ind, tf_ind].set_xticks([0, 1])
+    ax[sp_ind, tf_ind].set_xticklabels(['mean', 'max'])
+    ax[sp_ind, tf_ind].set_ylabel('normalized difference')
 
 
+# Loop through spatial_periods and temporal_frequences, and for each parameter, make a boxplot for mean_diff_norm and max_diff_norm
+save_fig = True
 
+fh, ax = plt.subplots(len(spatial_periods), len(temporal_frequencies), figsize=(24, 16))
+for sp_ind in range(len(spatial_periods)):
+  for tf_ind in range(len(temporal_frequencies)):
+    # first filter out nan values from mean_diff_norm and max_diff_norm
+    mean_diff_norm_filtered = mean_diff_norm[:, sp_ind, tf_ind][~np.isnan(mean_diff_norm[:, sp_ind, tf_ind])]
+    max_diff_norm_filtered = max_diff_norm[:, sp_ind, tf_ind][~np.isnan(max_diff_norm[:, sp_ind, tf_ind])]
+    # create a boxplot for mean_diff_norm_filtered and max_diff_norm_filtered and fill the boxplots with blue and red
+    c = [193/255, 70/255, 255/255]
+    ax[sp_ind, tf_ind].boxplot(mean_diff_norm_filtered, positions=[1.2], notch=True, patch_artist=True,
+                               boxprops=dict(facecolor=c, color='k'),
+                                capprops=dict(color=c),
+                                whiskerprops=dict(color=c),
+                                flierprops=dict(color=c, markeredgecolor=c),
+                                medianprops=dict(color='k'))
+    c = [70/255, 185/255, 255/255]
+    ax[sp_ind, tf_ind].boxplot(max_diff_norm_filtered, positions=[1.8], notch=True, patch_artist=True,
+                                boxprops=dict(facecolor=c, color='k'),
+                                capprops=dict(color=c),
+                                whiskerprops=dict(color=c),
+                                flierprops=dict(color=c, markeredgecolor=c),
+                                medianprops=dict(color='k'))
+     
+    # plot a dotted line at y=0
+    ax[sp_ind, tf_ind].plot([0.9, 2.1], [0, 0], 'g--', alpha=0.2)
+    ax[sp_ind, tf_ind].set_title('spatial_period: ' + str(spatial_periods[sp_ind]) + ', temporal_frequency: ' + str(temporal_frequencies[tf_ind]))
+    ax[sp_ind, tf_ind].set_ylabel('normalized difference')
+    # create labels
+    ax[sp_ind, tf_ind].set_xticks([1.2, 1.8])
+    ax[sp_ind, tf_ind].set_xticklabels(['mean', 'max'])
 
-  # %%
+# create a super title
+fh.suptitle('Comparison of mean and max normalized difference between opto and no opto across ROIs, for each spatial period and temporal frequency')
 
-
-# Pulls the metrics given the layer, which_parameter, etc
-def getMetricsFromExperiment(layer, which_parameter='spatiotemporal', alt_pre_time = 1, background_subtraction = False, background_roi_name = 'bg'):
-  file_path = os.path.join(layer[0], layer[1] + ".hdf5")
-  cfg_dict = {'timing_channel_ind': 1} # for fly 4 :/
-  ID = imaging_data.ImagingDataObject(file_path, layer[2], quiet=True, cfg_dict=cfg_dict)
-  roi_data = ID.getRoiResponses(layer[3], background_subtraction=background_subtraction, background_roi_name='bg_distal')
-  # Testing opto vs no opto
-  # first, get roi_data
-  #epoch_response = roi_data.get('epoch_response') 
-  # getAltEpochResponseMatrix b/c opto comes on during typical pre-time
-  time_vector, epoch_response = ma.getAltEpochResponseMatrix(ID, np.vstack(roi_data['roi_response']), dff = False, alt_pre_time=alt_pre_time)
-
-  # second, filter by opto
-  yopto_query = {'opto_stim': True}
-  nopto_query = {'opto_stim': False}
-  yes_opto_trials = shared_analysis.filterTrials(epoch_response, ID, query=yopto_query)
-  no_opto_trials = shared_analysis.filterTrials(epoch_response, ID, query=nopto_query)
-
-  # run the function
-  #yopto_unique_parameter_values, yopto_mean_response, yopto_sem_response, yopto_sem_plus, yopto_sem_minus, yopto_unique_parameter_values_spatial, yopto_mean_response_spatial, yopto_sem_response_spatial, yopto_sem_plus_spatial, yopto_sem_minus_spatial, yopto_unique_parameter_values_temporal, yopto_mean_response_temporal, yopto_sem_response_temporal, yopto_sem_plus_temporal, yopto_sem_minus_temporal = get_spatiotemporal_responses(trials = yes_opto_trials, which_parameter = which_parameter)
-  #nopto_unique_parameter_values, nopto_mean_response, nopto_sem_response, nopto_sem_plus, nopto_sem_minus, nopto_unique_parameter_values_spatial, nopto_mean_response_spatial, nopto_sem_response_spatial, nopto_sem_plus_spatial, nopto_sem_minus_spatial, nopto_unique_parameter_values_temporal, nopto_mean_response_temporal, nopto_sem_response_temporal, nopto_sem_plus_temporal, nopto_sem_minus_temporal = get_spatiotemporal_responses(trials = no_opto_trials, which_parameter = which_parameter)
-  yopto_unique_parameter_values, yopto_mean_response, yopto_sem_response, yopto_sem_plus, yopto_sem_minus = get_spatiotemporal_responses(ID, trials = yes_opto_trials, which_parameter = which_parameter)
-  nopto_unique_parameter_values, nopto_mean_response, nopto_sem_response, nopto_sem_plus, nopto_sem_minus = get_spatiotemporal_responses(ID, trials = no_opto_trials, which_parameter = which_parameter)
-
-  # interpolate to common trial length
-  yopto_mean_response, new_time_vector = interpolate_to_common_trial_length(ID, yopto_mean_response)
-  nopto_mean_response, _ = interpolate_to_common_trial_length(ID, nopto_mean_response)
-  yopto_sem_response, _ = interpolate_to_common_trial_length(ID, yopto_sem_response)
-  nopto_sem_response, _ = interpolate_to_common_trial_length(ID, nopto_sem_response)
-
-  # Collect metrics for mean, max, min for inside stim presentation window
-  vis_start = ID.getRunParameters('pre_time')
-  vis_length = ID.getRunParameters('stim_time')
-  getting_going_time = 0.5
-  early_cutoff_time = 0.1
-  window_length = vis_length - getting_going_time - early_cutoff_time
-  window_time = vis_start + getting_going_time
-  window_frames = int(np.ceil(window_length / ID.getResponseTiming().get('sample_period')))
-  nopto_windows = np.zeros((len(nopto_unique_parameter_values), window_frames))
-  nopto_windows_sem = np.zeros((len(nopto_unique_parameter_values), window_frames))
-  yopto_windows = np.zeros((len(nopto_unique_parameter_values), window_frames))
-  yopto_windows_sem = np.zeros((len(nopto_unique_parameter_values), window_frames))
-
-  for up_ind, up in enumerate(nopto_unique_parameter_values):
-    start_index = np.where(roi_data.get('time_vector') > window_time)[0][0]
-    nopto_windows[up_ind, :] = nopto_mean_response[:, up_ind, start_index:(start_index+window_frames)].mean(axis=0)
-    nopto_windows_sem[up_ind, :] = nopto_sem_response[:, up_ind, start_index:(start_index+window_frames)].mean(axis=0)
-    yopto_windows[up_ind, :] = yopto_mean_response[:, up_ind, start_index:(start_index+window_frames)].mean(axis=0)
-    yopto_windows_sem[up_ind, :] = yopto_sem_response[:, up_ind, start_index:(start_index+window_frames)].mean(axis=0)
-
-  # find and then plot Mean, Max, Min Opto Vs No Opto for each layer
-  # nopto_windows.shape = unique_parameters x window_frames
-  # response_max_nopto = max for each unique_parameters
-  response_max_nopto = np.max(nopto_windows, axis=-1)
-  response_min_nopto = np.min(nopto_windows, axis=-1)
-  response_mean_nopto = np.mean(nopto_windows, axis=-1)
-  response_sem_mean_nopto = np.mean(nopto_windows_sem, axis=-1)
-  response_max_yopto = np.max(yopto_windows, axis=-1)
-  response_min_yopto = np.min(yopto_windows, axis=-1)
-  response_mean_yopto = np.mean(yopto_windows, axis=-1)
-  response_sem_mean_yopto = np.mean(yopto_windows_sem, axis=-1)
-  # mean - max to approximate peak-->trough distance
-  response_PtT_nopto = response_max_nopto - response_min_nopto
-  response_PtT_yopto = response_max_yopto - response_min_yopto
-  # now find the indecies of max and min to later pull the sem for those values
-  max_indecies_nopto = np.argmax(nopto_windows, axis=-1)
-  max_indecies_yopto = np.argmax(yopto_windows, axis=-1)
-  min_indecies_nopto = np.argmin(nopto_windows, axis=-1)
-  min_indecies_yopto = np.argmin(yopto_windows, axis=-1)
-
-  # pull the sem for the max and min values
-  #initialize:
-  sem_max_nopto = np.empty(len(nopto_windows))
-  sem_max_yopto = np.empty(len(yopto_windows))
-  sem_min_nopto = np.empty(len(nopto_windows))
-  sem_min_yopto = np.empty(len(yopto_windows))
-  for i in range(len(nopto_windows)):
-    sem_max_nopto[i] = nopto_windows_sem[i][max_indecies_nopto[i]]
-    sem_max_yopto[i] = yopto_windows_sem[i][max_indecies_yopto[i]]
-    sem_min_nopto[i] = nopto_windows_sem[i][min_indecies_nopto[i]]
-    sem_min_yopto[i] = yopto_windows_sem[i][min_indecies_yopto[i]]
-  # Calc the mean of max, min st error
-  sem_PtT_nopto = abs(sem_max_nopto-sem_min_nopto)/2
-  sem_PtT_yopto = abs(sem_max_yopto-sem_min_yopto)/2
-
-  return nopto_unique_parameter_values, \
-         response_max_nopto, sem_max_nopto, response_min_nopto, sem_min_nopto, response_mean_nopto, response_sem_mean_nopto, \
-         response_PtT_nopto, sem_PtT_nopto,\
-         response_max_yopto, sem_max_yopto, response_min_yopto, sem_min_yopto, \
-         response_mean_yopto, response_sem_mean_yopto, response_PtT_yopto, sem_PtT_yopto
-
-# Takes in a fly x uqique_parameter_values metric matrix and outputs the same but normalized on the fly axis
-def normalizeAcrossFlies(raw_metric_across_flies):
-  normalize_values = np.zeros(len(raw_metric_across_flies[0]))
-  for fly_ind in range(len(raw_metric_across_flies)):
-    max_value = np.max(raw_metric_across_flies[fly_ind])
-    raw_metric_across_flies[fly_ind] = raw_metric_across_flies[fly_ind]/max_value
-    normalize_values[fly_ind] = max_value
-  # DEBUG: print max values
-  print(f'max value.. ', max_value)
-  return raw_metric_across_flies, normalize_values
-
-
-# Collects the metrics across multiple flies within layers
-def collectMultiFlyParameters(layers, which_parameter, alt_pre_time = 0.7):
-  # Initialize empty variables to stack em up and lay em down
-  outer_response_max_nopto = []; outer_sem_max_nopto = []; outer_response_min_nopto = []; outer_sem_min_nopto = []
-  outer_response_mean_nopto = []; outer_response_sem_mean_nopto = []; outer_response_PtT_nopto = []; outer_sem_PtT_nopto = []
-  outer_response_max_yopto = []; outer_sem_max_yopto = []; outer_response_min_yopto = []; outer_sem_min_yopto = []
-  outer_response_mean_yopto = []; outer_response_sem_mean_yopto = []; outer_response_PtT_yopto = []; outer_sem_PtT_yopto = []
-
-  # WE LOOPIN
-  for layer_ind in range(len(layers)):
-    nopto_unique_parameter_values, \
-    response_max_nopto, sem_max_nopto, response_min_nopto, sem_min_nopto, response_mean_nopto, response_sem_mean_nopto, \
-    response_PtT_nopto, sem_PtT_nopto,\
-    response_max_yopto, sem_max_yopto, response_min_yopto, sem_min_yopto, response_mean_yopto, response_sem_mean_yopto, \
-    response_PtT_yopto, sem_PtT_yopto \
-      = getMetricsFromExperiment(layers[layer_ind], which_parameter = which_parameter, alt_pre_time = 0.7 )
-
-    outer_response_max_nopto.append(response_max_nopto)
-    outer_sem_max_nopto.append(sem_max_nopto)
-    outer_response_min_nopto.append(response_min_nopto)
-    outer_sem_min_nopto.append(sem_min_nopto)
-    outer_response_mean_nopto.append(response_mean_nopto)
-    outer_response_sem_mean_nopto.append(response_sem_mean_nopto)
-    outer_response_PtT_nopto.append(response_PtT_nopto)
-    outer_sem_PtT_nopto.append(sem_PtT_nopto)
-    outer_response_max_yopto.append(response_max_yopto)
-    outer_sem_max_yopto.append(sem_max_yopto)
-    outer_response_min_yopto.append(response_min_yopto)
-    outer_sem_min_yopto.append(sem_min_yopto)
-    outer_response_mean_yopto.append(response_mean_yopto)
-    outer_response_sem_mean_yopto.append(response_sem_mean_yopto)
-    outer_response_PtT_yopto.append(response_PtT_yopto)
-    outer_sem_PtT_yopto.append(sem_PtT_yopto)
-
-  return nopto_unique_parameter_values, \
-         outer_response_max_nopto, outer_sem_max_nopto, outer_response_min_nopto, outer_sem_min_nopto, \
-         outer_response_mean_nopto, outer_response_sem_mean_nopto, \
-         outer_response_PtT_nopto, outer_sem_PtT_nopto, \
-         outer_response_max_yopto, outer_sem_max_yopto, outer_response_min_yopto, outer_sem_min_yopto, \
-         outer_response_mean_yopto, outer_response_sem_mean_yopto, \
-         outer_response_PtT_yopto, outer_sem_PtT_yopto
-
-
-# Plots the metrics given the layer, which_parameter, etc
-def plotMTSMetrics(layers, layer_name, which_parameter, plot_individual_flies = True, normalize_across_flies = True, alt_pre_time = 0.7, save_fig = True):
-  
-  # Call collectMultiFlyParameters
-  nopto_unique_parameter_values, \
-  outer_response_max_nopto, outer_sem_max_nopto, outer_response_min_nopto, outer_sem_min_nopto, \
-  outer_response_mean_nopto, outer_response_sem_mean_nopto, outer_response_PtT_nopto, outer_sem_PtT_nopto, \
-  outer_response_max_yopto, outer_sem_max_yopto, outer_response_min_yopto, outer_sem_min_yopto, \
-  outer_response_mean_yopto, outer_response_sem_mean_yopto, \
-  outer_response_PtT_yopto, outer_sem_PtT_yopto = \
-  collectMultiFlyParameters(layers, which_parameter, alt_pre_time)
-
-  # normalizing across flies
-  if normalize_across_flies == True:
-    outer_response_max_nopto, norm_values_max_nopto = normalizeAcrossFlies(outer_response_max_nopto)
-    outer_response_min_nopto, norm_values_min_nopto = normalizeAcrossFlies(outer_response_min_nopto)
-    outer_response_mean_nopto, norm_values_mean_nopto = normalizeAcrossFlies(outer_response_mean_nopto)
-    outer_response_PtT_nopto, norm_values_PtT_nopto = normalizeAcrossFlies(outer_response_PtT_nopto)
-    outer_response_max_yopto, norm_values_max_yopto = normalizeAcrossFlies(outer_response_max_yopto)
-    outer_response_min_yopto, norm_values_min_yopto = normalizeAcrossFlies(outer_response_min_yopto)
-    outer_response_mean_yopto, norm_values_mean_yopto = normalizeAcrossFlies(outer_response_mean_yopto)
-    outer_response_PtT_yopto, norm_values_PtT_yopto = normalizeAcrossFlies(outer_response_PtT_yopto)
-
-    # DEBUG: print norm_values
-    print('norm_values_max_nopto: ' + str(norm_values_max_nopto))
-    print('norm_values_max_yopto: ' + str(norm_values_max_yopto))
-    print('norm_values_min_nopto: ' + str(norm_values_min_nopto))
-    print('norm_values_min_yopto: ' + str(norm_values_min_yopto))
-    print('norm_values_mean_nopto: ' + str(norm_values_mean_nopto))
-    print('norm_values_mean_yopto: ' + str(norm_values_mean_yopto))
-
-    for fly_ind in range(len(outer_sem_max_nopto)):
-      outer_sem_max_nopto[fly_ind] = np.array(outer_sem_max_nopto[fly_ind]/norm_values_max_nopto[fly_ind])
-      outer_sem_min_nopto[fly_ind] = np.array(outer_sem_min_nopto[fly_ind]/norm_values_min_nopto[fly_ind])
-      outer_response_sem_mean_nopto[fly_ind] = np.array(outer_response_sem_mean_nopto[fly_ind]/norm_values_mean_nopto)
-      outer_sem_PtT_nopto[fly_ind] = np.array(outer_sem_PtT_nopto[fly_ind]/norm_values_PtT_nopto)
-      outer_sem_max_yopto[fly_ind] = np.array(outer_sem_max_yopto[fly_ind]/norm_values_max_yopto[fly_ind])
-      outer_sem_min_yopto[fly_ind] = np.array(outer_sem_min_yopto[fly_ind]/norm_values_min_yopto[fly_ind])
-      outer_response_sem_mean_yopto[fly_ind] = np.array(outer_response_sem_mean_yopto[fly_ind]/norm_values_mean_yopto)
-      outer_sem_PtT_yopto[fly_ind] = np.array(outer_sem_PtT_yopto[fly_ind]/norm_values_PtT_yopto)
-    #outer_sem_max_nopto = np.array(outer_sem_max_nopto)/norm_values_max_nopto
-    
-  # calculate the means
-  response_max_nopto = np.mean(outer_response_max_nopto, axis = 0)
-  sem_max_nopto = np.mean(outer_sem_max_nopto, axis = 0)
-  response_min_nopto = np.mean(outer_response_min_nopto, axis = 0)
-  sem_min_nopto = np.mean(outer_sem_min_nopto, axis = 0)
-  response_mean_nopto = np.mean(outer_response_mean_nopto, axis = 0)
-  response_sem_mean_nopto = np.mean(outer_response_sem_mean_nopto, axis = 0)
-  response_PtT_nopto = np.mean(outer_response_PtT_nopto, axis = 0)
-  sem_PtT_nopto = np.mean(outer_sem_PtT_nopto, axis = 0)
-
-  response_max_yopto = np.mean(outer_response_max_yopto, axis = 0)
-  sem_max_yopto = np.mean(outer_sem_max_yopto, axis = 0)
-  response_min_yopto = np.mean(outer_response_min_yopto, axis = 0)
-  sem_min_yopto = np.mean(outer_sem_min_yopto, axis = 0)
-  response_mean_yopto = np.mean(outer_response_mean_yopto, axis = 0)
-  response_sem_mean_yopto = np.mean(outer_response_sem_mean_yopto, axis = 0)
-  response_PtT_yopto = np.mean(outer_response_PtT_yopto, axis = 0)
-  sem_PtT_yopto = np.mean(outer_sem_PtT_yopto, axis = 0)
-
-  # DEBUG: print the SEMs
-  print("Outer response SEM mean nopto: ", outer_response_sem_mean_nopto)
-  print("Outer response SEM mean yopto: ", outer_response_sem_mean_yopto)
-
-  print("SEM mean nopto: ", response_sem_mean_nopto)
-  print("SEM mean yopto: ", response_sem_mean_yopto)
-
-
-  # plotting Metrics across flies
-  cmap = plt.get_cmap('Spectral') # also 'cool' 'winter' 'PRGn' 'Pastel1' 'YlGnBu' 'twilight' 'tab20c' 'Spectral'
-  colors = [cmap(i) for i in np.linspace(0.0, 1.0, len(nopto_unique_parameter_values))]
-  num_flies = len(outer_response_max_nopto)
-  fly_color_list = ['Purples', 'Blues', 'Greens', 'Oranges', 'Reds', 'YlOrBr', 'YlOrRd', 'OrRd', 'PuRd', 'RdPu', 'BuPu', 'GnBu', 'PuBu', 'YlGnBu', 'PrBuGn', 'BuGn', 'YlGn']
-  fly_marker_list = ["v", "s", "P", "*", "+", "X", "D", "|", "^", "1", "h"] # currently ready for 11 flies
-
-  fh, ax = plt.subplots(4, 1, figsize=(13, 20))
-  for up_ind, up in enumerate(nopto_unique_parameter_values):
-    if plot_individual_flies == True:
-      for fly_ind in range(num_flies):
-        cmap = plt.get_cmap(fly_color_list[fly_ind])
-        fly_colors = [cmap(c) for c in np.linspace(0.0, 1.0, num_flies)]
-        #ax[0].scatter(outer_response_max_nopto[fly_ind][up_ind], outer_response_max_yopto[fly_ind][up_ind], color=fly_colors[fly_ind], alpha=0.3, label = fly_ind)
-        ax[0].scatter(outer_response_max_nopto[fly_ind][up_ind], outer_response_max_yopto[fly_ind][up_ind], marker=fly_marker_list[fly_ind], color=colors[up_ind], s=100, edgecolor=[0.1,0.1,0.1, .5], alpha=0.5, label = 'fly'+str(fly_ind))
-        #ax[0].errorbar(outer_response_max_nopto[fly_ind][up_ind], outer_response_max_yopto[fly_ind][up_ind], xerr=outer_sem_max_nopto[fly_ind][up_ind], yerr=outer_sem_max_yopto[fly_ind][up_ind])
-        ax[1].scatter(outer_response_min_nopto[fly_ind][up_ind], outer_response_min_yopto[fly_ind][up_ind], marker=fly_marker_list[fly_ind], color=colors[up_ind], s=100, edgecolor=[0.1,0.1,0.1, .5], alpha=0.5)
-        # ax[1].errorbar()
-        ax[2].scatter(outer_response_mean_nopto[fly_ind][up_ind], outer_response_mean_yopto[fly_ind][up_ind], marker=fly_marker_list[fly_ind], color=colors[up_ind], s=100, edgecolor=[0.1,0.1,0.1, .5], alpha=0.5)
-        # ax[2].errorbar()
-        ax[3].scatter(outer_response_PtT_nopto[fly_ind][up_ind], outer_response_PtT_yopto[fly_ind][up_ind], marker=fly_marker_list[fly_ind], color=colors[up_ind], s=100, edgecolor=[0.1,0.1,0.1, .5], alpha=0.5)
-        # ax[3].errorbar()
-
-      # Finding unity lines by selecting the largest and smallest points on the plot
-      unity_lower_max = min(np.min(outer_response_max_nopto), np.min(outer_response_max_yopto))*0.9
-      unity_upper_max = max(np.max(outer_response_max_nopto), np.max(outer_response_max_yopto))*1.1
-      unity_lower_min = min(np.min(outer_response_min_nopto), np.min(outer_response_min_yopto))*0.9
-      unity_upper_min = max(np.max(outer_response_min_nopto), np.max(outer_response_min_yopto))*1.1
-      unity_lower_mean = min(np.min(outer_response_mean_nopto), np.min(outer_response_mean_yopto))*0.9
-      unity_upper_mean = max(np.max(outer_response_mean_nopto), np.max(outer_response_mean_yopto))*1.1
-      unity_lower_PtT = min(np.min(outer_response_PtT_nopto), np.min(outer_response_PtT_yopto))*0.9
-      unity_upper_PtT = max(np.max(outer_response_PtT_nopto), np.max(outer_response_PtT_yopto))*1.1
-      ax[0].plot([unity_lower_max, unity_upper_max], [unity_lower_max, unity_upper_max], 'k--', alpha=0.3, linewidth=3)
-      ax[1].plot([unity_lower_min, unity_upper_min], [unity_lower_min, unity_upper_min], 'k--', alpha=0.3, linewidth=3)
-      ax[2].plot([unity_lower_mean, unity_upper_mean], [unity_lower_mean, unity_upper_mean], 'k--', alpha=0.3, linewidth=3)
-      ax[3].plot([unity_lower_PtT, unity_upper_PtT], [unity_lower_PtT, unity_upper_PtT], 'k--', alpha=0.3, linewidth=3)
-    
-    ax[0].scatter(response_max_nopto[up_ind], response_max_yopto[up_ind], color=colors[up_ind], alpha = 0.9, s=300, label = which_parameter+':'+str(up))
-    ax[0].set_title('Maximum Response - No Opto v Opto')
-    ax[0].set_xlabel('No Opto')
-    ax[0].set_ylabel('Opto')
-
-    ax[1].scatter(response_min_nopto[up_ind], response_min_yopto[up_ind], color=colors[up_ind], alpha = 0.9, s=300)
-    ax[1].set_title('Minimum Response - No Opto v Opto')
-    ax[1].set_xlabel('No Opto')
-    ax[1].set_ylabel('Opto')
-
-    ax[2].scatter(response_mean_nopto[up_ind], response_mean_yopto[up_ind], color=colors[up_ind], alpha = 0.9, s=300)
-    ax[2].set_title('Mean Response - No Opto v Opto')
-    ax[2].set_xlabel('No Opto')
-    ax[2].set_ylabel('Opto')
-
-    ax[3].scatter(response_PtT_nopto[up_ind], response_PtT_yopto[up_ind], color=colors[up_ind], alpha = 0.9, s=300)
-    ax[3].set_title('Max-Min Response - No Opto v Opto')
-    ax[3].set_xlabel('No Opto')
-    ax[3].set_ylabel('Opto')
-
-    # Errorbars for the average plots
-    ax[0].errorbar(response_max_nopto[up_ind], response_max_yopto[up_ind], xerr=sem_max_nopto[up_ind], yerr=sem_max_yopto[up_ind], color=colors[up_ind], elinewidth=4, alpha=0.35)
-    ax[1].errorbar(response_min_nopto[up_ind], response_min_yopto[up_ind], xerr=sem_min_nopto[up_ind], yerr=sem_min_yopto[up_ind], color=colors[up_ind], elinewidth=4, alpha=0.35)
-    ax[2].errorbar(response_mean_nopto[up_ind], response_mean_yopto[up_ind], xerr=response_sem_mean_nopto[up_ind], yerr=response_sem_mean_yopto[up_ind], color=colors[up_ind], elinewidth=4, alpha=0.5)
-    ax[3].errorbar(response_PtT_nopto[up_ind], response_PtT_yopto[up_ind], xerr=sem_PtT_nopto[up_ind], yerr=sem_PtT_yopto[up_ind], color=colors[up_ind], elinewidth=4, alpha=0.35)
-
-  if plot_individual_flies == False:
-    # Finding unity lines by selecting the largest and smallest points on the plot. Outside the loop to not duplicate
-    unity_lower_max = min(np.min(response_max_nopto), np.min(response_max_yopto))*0.9
-    unity_upper_max = max(np.max(response_max_nopto), np.max(response_max_yopto))*1.1
-    unity_lower_min = min(np.min(response_min_nopto), np.min(response_min_yopto))*0.9
-    unity_upper_min = max(np.max(response_min_nopto), np.max(response_min_yopto))*1.1
-    unity_lower_mean = min(np.min(response_mean_nopto), np.min(response_mean_yopto))*0.9
-    unity_upper_mean = max(np.max(response_mean_nopto), np.max(response_mean_yopto))*1.1
-    unity_lower_PtT = min(np.min(response_PtT_nopto), np.min(response_PtT_yopto))*0.9
-    unity_upper_PtT = max(np.max(response_PtT_nopto), np.max(response_PtT_yopto))*1.1
-    ax[0].plot([unity_lower_max, unity_upper_max], [unity_lower_max, unity_upper_max], 'k--', label='unity', alpha=0.5, linewidth=3)
-    ax[1].plot([unity_lower_min, unity_upper_min], [unity_lower_min, unity_upper_min], 'k--', alpha=0.5, linewidth=3)
-    ax[2].plot([unity_lower_mean, unity_upper_mean], [unity_lower_mean, unity_upper_mean], 'k--', alpha=0.5, linewidth=3)
-    ax[3].plot([unity_lower_PtT, unity_upper_PtT], [unity_lower_PtT, unity_upper_PtT], 'k--', alpha=0.5, linewidth=3)
-
-  fh.legend(loc='lower right')
-  fh.suptitle(f'Metrics for {layer_name} layer, {which_parameter_type} params, AltPreTime={alt_pre_time} | BgSub={background_subtraction}', fontsize=13)
-
-  if save_fig == True:
-      fh.savefig(
-      save_directory
-      + "Metrics."
-      + str(layer_name)
-      + ".Param-"
-      + which_parameter_type
-      + ".Normalized-"
-      + str(normalize_across_flies)
-      + ".IndividualFlies-"
-      + str(plot_individual_flies)
-      + ".AltPreTime"
-      + str(alt_pre_time)
-      + ".BgSub"
-      + str(background_subtraction)
-      + ".pdf",
-      dpi=300,
-      )
-
-# ============================================================================================================================================================================
-# ============================================================================================================================================================================
-# ============================================================================================================================================================================
-# ============================================================================================================================================================================
-# ============================================================================================================================================================================
-# ============================================================================================================================================================================
-# ============================================================================================================================================================================
-# ================================================================ ACTUALLY RUNNING THIS SHIT BELOW: =========================================================================
-# ============================================================================================================================================================================
-# ============================================================================================================================================================================
-# ============================================================================================================================================================================
-# ============================================================================================================================================================================
-# ============================================================================================================================================================================
-# ============================================================================================================================================================================
-
-# %% Running all the functions after intitialilzing 
-# Initialize the fucking correct variables below:
-layers = astar1_alt_prox_all # astar1_alt_dist_all
-layer_name = 'proximal' # 'proximal' 'medial_1' 'medial_2' 'distal'
-which_parameter_type = 'spatiotemporal' # 'spatial' 'temporal' 'spatiotemporal'
-alt_pre_time = 0.7
-background_subtraction = False
-plot_individual_fliez = True
-normalize_across_fliez = True
-save_the_fig = True
-
-plotMTSMetrics(layers, layer_name, which_parameter = which_parameter_type, plot_individual_flies = plot_individual_fliez, normalize_across_flies = normalize_across_fliez, alt_pre_time = alt_pre_time, save_fig = save_the_fig)
-# %% metrics for mean, max, min - mostly deprecated
-
-# Collect metrics for mean, max, min for inside stim presentation window
-vis_start = ID.getRunParameters('pre_time')
-vis_length = ID.getRunParameters('stim_time')
-getting_going_time = 0.5
-early_cutoff_time = 0.1
-window_length = vis_length - getting_going_time - early_cutoff_time
-window_time = vis_start + getting_going_time
-window_frames = int(np.ceil(window_length / ID.getResponseTiming().get('sample_period')))
-nopto_windows = np.zeros((len(nopto_unique_parameter_values), window_frames))
-nopto_windows_sem = np.zeros((len(nopto_unique_parameter_values), window_frames))
-yopto_windows = np.zeros((len(nopto_unique_parameter_values), window_frames))
-yopto_windows_sem = np.zeros((len(nopto_unique_parameter_values), window_frames))
-
-fh, ax = plt.subplots(len(nopto_unique_parameter_values), 1, figsize=(18, 4*len(nopto_unique_parameter_values)))
-
-# Collect windowed responses and plot them
-cmap = plt.get_cmap('viridis') # also 'cool' 'winter' 'PRGn' 'Pastel1' 'YlGnBu' 'twilight'
-colors = [cmap(i) for i in np.linspace(0.0, 1.0)]
-for up_ind, up in enumerate(nopto_unique_parameter_values):
-  start_index = np.where(roi_data.get('time_vector') > window_time)[0][0]
-  nopto_windows[up_ind, :] = nopto_mean_response[:, up_ind, start_index:(start_index+window_frames)].mean(axis=0)
-  nopto_windows_sem[up_ind, :] = nopto_sem_response[:, up_ind, start_index:(start_index+window_frames)].mean(axis=0)
-  yopto_windows[up_ind, :] = yopto_mean_response[:, up_ind, start_index:(start_index+window_frames)].mean(axis=0)
-  yopto_windows_sem[up_ind, :] = yopto_sem_response[:, up_ind, start_index:(start_index+window_frames)].mean(axis=0)
-
-  # Plot: Each Window for a given LED Intensity
-  ax[up_ind].plot(nopto_windows[up_ind, :], label='no opto')
-  ax[up_ind].plot(yopto_windows[up_ind, :], label='yes opto')
-  ax[up_ind].set_title('up={}'.format(up))
-  ax[up_ind].legend()
-fh.suptitle(f'Window Traces for {layer[0][1]}, Series {layer[0][2]} | ROI={layer[0][3]} | AltPreTime={alt_pre_time} | BgSub={background_subtraction}', fontsize=13)
-
-if savefig == True:
+if save_fig == True:
     fh.savefig(
     save_directory
-    + "Window_Traces."
-    + str(layer[0][1])
-    + ".Series"
-    + str(layer[0][2])
-    + ".ROI"
-    + str(layer[0][3])
-    + ".AltPreTime"
-    + str(alt_pre_time)
-    + ".BgSub"
-    + str(background_subtraction)
-    + ".pdf",
+    + 'comparison_of_mean_and_max_normalized_difference_between_opto_and_no_opto.pdf',
     dpi=300,
     )
 
-# find and then plot Mean, Max, Min Opto Vs No Opto for each layer
-# nopto_windows.shape = unique_parameters x window_frames
-# response_max_nopto = max for each unique_parameters
-response_max_nopto = np.max(nopto_windows, axis=-1)
-response_min_nopto = np.min(nopto_windows, axis=-1)
-response_mean_nopto = np.mean(nopto_windows, axis=-1)
-response_sem_mean_nopto = np.mean(nopto_windows_sem, axis=-1)
-response_max_yopto = np.max(yopto_windows, axis=-1)
-response_min_yopto = np.min(yopto_windows, axis=-1)
-response_mean_yopto = np.mean(yopto_windows, axis=-1)
-response_sem_mean_yopto = np.mean(yopto_windows_sem, axis=-1)
-
-## DEBUG: Print out the sems 
-print(f'opto')
-print(f'response_sem_mean_nopto = {response_sem_mean_nopto}')
-print(f'response_sem_mean_yopto = {response_sem_mean_yopto}')
-
-      
-# mean - max to approximate peak-->trough distance
-response_PtT_nopto = response_max_nopto - response_min_nopto
-response_PtT_yopto = response_max_yopto - response_min_yopto
-# now find the indecies of max and min to later pull the sem for those values
-max_indecies_nopto = np.argmax(nopto_windows, axis=-1)
-max_indecies_yopto = np.argmax(yopto_windows, axis=-1)
-min_indecies_nopto = np.argmin(nopto_windows, axis=-1)
-min_indecies_yopto = np.argmin(yopto_windows, axis=-1)
-
-# pull the sem for the max and min values
-#initialize:
-sem_max_nopto = np.empty(len(nopto_windows))
-sem_max_yopto = np.empty(len(yopto_windows))
-sem_min_nopto = np.empty(len(nopto_windows))
-sem_min_yopto = np.empty(len(yopto_windows))
-for i in range(len(nopto_windows)):
-  sem_max_nopto[i] = nopto_windows_sem[i][max_indecies_nopto[i]]
-  sem_max_yopto[i] = yopto_windows_sem[i][max_indecies_yopto[i]]
-  sem_min_nopto[i] = nopto_windows_sem[i][min_indecies_nopto[i]]
-  sem_min_yopto[i] = yopto_windows_sem[i][min_indecies_yopto[i]]
-# Calc the mean of max, min st error
-sem_PtT_nopto = abs(sem_max_nopto-sem_min_nopto)/2
-sem_PtT_yopto = abs(sem_max_yopto-sem_min_yopto)/2
-
-# plotting those metrics
-cmap = plt.get_cmap('tab20c') # also 'cool' 'winter' 'PRGn' 'Pastel1' 'YlGnBu' 'twilight'
-colors = [cmap(i) for i in np.linspace(0.0, 1.0, len(nopto_unique_parameter_values))]
-
-fh, ax = plt.subplots(4, 1, figsize=(8, 24))
-for up_ind, up in enumerate(nopto_unique_parameter_values):
-  ax[0].scatter(response_max_nopto[up_ind], response_max_yopto[up_ind], color=colors[up_ind], label = up)
-  ax[0].errorbar(response_max_nopto[up_ind], response_max_yopto[up_ind], xerr=sem_max_nopto[up_ind], yerr=sem_max_yopto[up_ind], elinewidth=4, alpha=0.2)
-  ax[0].set_title('Maximum Response - No Opto v Opto')
-  ax[0].set_xlabel('No Opto')
-  ax[0].set_ylabel('Opto')
-
-  ax[1].scatter(response_min_nopto[up_ind], response_min_yopto[up_ind], color=colors[up_ind])
-  ax[1].errorbar(response_min_nopto[up_ind], response_min_yopto[up_ind], xerr=sem_min_nopto[up_ind], yerr=sem_min_yopto[up_ind], elinewidth=4, alpha=0.2)
-  ax[1].set_title('Minimum Response - No Opto v Opto')
-  ax[1].set_xlabel('No Opto')
-  ax[1].set_ylabel('Opto')
-
-  ax[2].scatter(response_mean_nopto[up_ind], response_mean_yopto[up_ind], color=colors[up_ind])
-  ax[2].errorbar(response_mean_nopto[up_ind], response_mean_yopto[up_ind], xerr=response_sem_mean_nopto[up_ind], yerr=response_sem_mean_yopto[up_ind], elinewidth=4, alpha=0.2)
-  ax[2].set_title('Mean Response - No Opto v Opto')
-  ax[2].set_xlabel('No Opto')
-  ax[2].set_ylabel('Opto')
-
-  ax[3].scatter(response_PtT_nopto[up_ind], response_PtT_yopto[up_ind], color=colors[up_ind])
-  ax[3].errorbar(response_PtT_nopto[up_ind], response_PtT_yopto[up_ind], xerr=sem_PtT_nopto[up_ind], yerr=sem_PtT_yopto[up_ind], elinewidth=4, alpha=0.2)
-  ax[3].set_title('Max-Min Response - No Opto v Opto')
-  ax[3].set_xlabel('No Opto')
-  ax[3].set_ylabel('Opto')
 
 
-# Finding unity lines by selecting the largest and smallest points on the plot
-unity_lower_max = min(np.min(response_max_nopto), np.min(response_max_yopto))*0.9
-unity_upper_max = max(np.max(response_max_nopto), np.max(response_max_yopto))*1.1
-unity_lower_min = min(np.min(response_min_nopto), np.min(response_min_yopto))*0.9
-unity_upper_min = max(np.max(response_min_nopto), np.max(response_min_yopto))*1.1
-unity_lower_mean = min(np.min(response_mean_nopto), np.min(response_mean_yopto))*0.9
-unity_upper_mean = max(np.max(response_mean_nopto), np.max(response_mean_yopto))*1.1
-unity_lower_PtT = min(np.min(response_PtT_nopto), np.min(response_PtT_yopto))*0.9
-unity_upper_PtT = max(np.max(response_PtT_nopto), np.max(response_PtT_yopto))*1.1
-ax[0].plot([unity_lower_max, unity_upper_max], [unity_lower_max, unity_upper_max], 'k--', label='unity', alpha=0.5, linewidth=3)
-ax[1].plot([unity_lower_min, unity_upper_min], [unity_lower_min, unity_upper_min], 'k--', alpha=0.5, linewidth=3)
-ax[2].plot([unity_lower_mean, unity_upper_mean], [unity_lower_mean, unity_upper_mean], 'k--', alpha=0.5, linewidth=3)
-ax[3].plot([unity_lower_PtT, unity_upper_PtT], [unity_lower_PtT, unity_upper_PtT], 'k--', alpha=0.5, linewidth=3)
 
-fh.legend(loc='lower right')
-fh.suptitle(f'Metrics for {layer[0][1]}, Series {layer[0][2]} | ROI={layer[0][3]} | AltPreTime={alt_pre_time} | BgSub={background_subtraction}', fontsize=13)
 
-if savefig == True:
-    fh.savefig(
-    save_directory
-    + "Metrics."
-    + str(layer[0][1])
-    + ".Series"
-    + str(layer[0][2])
-    + ".ROI"
-    + str(layer[0][3])
-    + ".AltPreTime"
-    + str(alt_pre_time)
-    + ".BgSub"
-    + str(background_subtraction)
-    + ".pdf",
-    dpi=300,
-    )
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
 
