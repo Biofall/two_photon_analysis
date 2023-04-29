@@ -190,21 +190,20 @@ def interpolate_to_common_trial_length(ID, original_values):
 
   return interp_value, new_time_vector
 
+
+
 #%% Pulling Traces separated by opto and unique parameter values
-# Which one to plot
-layer = astar1_alt_prox_all
+layer = astar1_alt_prox_all  #astar1_alt_prox_all, astar1_fly5_alt_prox
 background_subtraction = False
-alt_pre_time = 0
+alt_pre_time = 0.2 # this now is backwards from the vis stim time
 dff = False
-savefig = False
+display_fix = True
+layer_name = 'astar1_alt_prox_all'
 
 print('\n\n\n')
 print('======================================================================================')
 print(f'FLY = {str(layer)}')
-print(f'Background Subtraction = {str(background_subtraction)}')
-print(f'Alt Pre Time = {str(alt_pre_time)}')
 print('======================================================================================')
-
 print('\n\n\n')
 #Loop through experiments/layers here:
 # instantiate the big bois
@@ -220,10 +219,12 @@ optos = [0, 1]
 
 for fly_ind in range(len(layer)):
   file_path = os.path.join(layer[fly_ind][0], layer[fly_ind][1] + ".hdf5")
-  ID = imaging_data.ImagingDataObject(file_path, layer[fly_ind][2], quiet=True)
-  # if fly_ind == 3: # this is to fix the timing channel for the 4th fly
-  #   cfg_dict = {'timing_channel_ind': 1}
-  #   ID = imaging_data.ImagingDataObject(file_path, layer[fly_ind][2], quiet=True, cfg_dict = cfg_dict)
+  if display_fix == True:
+    cfg_dict = {'timing_channel_ind': 1}
+    ID = imaging_data.ImagingDataObject(file_path, layer[fly_ind][2], quiet=True, cfg_dict = cfg_dict)
+  else:  
+    ID = imaging_data.ImagingDataObject(file_path, layer[fly_ind][2], quiet=True)
+
   
   roi_data = ID.getRoiResponses(layer[fly_ind][3], background_subtraction=background_subtraction, background_roi_name='bg_distal')
 
@@ -271,7 +272,6 @@ for fly_ind in range(len(layer)):
         else:
           print('This should never happen')
 
-
   if np.any(np.isnan(reordered_mean)):
     print('Nans found - missing param combo')
 
@@ -289,8 +289,6 @@ for fly_ind in range(len(layer)):
     flies_nopto_sem_response = np.append(flies_nopto_sem_response, reordered_sem[:, 0, :, :, :], axis=0)
     flies_yopto_sem_response = np.append(flies_yopto_sem_response, reordered_sem[:, 1, :, :, :], axis=0)
 
-
-
 # creating sem plus and minus
 flies_yopto_sem_plus = flies_yopto_mean_response + flies_yopto_sem_response
 flies_yopto_sem_minus = flies_yopto_mean_response - flies_yopto_sem_response
@@ -302,14 +300,15 @@ optoless_unique_parameter_values = np.unique(np.delete((unique_parameter_values)
 
 
 
-# %%  Plotting the whole trace averaging across ROIs
+# %%  Plot the whole trace averaging across ROIs
+savefig = True
 
 fh, ax = plt.subplots(len(spatial_periods), len(temporal_frequencies), figsize=(8*len(spatial_periods), 8*len(temporal_frequencies)))
 for sp_ind, spatial in enumerate(spatial_periods):
   for tf_ind, temporal in enumerate(temporal_frequencies):
 
-    ax[sp_ind, tf_ind].plot(interp_time, np.nanmean(flies_yopto_mean_response[:, sp_ind, tf_ind, :], axis=0), color='red', alpha=0.9, label='opto'+'spatial: '+str(spatial)+' temporal: '+str(temporal))
-    ax[sp_ind, tf_ind].plot(interp_time, np.nanmean(flies_nopto_mean_response[:, sp_ind, tf_ind, :], axis=0), color='black', alpha=0.9, label='no opto'+'spatial: '+str(spatial)+' temporal: '+str(temporal))
+    ax[sp_ind, tf_ind].plot(interp_time, np.nanmean(flies_yopto_mean_response[:, sp_ind, tf_ind, :], axis=0), color='red', alpha=0.9, label='opto')
+    ax[sp_ind, tf_ind].plot(interp_time, np.nanmean(flies_nopto_mean_response[:, sp_ind, tf_ind, :], axis=0), color='black', alpha=0.9, label='no opto')
 
     ax[sp_ind, tf_ind].fill_between(interp_time, np.nanmean(flies_yopto_sem_plus[:, sp_ind, tf_ind, :], axis=0), 
                     np.nanmean(flies_yopto_sem_minus[:, sp_ind, tf_ind, :], axis=0),
@@ -328,21 +327,18 @@ for sp_ind, spatial in enumerate(spatial_periods):
     ax[sp_ind, tf_ind].set_xlabel('Time in Seconds')
     ax[sp_ind, tf_ind].set_ylabel('DF/F')
     ax[sp_ind, tf_ind].set_title(f'spatal: {spatial} | temporal: {temporal}')
-fh.suptitle(f'Traces (ROI avg) for {layer[0][1]}, Series {layer[0][2]} | ROI={layer[0][3]} | AltPreTime={alt_pre_time} | BgSub={background_subtraction}', fontsize=13)
+# fig suptitle
+fh.suptitle(f"Average Traces Across ROIs", fontsize=20)
 
 if savefig == True:
     fh.savefig(
     save_directory
     + "AvgTraces."
-    + str(layer[0][1])
-    + ".Series"
-    + str(layer[0][2])
-    + ".ROI"
-    + str(layer[0][3])
-    + ".AltPreTime"
+    + layer_name
+    + ".DFF: "
+    + str(dff)
+    + "AltPreTime: "
     + str(alt_pre_time)
-    + ".BgSub"
-    + str(background_subtraction)
     + ".pdf",
     dpi=300,
     )
@@ -350,93 +346,94 @@ if savefig == True:
 # %% For each unique parameter value, plot every ROI
 error_bars = False
 
-fh, ax = plt.subplots(len(nopto_unique_parameter_values), 1, figsize=(16, 8*len(nopto_unique_parameter_values)))
-for up_ind, up in enumerate(nopto_unique_parameter_values): # up = unique parameter
-  # Have to reset these inside the loop, otherwise the colors don't reset
-  reds = iter(cm.autumn(np.linspace(0, 1, len(flies_yopto_mean_response))))
-  blues = iter(cm.winter(np.linspace(0, 1, len(flies_yopto_mean_response))))
-  for roi_ind in range(len(flies_yopto_mean_response)):
+fh, ax = plt.subplots(len(spatial_periods), len(temporal_frequencies), figsize=(8*len(spatial_periods), 8*len(temporal_frequencies)))
+for sp_ind, spatial in enumerate(spatial_periods):
+  for tf_ind, temporal in enumerate(temporal_frequencies):
+    # Have to reset these inside the loop, otherwise the colors don't reset
+    reds = iter(cm.autumn(np.linspace(0, 1, len(flies_yopto_mean_response))))
+    blues = iter(cm.winter(np.linspace(0, 1, len(flies_yopto_mean_response))))
 
-    # Loop through shades of red for opto
-    red_color = next(reds)
-    ax[up_ind].plot(new_time_vector, flies_yopto_mean_response[roi_ind, up_ind, :], color=red_color, alpha=0.6, label='ROI: '+str(roi_ind)+' | opto')
-    # Loop through shades of blue for no opto
-    blue_color = next(blues)
-    ax[up_ind].plot(new_time_vector, flies_nopto_mean_response[roi_ind, up_ind, :], color=blue_color, alpha=0.6, label='ROI: '+str(roi_ind)+' | no opto')
 
-    if error_bars == True:
-      ax[up_ind].fill_between(new_time_vector, flies_yopto_sem_plus[roi_ind, up_ind, :], 
-                      flies_yopto_sem_minus[roi_ind, up_ind, :],
-                      color='red', alpha=0.1)
-      ax[up_ind].fill_between(new_time_vector, flies_nopto_sem_plus[roi_ind, up_ind, :], 
-                  flies_nopto_sem_minus[roi_ind, up_ind, :],
-                  color='black', alpha=0.1)
-    # Legend, Grid, Axis
-    ax[up_ind].legend()
-    ax[up_ind].grid(axis="x", color="k", alpha=.1, linewidth=1, linestyle=":")
-    #x_locator = FixedLocator(list(range(-1, 20)))
-    #ax.xaxis.set_major_locator(x_locator)
-    ax[up_ind].tick_params(axis="x", direction="in", length=10, width=1, color="k")
-    ax[up_ind].grid(axis="y", color="k", alpha=.1, linewidth=.5)
-    ax[up_ind].set_xlabel('Time in Seconds')
-    ax[up_ind].set_ylabel('DF/F')
-    ax[up_ind].set_title(f'spatio-temporal: {up}')
-fh.suptitle(f'Traces x ROI for {layer[0][1]}, Series {layer[0][2]} | ROI={layer[0][3]} | AltPreTime={alt_pre_time} | BgSub={background_subtraction}', fontsize=13)
+    for roi_ind in range(len(flies_yopto_mean_response)):
 
+      # Loop through shades of red for opto
+      red_color = next(reds)
+      ax[sp_ind, tf_ind].plot(interp_time, flies_yopto_mean_response[roi_ind, sp_ind, tf_ind, :], color=red_color, alpha=0.6, label='ROI: '+str(roi_ind)+' | opto')
+      # Loop through shades of blue for no opto
+      blue_color = next(blues)
+      ax[sp_ind, tf_ind].plot(interp_time, flies_nopto_mean_response[roi_ind, sp_ind, tf_ind, :], color=blue_color, alpha=0.6, label='ROI: '+str(roi_ind)+' | no opto')
+
+      if error_bars == True:
+        ax[sp_ind, tf_ind].fill_between(interp_time, flies_yopto_sem_plus[roi_ind, sp_ind, tf_ind, :],
+                    flies_yopto_sem_minus[roi_ind, sp_ind, tf_ind, :],
+                    color=red_color, alpha=0.1)
+        ax[sp_ind, tf_ind].fill_between(interp_time, flies_nopto_sem_plus[roi_ind, sp_ind, tf_ind, :],
+                    flies_nopto_sem_minus[roi_ind, sp_ind, tf_ind, :],
+                    color=blue_color, alpha=0.1)
+        
+      # Legend, Grid, Axis
+      ax[sp_ind, tf_ind].legend()
+      ax[sp_ind, tf_ind].grid(axis="x", color="k", alpha=.1, linewidth=1, linestyle=":")
+      ax[sp_ind, tf_ind].tick_params(axis="x", direction="in", length=10, width=1, color="k")
+      ax[sp_ind, tf_ind].grid(axis="y", color="k", alpha=.1, linewidth=.5)
+      ax[sp_ind, tf_ind].set_xlabel('Time in Seconds')
+      ax[sp_ind, tf_ind].set_ylabel('Response')
+      ax[sp_ind, tf_ind].set_title(f'spatal: {spatial} | temporal: {temporal}')
+# title for entire figure. Each unique parameter value, plot every ROI
+fh.suptitle('Traces for each unique parameter value, every ROI')
 if savefig == True:
     fh.savefig(
     save_directory
     + "TracePerROI."
-    + str(layer[0][1])
-    + ".Series"
-    + str(layer[0][2])
-    + ".ROI"
-    + str(layer[0][3])
-    + ".AltPreTime"
+    + "DFF: "
+    + str(dff)
+    + ".AltPreTime: "
     + str(alt_pre_time)
-    + ".BgSub"
-    + str(background_subtraction)
     + ".pdf",
     dpi=300,
     )
 
 # %% For each ROI, plot every unique parameter value
 error_bars = False
-
+# Create a figure with as many subplots as there are ROIs
 fh, ax = plt.subplots(len(flies_yopto_mean_response), 1, figsize=(16, 8*len(flies_yopto_mean_response)))
+
 for roi_ind in range(len(flies_yopto_mean_response)):
   # Have to reset these inside the loop, otherwise the colors don't reset
-  colors1 = iter(cm.PuRd(np.linspace(0.2, 1, len(nopto_unique_parameter_values))))
-  colors2 = iter(cm.YlGn(np.linspace(0.3, 1, len(nopto_unique_parameter_values))))
+  colors1 = iter(cm.winter(np.linspace(0.2, 1, len(optoless_unique_parameter_values))))
+  colors2 = iter(cm.autumn(np.linspace(0.2, 1, len(optoless_unique_parameter_values))))
+
   marker1 = itertools.cycle((',', 'v', 's', 'P', 'x', '+', '.', 'X', 'o', '*', '4', '>', 'p', '1', '<', '|', '_', 'H', '8')) 
   marker2 = itertools.cycle((',', 'v', 's', 'P', 'x', '+', '.', 'X', 'o', '*', '4', '>', 'p', '1', '<', '|', '_', 'H', '8')) 
 
-  for up_ind, up in enumerate(nopto_unique_parameter_values): # up = unique parameter
+  # loop through the spatial periods and then temporal frequencies
+  for sp_ind, spatial in enumerate(spatial_periods):
+    for tf_ind, temporal in enumerate(temporal_frequencies):
 
-    # Loop through shades of red for opto
-    color1_color = next(colors1)
-    ax[roi_ind].plot(new_time_vector, flies_yopto_mean_response[roi_ind, up_ind, :], marker=next(marker1), color=color1_color, alpha=0.9, label='spatio-temporal: '+str(up)+' | opto')
-    # Loop through shades of blue for no opto
-    color2_color = next(colors2)
-    ax[roi_ind].plot(new_time_vector, flies_nopto_mean_response[roi_ind, up_ind, :], marker=next(marker2), color=color2_color, alpha=0.9, label='spatio-temporal: '+str(up)+' | no opto')
+      # Loop through shades of red for opto
+      color1_color = next(colors1)
+      ax[roi_ind].plot(interp_time, flies_yopto_mean_response[roi_ind, sp_ind, tf_ind, :], marker=next(marker1), color=color1_color, alpha=0.8, label='spatio-temporal: '+str(up)+' | opto')
+      # Loop through shades of blue for no opto
+      color2_color = next(colors2)
+      ax[roi_ind].plot(interp_time, flies_nopto_mean_response[roi_ind, sp_ind, tf_ind, :], marker=next(marker2), color=color2_color, alpha=0.8, label='spatio-temporal: '+str(up)+' | no opto')
 
-    if error_bars == True:
-      ax[roi_ind].fill_between(new_time_vector, flies_yopto_sem_plus[roi_ind, up_ind, :], 
-                      flies_yopto_sem_minus[roi_ind, up_ind, :],
-                      color='red', alpha=0.1)
-      ax[roi_ind].fill_between(new_time_vector, flies_nopto_sem_plus[roi_ind, up_ind, :], 
-                  flies_nopto_sem_minus[roi_ind, up_ind, :],
-                  color='black', alpha=0.1)
-    # Legend, Grid, Axis
-    ax[roi_ind].legend()
-    ax[roi_ind].grid(axis="x", color="k", alpha=.1, linewidth=1, linestyle=":")
-
-    ax[roi_ind].tick_params(axis="x", direction="in", length=10, width=1, color="k")
-    ax[roi_ind].grid(axis="y", color="k", alpha=.1, linewidth=.5)
-    ax[roi_ind].set_xlabel('Time in Seconds')
-    ax[roi_ind].set_ylabel('DF/F')
-    ax[roi_ind].set_title(f'ROI: {roi_ind}')
-fh.suptitle(f'Traces x ROI for {layer[0][1]}, Series {layer[0][2]} | ROI={layer[0][3]} | AltPreTime={alt_pre_time} | BgSub={background_subtraction}', fontsize=13)
+      if error_bars == True:
+        ax[roi_ind].fill_between(interp_time, flies_yopto_sem_plus[roi_ind, sp_ind, tf_ind, :],
+                    flies_yopto_sem_minus[roi_ind, sp_ind, tf_ind, :],
+                    color=color1_color, alpha=0.1)
+        ax[roi_ind].fill_between(interp_time, flies_nopto_sem_plus[roi_ind, sp_ind, tf_ind, :],
+                    flies_nopto_sem_minus[roi_ind, sp_ind, tf_ind, :],
+                    color=color2_color, alpha=0.1)
+        
+      # Legend, Grid, Axis for each subplot
+      ax[roi_ind].legend()
+      ax[roi_ind].grid(axis="x", color="k", alpha=.1, linewidth=1, linestyle=":")
+      ax[roi_ind].tick_params(axis="x", direction="in", length=10, width=1, color="k")
+      ax[roi_ind].grid(axis="y", color="k", alpha=.1, linewidth=.5)
+      ax[roi_ind].set_xlabel('Time in Seconds')
+      ax[roi_ind].set_ylabel('Response')
+      ax[roi_ind].set_title(f'ROI: {roi_ind}')
+fh.suptitle(f'For each ROI, show all the unique parameter values')
 
 # %% For each ROI, plot the mean of all parameter values
 error_bars = True
@@ -466,6 +463,94 @@ for roi_ind in range(len(flies_yopto_mean_response)):
 
 # %% Functions for extracting metrics from a window across flies and plotting those metrics
 
+# New function to extract metrics from individual ROIs
+# takes in flies_yopto_mean_response and flies nopto_mean_response, computes metrics for them, and returns the differences between them
+def getMetricsFromROIs(flies_nopto_mean_response, flies_yopto_mean_response):
+# optoless_unique_parameter_values | flies_nopto_mean_response | flies_yopto_mean_response
+# mean_response_matrix is ROIs x spatial_periods x temporal_frequencies x time
+
+  # Define stimulus window to collect responses
+  vis_start = ID.getRunParameters('pre_time')
+  vis_length = ID.getRunParameters('stim_time')
+  getting_going_time = 0.3 # time to wait to start the window responding to vis stimuluxs
+  early_cutoff_time = 0.0 # time to cut off the window before the vis stimulus ends
+  buffer_from_interp = 1.0 # time to buffer the window from the interpolation 'adding time' to the trial length
+  window_length = vis_length - getting_going_time - early_cutoff_time + buffer_from_interp # length of the window
+  window_time = vis_start + getting_going_time # time to start the window
+  window_start_frame = int(np.ceil(window_time / ID.getResponseTiming().get('sample_period'))) # time to start the window in frames
+  window_frames = int(np.ceil(window_length / ID.getResponseTiming().get('sample_period'))) # number of frames in the window
+  
+  nopto_windows = np.zeros((flies_nopto_mean_response.shape[0], flies_nopto_mean_response.shape[1], flies_nopto_mean_response.shape[2], window_frames))
+  yopto_windows = np.zeros((flies_yopto_mean_response.shape[0], flies_yopto_mean_response.shape[1], flies_yopto_mean_response.shape[2], window_frames))
+
+  # Loop through spatial_periods and temporal_frequences, and for each parameter, get the window of responses and calculate the min, max, and mean of that window
+  # Loop through each ROI
+  for roi_ind in range(flies_nopto_mean_response.shape[0]):
+    for sp_ind in range(flies_nopto_mean_response.shape[1]):
+      for tf_ind in range(flies_nopto_mean_response.shape[2]):
+        # pull the window frames out of the mean response matrix
+        nopto_windows[roi_ind, sp_ind, tf_ind, :] = flies_nopto_mean_response[roi_ind, sp_ind, tf_ind, window_start_frame:window_start_frame+window_frames]
+        yopto_windows[roi_ind, sp_ind, tf_ind, :] = flies_yopto_mean_response[roi_ind, sp_ind, tf_ind, window_start_frame:window_start_frame+window_frames]
+  
+  # calculate the mean and max of the window for each ROI
+  nopto_windows_mean = np.mean(nopto_windows, axis=3)
+  yopto_windows_mean = np.mean(yopto_windows, axis=3)
+  nopto_windows_max = np.max(nopto_windows, axis=3)
+  yopto_windows_max = np.max(yopto_windows, axis=3)
+  
+  # return the windows and the metrics
+  return nopto_windows, yopto_windows, nopto_windows_mean, yopto_windows_mean, nopto_windows_max, yopto_windows_max
+
+
+# Function to compare and summarize the metrics from getMetricsFromROIs
+def compareMetrics(nopto_windows_mean, yopto_windows_mean, nopto_windows_max, yopto_windows_max):
+  # Takes in metrics that getMetricsFromROIs returns and compares them
+  # returns the differences between the metrics, their mean, and their SEM across ROIs
+  # The order of operations is such that each ROI is processed individually. 
+  # For each ROI, the opto value and the no opto value are compared, and the difference is normalized by the no opto value.
+  # Then, the mean and SEM of the normalized differences are calculated across ROIs.
+  
+
+  # calculate the differences between the metrics and normalize the difference
+  mean_diff = yopto_windows_mean - nopto_windows_mean
+  mean_diff_norm = mean_diff / nopto_windows_mean
+  max_diff = yopto_windows_max - nopto_windows_max
+  max_diff_norm = max_diff / nopto_windows_max
+
+  # find the mean and sem of the normalized differences
+  mean_diff_norm_ROI_avg = np.nanmean(mean_diff_norm, axis=0)
+  mean_diff_norm_ROI_sem = np.nanstd(mean_diff_norm, axis=0) / np.sqrt(mean_diff_norm.shape[0])
+  max_diff_norm_ROI_avg = np.nanmean(max_diff_norm, axis=0)
+  max_diff_norm_ROI_sem = np.nanstd(max_diff_norm, axis=0) / np.sqrt(max_diff_norm.shape[0])
+
+  # return the differences and their mean and sem
+  return mean_diff_norm, mean_diff_norm_ROI_avg, mean_diff_norm_ROI_sem, max_diff_norm, max_diff_norm_ROI_avg, max_diff_norm_ROI_sem
+
+# %% testing getMetricsFromROIs and compareMetrics
+
+# get the windows and metrics
+nopto_windows, yopto_windows, nopto_windows_mean, yopto_windows_mean, nopto_windows_max, yopto_windows_max = getMetricsFromROIs(flies_nopto_mean_response, flies_yopto_mean_response)
+
+# create a new figure
+fh, ax = plt.subplots(1, figsize=(16, 8))
+ax.plot(flies_nopto_mean_response[0, 2, 2, :])
+ax.plot(nopto_windows[0, 2, 2, :])
+
+# create a new figure
+fh, ax = plt.subplots(1, figsize=(16, 8))
+ax.plot(flies_nopto_mean_response[2, 1, 1, :])
+ax.plot(nopto_windows[1, 1, 1, :])
+
+# compare the metrics
+mean_diff_norm, mean_diff_norm_ROI_avg, mean_diff_norm_ROI_sem, max_diff_norm, max_diff_norm_ROI_avg, max_diff_norm_ROI_sem = compareMetrics(nopto_windows_mean, yopto_windows_mean, nopto_windows_max, yopto_windows_max)
+
+
+
+
+
+  # %%
+
+
 # Pulls the metrics given the layer, which_parameter, etc
 def getMetricsFromExperiment(layer, which_parameter='spatiotemporal', alt_pre_time = 1, background_subtraction = False, background_roi_name = 'bg'):
   file_path = os.path.join(layer[0], layer[1] + ".hdf5")
@@ -476,7 +561,7 @@ def getMetricsFromExperiment(layer, which_parameter='spatiotemporal', alt_pre_ti
   # first, get roi_data
   #epoch_response = roi_data.get('epoch_response') 
   # getAltEpochResponseMatrix b/c opto comes on during typical pre-time
-  time_vector, epoch_response = ma.getAltEpochResponseMatrix(ID, np.vstack(roi_data['roi_response']), alt_pre_time=alt_pre_time)
+  time_vector, epoch_response = ma.getAltEpochResponseMatrix(ID, np.vstack(roi_data['roi_response']), dff = False, alt_pre_time=alt_pre_time)
 
   # second, filter by opto
   yopto_query = {'opto_stim': True}
