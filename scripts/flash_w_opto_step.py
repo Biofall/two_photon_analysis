@@ -69,6 +69,14 @@ mi1_fly15_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230403.moco", "2023-0
 mi1_fly16_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230403.moco", "2023-04-03", "3", "mi1_proximal_multiple"]]
 # Fly 17
 mi1_fly17_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230403.moco", "2023-04-03", "4", "mi1_proximal_multiple"]]
+# Fly 18
+mi1_fly18_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230427.moco", "2023-04-27", "1", "mi1_proximal_multiple"]]
+# Fly 19
+mi1_fly19_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230427.moco", "2023-04-27", "2", "mi1_proximal_multiple"]]
+# Fly 20
+mi1_fly20_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230427.moco", "2023-04-27", "3", "mi1_proximal_multiple"]]
+# Fly 21
+mi1_fly21_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230427.moco", "2023-04-27", "5", "mi1_proximal_multiple"]]
 
 
 # CONTROL FLIES
@@ -95,10 +103,11 @@ mi1_prox_good = np.concatenate(
                              mi1_fly7_prox, mi1_fly8_prox, mi1_fly9_prox,
                              mi1_fly10_prox, mi1_fly11_prox, mi1_fly12_prox,
                              mi1_fly13_prox, mi1_fly14_prox, mi1_fly15_prox, 
-                             mi1_fly16_prox, mi1_fly17_prox,),
+                             mi1_fly16_prox, mi1_fly17_prox, mi1_fly18_prox,
+                             mi1_fly19_prox, mi1_fly20_prox, mi1_fly21_prox,),
                              axis = 0,
                              )
-fly_list_prox = [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]
+fly_list_prox = [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21]
 
 mi1_dist_good = np.concatenate(
                              (mi1_fly4_dist, mi1_fly5_dist, mi1_fly6_dist,
@@ -216,15 +225,23 @@ def getWindowMetricsFromLayer(layer, condition_name, normalize_to=False, plot_tr
 
         unique_parameter_values, mean_response, sem_response, trial_response_by_stimulus = ID.getTrialAverages(roi_data.get('epoch_response'), parameter_key='current_led_intensity')
         # ('current_led_intensity', 'current_led_duration')
-        # calc the sem + / -
-        sem_plus = mean_response + sem_response
-        sem_minus = mean_response - sem_response
+        # calc the sem + / - NOTE This is a sem across trials. Probably not what you're looking for unless plotting individual ROIs
+        # instead calculate the SEM when averaging across ROIs
+        # sem_plus = mean_response + sem_response
+        # sem_minus = mean_response - sem_response
+
+        # Calculate the mean and SEM of mean_response across ROIs
+        cross_roi_mean_response = np.mean(mean_response, axis=0)
+        cross_roi_sem_response = np.std(mean_response, axis=0) / np.sqrt(mean_response.shape[0])
+        cross_roi_sem_plus = cross_roi_mean_response + cross_roi_sem_response
+        cross_roi_sem_minus = cross_roi_mean_response - cross_roi_sem_response
+
         trial_timepoints = range(len(roi_data['time_vector']))
 
         # finding vis flash locations 
         flash_start, flash_end = visFlash(ID)
-        min_val = np.min(sem_minus.mean(axis=0))
-        max_val = np.max(sem_plus.mean(axis=0))
+        min_val = np.min(cross_roi_sem_minus.mean(axis=0))
+        max_val = np.max(cross_roi_sem_plus.mean(axis=0))
         y_low = min_val-abs(0.05*min_val)
         y_high = max_val+abs(0.05*max_val)
 
@@ -235,9 +252,9 @@ def getWindowMetricsFromLayer(layer, condition_name, normalize_to=False, plot_tr
             # Plotting the whole trace
             fh, ax = plt.subplots(1, 1, figsize=(16, 8))
             for up_ind, up in enumerate(unique_parameter_values): # up = unique parameter
-                ax.plot(roi_data['time_vector'], mean_response[:, up_ind, :].mean(axis=0), color=colors[up_ind], alpha=0.9, label=up)
-                ax.fill_between(roi_data['time_vector'], sem_plus[:, up_ind, :].mean(axis=0), 
-                                sem_minus[:, up_ind, :].mean(axis=0),
+                ax.plot(roi_data['time_vector'], cross_roi_mean_response[up_ind, :], color=colors[up_ind], alpha=0.9, label=up)
+                ax.fill_between(roi_data['time_vector'], cross_roi_sem_plus[up_ind, :], 
+                                cross_roi_sem_minus[up_ind, :],
                                 color=colors[up_ind], alpha=0.1)
             # opto stim plotting
             led_start_time = ID.getRunParameters('pre_time')+ID.getRunParameters('led_time')
@@ -281,8 +298,6 @@ def getWindowMetricsFromLayer(layer, condition_name, normalize_to=False, plot_tr
                 dpi=300,
                 )
 
-
-
         #  Windows to analyze for metrics
         flash_start = ID.getRunParameters('flash_times') + ID.getRunParameters('pre_time')
         flash_width = ID.getRunParameters('flash_width')
@@ -297,14 +312,14 @@ def getWindowMetricsFromLayer(layer, condition_name, normalize_to=False, plot_tr
         if plot_trial_figs == True:
             fh, ax = plt.subplots(1, len(unique_parameter_values), figsize=(18, 4))
 
-        # Collect windowed responses
+        # Collect windowed responses - calculate the mean and sem the correct way
         cmap = plt.get_cmap('viridis') # also 'cool' 'winter' 'PRGn' 'Pastel1' 'YlGnBu' 'twilight'
         colors = [cmap(i) for i in np.linspace(0.0, 1.0, num_windows)]
         for up_ind, up in enumerate(unique_parameter_values): # Opto intensities
             for w_ind, w in enumerate(window_times): # windows
                 start_index = np.where(roi_data.get('time_vector') > window_times[w_ind])[0][0]
-                windows[up_ind, w_ind, :] = mean_response[:, up_ind, start_index:(start_index+window_frames)].mean(axis=0)
-                windows_sem[up_ind, w_ind, :] = sem_response[:, up_ind, start_index:(start_index+window_frames)].mean(axis=0)
+                windows[up_ind, w_ind, :] = cross_roi_mean_response[up_ind, start_index:(start_index+window_frames)]
+                windows_sem[up_ind, w_ind, :] = cross_roi_sem_response[up_ind, start_index:(start_index+window_frames)] # This is using the correct cross-ROI SEM calculation
 
                 if plot_trial_figs == True:
                     # Plot: Each Window for a given LED Intensity
@@ -368,8 +383,8 @@ def getWindowMetricsFromLayer(layer, condition_name, normalize_to=False, plot_tr
         # This step takes windows (averaged across ROIs already) = UniqueOptoParams X Window X Time) and averages across time, so:
         # response_mean = Unique Opto Params x Windows
         response_mean = np.mean(windows, axis = -1)
-        # logic here for sem is that it's already a series of sem's across time. Take the avg to find 1 value per  UOPxWindow
-        response_sem = np.mean(windows_sem, axis = -1)
+        # NOTE: easy to use the wrong SEM calculation again. If mean(windows_sem) is used, then it's the wrong SEM calculation. Recalculate. 
+        response_sem = np.std(windows, axis = -1) / np.sqrt(window_frames) #NOTE - this is the correct SEM calculation, avg SEM across time windows
         response_max = np.max(windows, axis = -1)
         response_min = np.min(windows, axis = -1)
         response_PtT = response_max - response_min
@@ -518,8 +533,8 @@ def getWindowMetricsFromLayer(layer, condition_name, normalize_to=False, plot_tr
 #--------------------------------------------------------------------------------------------------------#
 #--------------------------------------------------------------------------------------------------------#
 # Set meeeeeeeeeeee
-data_list = mi1_control_all # mi1_all_good | mi1_control_all
-list_to_use = fly_list_control # fly_list_exp | fly_list_control
+data_list = mi1_all_good # mi1_all_good | mi1_control_all | mi1_prox_good
+list_to_use = fly_list_exp # fly_list_exp | fly_list_control | fly_list_prox
 
 # Making a data frame the way it's supposed to be....
 # Currently have:
