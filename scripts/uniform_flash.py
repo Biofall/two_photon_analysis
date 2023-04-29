@@ -73,6 +73,12 @@ mi1_prox_pre_all = np.concatenate( #removed mi1_fly3_pre_prox
                                   #mi1_fly5_pre_prox,),
                                   axis = 0,
                                  )
+mi1_prox_pre_5 = np.concatenate(
+                                    (mi1_fly5_pre_prox,),   
+                                    axis = 0,
+)
+mi1_prox_pre_5_list = [5]
+
 mi1_prox_pre_list = [1, 2, 4]
 mi1_prox_perf_all = np.concatenate(
                                    (mi1_fly1_perf_prox, mi1_fly2_perf_prox, mi1_fly4_perf_prox,),
@@ -80,6 +86,12 @@ mi1_prox_perf_all = np.concatenate(
                                    axis = 0,
                                   )
 mi1_prox_perf_list = [1, 2, 4]
+mi1_prox_perf_5 = np.concatenate(
+                                    (mi1_fly5_perf_prox,),
+                                    axis = 0,
+)
+mi1_prox_perf_5_list = [5]
+
 mi1_prox_post_all = np.concatenate(
                                    (mi1_fly1_post_prox, mi1_fly2_post_prox, mi1_fly4_post_prox,),
                                    axis = 0,
@@ -147,7 +159,13 @@ mi1_perf_all_list = [mi1_prox_perf_list, mi1_medi_perf_list, mi1_dist_perf_list]
 mi1_post_all = [mi1_prox_post_all, mi1_medi_post_all, mi1_dist_post_all] 
 mi1_post_all_list = [mi1_prox_post_list, mi1_medi_post_list, mi1_dist_post_list]
 
-mi1_fly5 = [mi1_fly5_pre_prox, mi1_fly5_perf_prox]
+#Fly 5 only (it's missing post)
+mi1_pre_5 = [mi1_prox_pre_5]
+mi1_pre_5_list = [mi1_prox_pre_5_list]
+mi1_perf_5 = [mi1_prox_perf_5]
+mi1_perf_5_list = [mi1_prox_perf_5_list]
+mi1_5_good = [mi1_pre_5, mi1_perf_5]
+mi1_5_good_list = [mi1_pre_5_list, mi1_perf_5_list]
 
 # Concatenate all together
 mi1_all_good = [mi1_pre_all, mi1_perf_all, mi1_post_all]
@@ -187,7 +205,10 @@ def getMetrics(which_experiment):
     max_across_rois = np.mean(max_by_rois, axis=0)
     min_across_rois = np.mean(min_by_rois, axis=0)
 
-    return time_vector, mean_response, sem_plus, sem_minus, mean_across_rois, max_across_rois, min_across_rois
+    epoch_timestamps = ID.getEpochParameters('epoch_unix_time')   # sec
+    epoch_timestamps = epoch_timestamps
+
+    return time_vector, mean_response, sem_plus, sem_minus, mean_across_rois, max_across_rois, min_across_rois, epoch_timestamps
 # %% Plot individual traces by layer
 save_figures = True
 
@@ -204,7 +225,7 @@ colors = [cmap(i) for i in np.linspace(0.0, 1.0, 12)]
 fh, ax = plt.subplots(exp_count, 1, figsize=(16, 8*exp_count))
 for block_ind in range(len(exp_block_type)):
     for exp_ind in range(exp_count):
-        time_vector, mean_response, sem_plus, sem_minus, mean_across_rois, max_across_rois, min_across_rois = getMetrics(which_layer[block_ind][layer][exp_ind])
+        time_vector, mean_response, sem_plus, sem_minus, mean_across_rois, max_across_rois, min_across_rois, _ = getMetrics(which_layer[block_ind][layer][exp_ind])
         # Mean it
         mean_across_rois = np.squeeze(mean_response.mean(axis=0))
         sem_plus_across_rois = np.squeeze(sem_plus.mean(axis=0))
@@ -246,7 +267,7 @@ for block_ind in range(len(exp_block_type)):
         # debug print the indecies
         print(f'block_ind: {block_ind}, exp_ind: {exp_ind}')
 
-        time_vector, mean_response, sem_plus, sem_minus, mean_across_rois, max_across_rois, min_across_rois = getMetrics(which_layer[block_ind][layer][exp_ind])
+        time_vector, mean_response, sem_plus, sem_minus, mean_across_rois, max_across_rois, min_across_rois, _ = getMetrics(which_layer[block_ind][layer][exp_ind])
 
         # plot the max_across_rois
         met_ax[exp_ind, 0].plot(max_across_rois, color=colors[block_ind], label=exp_block_type[block_ind])
@@ -295,10 +316,9 @@ if save_figures:
 
 # %% Plot max values using ID.getResponseAmplitude across all ROIs. End to end across blocks
 # Proximal, Medial, or Distal (0, 1, or 2)
-layer = 0
+layer = 2
 save_figures = False
-# which_layer = mi1_all_good 
-which_layer = mi1_fly5
+which_layer = mi1_all_good 
 
 exp_count = len(which_layer[0][layer]) # number of experiments
 
@@ -307,20 +327,25 @@ met_fig, met_ax = plt.subplots(exp_count, 3, figsize=(16*3, 8*exp_count))
 cmap = plt.get_cmap('Pastel2') # also 'cool' 'winter' 'PRGn' 'Pastel1' 'YlGnBu' 'twilight'
 colors = [cmap(i) for i in np.linspace(0.0, 1.0, 8)]
 
-for block_ind in range(len(exp_block_type)):
-    for exp_ind in range(exp_count):
+t0 = 0
+for exp_ind in range(exp_count):
+    for block_ind in range(len(exp_block_type)):
         # debug print the indecies
         print(f'block_ind: {block_ind}, exp_ind: {exp_ind}')
 
-        time_vector, mean_response, sem_plus, sem_minus, mean_across_rois, max_across_rois, min_across_rois = getMetrics(which_layer[block_ind][layer][exp_ind])
+        time_vector, mean_response, sem_plus, sem_minus, mean_across_rois, max_across_rois, min_across_rois, epoch_timestamps = getMetrics(which_layer[block_ind][layer][exp_ind])
 
-        xx = np.arange(len(max_across_rois)) + (block_ind * len(max_across_rois))
+        if block_ind == 0:
+            t0 = epoch_timestamps[0]
+
+        plot_timestamps = epoch_timestamps - t0
+
         # plot the max_across_rois
-        met_ax[exp_ind, 0].plot(xx, max_across_rois, color=colors[block_ind], label=exp_block_type[block_ind])
+        met_ax[exp_ind, 0].plot(plot_timestamps, max_across_rois, color=colors[block_ind], label=exp_block_type[block_ind])
         # plot the min_across_rois
-        met_ax[exp_ind, 1].plot(xx, min_across_rois, color=colors[block_ind], label=exp_block_type[block_ind])
+        met_ax[exp_ind, 1].plot(plot_timestamps, min_across_rois, color=colors[block_ind], label=exp_block_type[block_ind])
         # plot the mean_across_rois
-        met_ax[exp_ind, 2].plot(xx, mean_across_rois, color=colors[block_ind], label=exp_block_type[block_ind])
+        met_ax[exp_ind, 2].plot(plot_timestamps, mean_across_rois, color=colors[block_ind], label=exp_block_type[block_ind])
 
         # title for subfigure
         met_ax[exp_ind, 0].set_title(f'Fly {mi1_all_good_list[block_ind][0][exp_ind]} Max Response')
@@ -351,6 +376,47 @@ if save_figures:
     save_name = f'All_{exp_layer[0]}_Metrics_Averaged_Across_ROIs.pdf'
     save_path = os.path.join(save_directory, save_name)
     met_fig.savefig(save_path, dpi=300)
+
+
+
+
+
+
+
+# %% same plot as above, but just for fly 5
+met_fig, met_ax = plt.subplots(1, 3, figsize=(16*3, 8*1))
+# set the color map
+cmap = plt.get_cmap('Pastel2') # also 'cool' 'winter' 'PRGn' 'Pastel1' 'YlGnBu' 'twilight'
+colors = [cmap(i) for i in np.linspace(0.0, 1.0, 8)]
+
+# mi1_fly5_pre_prox | mi1_fly5_perf_prox
+
+time_vector_pre, mean_response_pre, sem_plus_pre, sem_minus_pre, mean_across_rois_pre, max_across_rois_pre, min_across_rois_pre = getMetrics(mi1_fly5_pre_prox[0])
+time_vector_perf, mean_response_perf, sem_plus_perf, sem_minus_perf, mean_across_rois_perf, max_across_rois_perf, min_across_rois_perf = getMetrics(mi1_fly5_perf_prox[0])
+
+
+# plot the max_across_rois
+met_ax[0].plot(np.arange(len(max_across_rois)), max_across_rois_pre, color='r', label='pre')
+met_ax[0].plot(np.arange(len(max_across_rois))+50, max_across_rois_perf, color='b', label='perf')
+# plot the min_across_rois
+met_ax[1].plot(np.arange(len(max_across_rois)), min_across_rois_pre, color='r', label='pre')
+met_ax[1].plot(np.arange(len(max_across_rois))+50, min_across_rois_perf, color='b', label='perf')
+
+# plot the mean_across_rois
+met_ax[2].plot(np.arange(len(max_across_rois)), mean_across_rois_pre, color='r', label='pre')
+met_ax[2].plot(np.arange(len(max_across_rois))+50, mean_across_rois_perf, color='b', label='perf')
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
