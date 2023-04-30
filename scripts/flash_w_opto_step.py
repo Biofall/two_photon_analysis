@@ -98,7 +98,7 @@ mi1_prox_all = np.concatenate(
                              axis = 0,
                             )
 
-mi1_prox_good = np.concatenate(
+mi1_prox_goodish = np.concatenate(
                              (mi1_fly4_prox, mi1_fly5_prox, mi1_fly6_prox,
                              mi1_fly7_prox, mi1_fly8_prox, mi1_fly9_prox,
                              mi1_fly10_prox, mi1_fly11_prox, mi1_fly12_prox,
@@ -107,21 +107,28 @@ mi1_prox_good = np.concatenate(
                              mi1_fly19_prox, mi1_fly20_prox, mi1_fly21_prox,),
                              axis = 0,
                              )
-fly_list_prox = [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21]
+
+mi1_prox_good = np.concatenate(
+                             (mi1_fly6_prox, mi1_fly8_prox, mi1_fly16_prox, mi1_fly17_prox,
+                              mi1_fly18_prox, mi1_fly19_prox, mi1_fly20_prox, mi1_fly21_prox,),
+                             axis = 0,
+                             )
+
+fly_list_prox = [6, 8, 16, 17, 18, 19, 20, 21]
 
 mi1_dist_good = np.concatenate(
-                             (mi1_fly4_dist, mi1_fly5_dist, mi1_fly6_dist,
-                             mi1_fly9_dist, mi1_fly10_dist, mi1_fly12_dist,),
+                             (mi1_fly6_dist,
+                             ),
                              axis = 0,
                              )
-fly_list_dist = [4, 5, 6, 9, 10, 12]
+fly_list_dist = [6]
 
 mi1_medi_good = np.concatenate(
-                             (mi1_fly4_medi, mi1_fly5_medi, mi1_fly6_medi,
-                             mi1_fly9_medi, mi1_fly10_medi, mi1_fly12_medi,),
+                             (mi1_fly6_medi,
+                             ),
                              axis = 0,
                              )
-fly_list_medi = [4, 5, 6, 9, 10, 12]
+fly_list_medi = [6]
                              
 mi1_medi_all = np.concatenate(
                        (mi1_fly1_medi, mi1_fly2_medi, mi1_fly3_medi,mi1_fly4_medi, mi1_fly5_medi, mi1_fly6_medi,), 
@@ -584,8 +591,9 @@ print('-------------------------------------------------------------------------
 
 
 # %% Seaborn plots for values over windows (Fig 4)
-#save_fig=True
-# Subplot grid where each row is a metric and each column is a layer
+
+# FIGURE: Subplot grid where each row is a metric and each column is a layer
+save_fig=True
 bigfig, bigaxes = plt.subplots(4,3, figsize=(36,27))
 bigfig.suptitle(f'PLACEHOLDER SUPERTITLE')
 
@@ -666,8 +674,129 @@ if save_fig == True:
     save_directory
     + "Cross-Fly.Cross-Layer.control.LinePlot."
     + ".pdf",
-    dpi=300,
+    dpi=300, bbox_inches='tight',
     )
+
+
+
+# %% FIGURE: Create a histogram of the difference between the first and third window for each fly (that's window 2)
+# seaborn histogram guide: https://seaborn.pydata.org/generated/seaborn.histplot.html 
+# Initialize some shit:
+# subset df for layer and window
+prox_win02_df = metric_df.loc[(metric_df['Window'] == 1) & (metric_df['Layer'] == 'Proximal')]
+
+# Parameters for histplots
+kde = True
+element = 'step' # bars | poly | step
+multiple = 'stack' # dodge | stack | layer | fill
+#bins = 10
+#binwidth = 0.05 #0.025 # supercedes bins |  0.025
+pally = 'Set3' # Set3 pastel
+
+save_fig = True
+# Histogram of Mean values for third - first windows
+sns.set_theme()
+with plt.style.context('dark_background'):
+    sns.set_context("talk")
+
+    fig_hist_mean, ax_hist_mean = plt.subplots(1, figsize = (12,9))
+    sns.histplot(
+        ax=ax_hist_mean, x="Mean", hue="Opto", data=prox_win02_df, multiple=multiple, element=element, kde=kde, palette=pally, 
+        )
+    ax_hist_mean.set(xlabel='Mean Value of Third Window - Mean Value of First Window')
+    ax_hist_mean.set_title(f'Mean Response - Mi1 Proximal Layer - Opto Effect')
+    ax_hist_mean.grid(False)
+    sns.despine(fig=fig_hist_mean)
+
+if save_fig == True:
+    fig_hist_mean.savefig(
+    save_directory
+    + "SummaryMeanHistogramThirdWindow.Proximal.Dark"
+    + ".pdf",
+    dpi=300, bbox_inches='tight', transparent=True,
+    )
+
+# Histogram of Max values for third - first windows
+# save_fig = True
+with plt.style.context('dark_background'):
+    sns.set_context("talk")
+
+    fig_hist_max, ax_hist_max = plt.subplots(1, figsize = (12,9))
+    sns.histplot(
+        ax=ax_hist_max, x="Max", hue="Opto", data=prox_win02_df, multiple=multiple, element=element, kde=kde, palette=pally, 
+        )
+    ax_hist_max.set(xlabel='Max Value of Third Window - Max Value of First Window')
+    ax_hist_max.set_title(f'Max Response - Mi1 Proximal Layer - Opto Effect')
+    ax_hist_max.grid(False)
+    sns.despine(fig=fig_hist_max)
+
+if save_fig == True:
+    fig_hist_max.savefig(
+    save_directory
+    + "SummaryMaxHistogramThirdWindow.Proximal.Dark"
+    + ".pdf",
+    dpi=300, bbox_inches='tight', transparent=True,
+    )
+
+# FIGURE: Create a series of boxplots with the differences between the first and third window for each fly
+# save_fig = True
+pally = 'Set3' # Set3 pastel
+
+with plt.style.context('dark_background'):
+    sns.set_context("talk")
+    sns.axes_style("whitegrid", {'grid.linestyle': '--'})
+    contrast_color = "coral"
+
+    fig_box, ax_box_mean = plt.subplots(1, figsize = (10, 10))
+    sns.boxplot(
+        ax=ax_box_mean, data=prox_win02_df, x="Mean", y="Opto", palette=pally, orient="h", order=[2,1,0],
+        medianprops={"color": contrast_color}, whiskerprops={"color":contrast_color}, capprops={"color":contrast_color}, 
+        flierprops={"markerfacecolor":contrast_color, "markeredgecolor":contrast_color, 'markersize': 10}, boxprops={"edgecolor":contrast_color},        
+        )
+    ax_box_mean.set(xlabel='Mean Value of Third Window - Mean Value of First Window')
+    ax_box_mean.set(ylabel='Opto Intensity')
+    ax_box_mean.set_title(f'Mean Response - Mi1 Proximal Layer - Opto Effect')
+    sns.despine(fig=fig_box, left=True)
+    sns.set_context("talk")
+    ax_box_mean.grid(alpha=0.3)
+if save_fig == True:
+    fig_box.savefig(
+    save_directory
+    + "SummaryMeanBoxPlotThirdWindow.Proximal.Dark"
+    + ".pdf",
+    dpi=300, bbox_inches='tight', transparent=True,
+    )
+
+# same figure as above, but max
+# save_fig = True
+with plt.style.context('dark_background'):
+    sns.set_context("talk")
+    sns.axes_style("whitegrid", {'grid.linestyle': '--'})
+    contrast_color = "coral"
+
+    fig_box_max, ax_box_max = plt.subplots(1, figsize = (10, 10))
+    sns.boxplot(
+        ax=ax_box_max, data=prox_win02_df, x="Max", y="Opto", palette=pally, orient="h", order=[2,1,0],
+        medianprops={"color": contrast_color}, whiskerprops={"color":contrast_color}, capprops={"color":contrast_color}, 
+        flierprops={"markerfacecolor":contrast_color, "markeredgecolor":contrast_color, 'markersize': 10}, boxprops={"edgecolor":contrast_color},
+        )
+    ax_box_max.set(xlabel='Max Value of Third Window - Max Value of First Window')
+    ax_box_max.set(ylabel='Opto Intensity')
+    ax_box_max.set_title(f'Max Response - Mi1 Proximal Layer - Opto Effect')
+    sns.despine(fig=fig_box_max, left=True)
+    sns.set_context("talk")
+    ax_box_max.grid(alpha=0.3)
+if save_fig == True:
+    fig_box_max.savefig(
+    save_directory
+    + "SummaryMaxBoxPlotThirdWindow.Proximal.Dark"
+    + ".pdf",
+    dpi=300, bbox_inches='tight', transparent=True,
+    )
+
+
+
+
 
 
 
@@ -718,12 +847,13 @@ big_daddy_df = pd.DataFrame(data=concat_met, columns=concat_labels)
 ############################################################################################################
 
 # Initialize some shit:
+savefig = False
+
 kde = True
 element = 'poly' # bars | poly | step
 multiple = 'stack' # dodge | stack | layer | fill
 bins = 10
 binwidth = 0.05 #0.025 # supercedes bins |  0.025
-savefig = False
 
 # Second window - First Window
 fig2, axes2 = plt.subplots(2, 2, figsize = (12,9))
@@ -814,35 +944,5 @@ if save_fig == True:
 
 # %% Close the figs after
 
+
 plt.close('all')
-
-
-# %% Deprecated: Histograms of these values
-# reminder: each matrix be experiment x unique opto params x visual flash window
-# NOTE: this needs unique_parameter_values
-fh_mean, ax_mean = plt.subplots(3, len(window_times)-1, figsize=(16, 12))
-fh_max, ax_max = plt.subplots(3, len(window_times)-1, figsize=(16, 12))
-fh_min, ax_min = plt.subplots(3, len(window_times)-1, figsize=(16, 12))
-fh_ptt, ax_ptt = plt.subplots(3, len(window_times)-1, figsize=(16, 12))
-
-for win_ind in range(mean_dif_matrix.shape[2]):
-    for opto_ind in range(mean_dif_matrix.shape[1]):
-        ax_mean[opto_ind, win_ind].hist(mean_diff_matrix[:, opto_ind, win_ind])
-        ax_mean
-        #ax_mean.plot(kind = "hist", density = True)
-        #ax_mean.plot(kind = "kde")
-        ax_max[opto_ind, win_ind].hist(max_diff_matrix[:, opto_ind, win_ind], density = True)
-        ax_min[opto_ind, win_ind].hist(min_diff_matrix[:, opto_ind, win_ind])
-        ax_ptt[opto_ind, win_ind].hist(ptt_diff_matrix[:, opto_ind, win_ind])
-
-        ax_mean[opto_ind, win_ind].set_title(f'Opto intensity = {unique_parameter_values[opto_ind]} | Vis Flash {win_ind+2} - Vis Flash 1')
-        ax_max[opto_ind, win_ind].set_title(f'Opto intensity = {unique_parameter_values[opto_ind]} | Vis Flash {win_ind+2} - Vis Flash 1')
-        ax_min[opto_ind, win_ind].set_title(f'Opto intensity = {unique_parameter_values[opto_ind]} | Vis Flash {win_ind+2} - Vis Flash 1')
-        ax_ptt[opto_ind, win_ind].set_title(f'Opto intensity = {unique_parameter_values[opto_ind]} | Vis Flash {win_ind+2} - Vis Flash 1')
-
-fh_mean.suptitle(f'Mean Value of X Window - Mean Value of First Window')
-fh_max.suptitle(f'Max Value of X Window - Max Value of First Window')
-fh_min.suptitle(f'Min Value of X Window - Min Value of First Window')
-fh_ptt.suptitle(f'Peak-to-Trough Value of X Window - Peak-to-Trough Value of First Window')
-
-# %%
