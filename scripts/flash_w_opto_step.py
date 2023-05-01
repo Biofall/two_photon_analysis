@@ -252,6 +252,9 @@ def getWindowMetricsFromLayer(layer, condition_name, normalize_to=False, plot_tr
         y_low = min_val-abs(0.05*min_val)
         y_high = max_val+abs(0.05*max_val)
 
+        # Set the plots to a dark grid background
+        plt.style.use("dark_background")
+
         if plot_trial_figs == True:
             # Colormap setting
             cmap = plt.get_cmap('cool') # also 'cool' 'winter' 'PRGn' 'Pastel1' 'YlGnBu' 'twilight'
@@ -262,7 +265,7 @@ def getWindowMetricsFromLayer(layer, condition_name, normalize_to=False, plot_tr
                 ax.plot(roi_data['time_vector'], cross_roi_mean_response[up_ind, :], color=colors[up_ind], alpha=0.9, label=up)
                 ax.fill_between(roi_data['time_vector'], cross_roi_sem_plus[up_ind, :], 
                                 cross_roi_sem_minus[up_ind, :],
-                                color=colors[up_ind], alpha=0.1)
+                                color=colors[up_ind], alpha=0.2)
             # opto stim plotting
             led_start_time = ID.getRunParameters('pre_time')+ID.getRunParameters('led_time')
             led_end_time = led_start_time + ID.getRunParameters('led_duration')        
@@ -276,16 +279,16 @@ def getWindowMetricsFromLayer(layer, condition_name, normalize_to=False, plot_tr
                     flash_label = None
                 ax.fill_between([flash_start[vis_ind], flash_end[vis_ind]], 
                                 y_low, y_high,
-                                alpha=0.6, edgecolor='b', facecolor='none', 
+                                alpha=0.9, edgecolor='b', facecolor='none', 
                                 linewidth=1, label=flash_label)
 
             # Legend, Grid, Axis
             ax.legend(loc="upper right", fontsize=15)
-            ax.grid(axis="x", color="k", alpha=.1, linewidth=1, linestyle=":")
+            ax.grid(axis="x", color="k", alpha=.2, linewidth=1, linestyle=":")
             x_locator = FixedLocator(list(range(-1, 20)))
             ax.xaxis.set_major_locator(x_locator)
-            ax.tick_params(axis="x", direction="in", length=10, width=1, color="k")
-            ax.grid(axis="y", color="k", alpha=.1, linewidth=.5)
+            ax.tick_params(axis="x", direction="in", length=10, width=1, color="w")
+            ax.grid(axis="y", color="w", alpha=.1, linewidth=.5)
             ax.set_xlabel('Time in Seconds')
             ax.set_ylabel('DF/F')
             ax.set_title(f'{which_layer[pull_ind][1]} Series: {which_layer[pull_ind][2]} | DFF=True | Conditions: {condition_name} | ROI={which_layer[pull_ind][3]}', fontsize=20)
@@ -293,7 +296,7 @@ def getWindowMetricsFromLayer(layer, condition_name, normalize_to=False, plot_tr
             if save_fig == True:
                 fh.savefig(
                 save_directory
-                + "AvgTraces."
+                + "AvgTraces.Dark"
                 + str(which_layer[pull_ind][1])
                 + ".Series"
                 + str(which_layer[pull_ind][2])
@@ -302,7 +305,7 @@ def getWindowMetricsFromLayer(layer, condition_name, normalize_to=False, plot_tr
                 + ".Conditions:"
                 + str(condition_name)
                 + ".pdf",
-                dpi=300,
+                dpi=300, bbox_inches='tight', transparent=True,
                 )
 
         #  Windows to analyze for metrics
@@ -327,11 +330,12 @@ def getWindowMetricsFromLayer(layer, condition_name, normalize_to=False, plot_tr
                 start_index = np.where(roi_data.get('time_vector') > window_times[w_ind])[0][0]
                 windows[up_ind, w_ind, :] = cross_roi_mean_response[up_ind, start_index:(start_index+window_frames)]
                 windows_sem[up_ind, w_ind, :] = cross_roi_sem_response[up_ind, start_index:(start_index+window_frames)] # This is using the correct cross-ROI SEM calculation
-
+        
                 if plot_trial_figs == True:
                     # Plot: Each Window for a given LED Intensity
                     ax[up_ind].plot(windows[up_ind, w_ind, :], color=colors[w_ind], label=w if up_ind==0 else '')
                     ax[up_ind].set_title('led={}'.format(up))
+                    ax[up_ind].grid(False)
 
         if plot_trial_figs == True:
             fh.legend()
@@ -340,7 +344,7 @@ def getWindowMetricsFromLayer(layer, condition_name, normalize_to=False, plot_tr
             if save_fig == True:
                 fh.savefig(
                 save_directory
-                + "Windows."
+                + "Windows.Dark"
                 + str(which_layer[pull_ind][1])
                 + ".Series"
                 + str(which_layer[pull_ind][2])
@@ -349,7 +353,7 @@ def getWindowMetricsFromLayer(layer, condition_name, normalize_to=False, plot_tr
                 + ".Conditions:"
                 + str(condition_name)
                 + ".pdf",
-                dpi=300,
+                dpi=300, bbox_inches='tight', transparent=True,
                 )
         
         if plot_trial_figs == True:
@@ -367,6 +371,7 @@ def getWindowMetricsFromLayer(layer, condition_name, normalize_to=False, plot_tr
                 for up_ind, up in enumerate(unique_parameter_values):
                     ax[w_ind].plot(windows[up_ind, w_ind], linewidth=2, color=colors[up_ind], alpha=0.8, label=up if w_ind==0 else '')
                     ax[w_ind].set_title('Visual Flash at: {}s'.format(w))
+                    ax[w_ind].grid(False)
 
             fh.legend()
             fh.suptitle(f'Each LED intenisty/window for {which_layer[pull_ind][1]} Series: {which_layer[pull_ind][2]} | DFF=True | Conditions: {condition_name} | ROI={which_layer[pull_ind][3]}', fontsize=12)
@@ -374,7 +379,7 @@ def getWindowMetricsFromLayer(layer, condition_name, normalize_to=False, plot_tr
             if save_fig == True:
                 fh.savefig(
                 save_directory
-                + "LED.Intensity.window."
+                + "LED.Intensity.window.Dark"
                 + str(which_layer[pull_ind][1])
                 + ".Series"
                 + str(which_layer[pull_ind][2])
@@ -383,7 +388,7 @@ def getWindowMetricsFromLayer(layer, condition_name, normalize_to=False, plot_tr
                 + ".Conditions:"
                 + str(condition_name)
                 + ".pdf",
-                dpi=300,
+                dpi=300, bbox_inches='tight', transparent=True,
                 )
 
         # % Plotting the metrics for the windows and then store those values
@@ -430,6 +435,7 @@ def getWindowMetricsFromLayer(layer, condition_name, normalize_to=False, plot_tr
                     #ax[2, w_ind].plot(response_PtT[up_ind, w_ind], response_PtT(up_ind, w_ind+1), color=colors[up_ind], markersize=10, marker='o')
 
                     ax[0, w_ind].set_title(f'Visual Flash {w_ind+2} | Window Time: {window_times[w_ind+1]}')
+                    ax[up_ind, w_ind].grid(False)
 
                 # Finding unity params - Max
                 unity_lower_max = min(min(response_max[:, w_ind]), min(response_max[:, w_ind+1]))*0.8
@@ -475,19 +481,19 @@ def getWindowMetricsFromLayer(layer, condition_name, normalize_to=False, plot_tr
                 ax[0, w_ind].set_xlabel('Visual Flash 1 (Pre-Opto) Peak Amplitude')
                 ax[1, w_ind].set_xlabel('Visual Flash 1 (Pre-Opto) Trough Amplitude')
                 ax[2, w_ind].set_xlabel('Visual Flash 1 (Pre-Opto) Peak-Trough')
-            
+
             for w_ind in range(len(window_times)-1): # sets all the axes to be the same
                 ax[0,w_ind].set_xlim(left=temp_lower_max, right=temp_upper_max)
                 ax[0,w_ind].set_ylim(bottom=temp_lower_max, top=temp_upper_max)
-                ax[0,w_ind].plot([temp_lower_max, temp_upper_max], [temp_lower_max, temp_upper_max], 'k--', alpha=0.7)
+                ax[0,w_ind].plot([temp_lower_max, temp_upper_max], [temp_lower_max, temp_upper_max], 'w--', alpha=0.7)
 
                 ax[1,w_ind].set_xlim(left=temp_lower_min, right=temp_upper_min)
                 ax[1,w_ind].set_ylim(bottom=temp_lower_min, top=temp_upper_min)
-                ax[1,w_ind].plot([temp_lower_min, temp_upper_min], [temp_lower_min, temp_upper_min], 'k--', alpha=0.7)
+                ax[1,w_ind].plot([temp_lower_min, temp_upper_min], [temp_lower_min, temp_upper_min], 'w--', alpha=0.7)
 
                 ax[2,w_ind].set_xlim(left=temp_lower_PtT, right=temp_upper_PtT)
                 ax[2,w_ind].set_ylim(bottom=temp_lower_PtT, top=temp_upper_PtT)
-                ax[2,w_ind].plot([temp_lower_PtT, temp_upper_PtT], [temp_lower_PtT, temp_upper_PtT], 'k--', alpha=0.7)
+                ax[2,w_ind].plot([temp_lower_PtT, temp_upper_PtT], [temp_lower_PtT, temp_upper_PtT], 'w--', alpha=0.7)
 
             #ax[0,0].setp(xlim=temp_upper_max, ylim=temp_upper_max)
             #ax[0,1].setp(xlim=temp_upper_max, ylim=temp_upper_max)
@@ -504,7 +510,7 @@ def getWindowMetricsFromLayer(layer, condition_name, normalize_to=False, plot_tr
             if save_fig == True:
                 fh.savefig(
                 save_directory
-                + "WindowsMetrics."
+                + "WindowsMetrics.Dark"
                 + str(which_layer[pull_ind][1])
                 + ".Series"
                 + str(which_layer[pull_ind][2])
@@ -513,7 +519,7 @@ def getWindowMetricsFromLayer(layer, condition_name, normalize_to=False, plot_tr
                 + ".Conditions:"
                 + str(condition_name)
                 + ".pdf",
-                dpi=300,
+                dpi=300, bbox_inches='tight', transparent=True,
                 )
     
     if normalize_to == 'sum':
@@ -559,7 +565,7 @@ row_idx = 0
 # Print statement that explains loop is starting
 print(f"\nBeginning Loops for extracting data.")
 for layer_ind in range(len(layer_list)):
-    mean_diff_matrix, sem_mean_diff_matrix, max_diff_matrix, min_diff_matrix, ptt_diff_matrix = getWindowMetricsFromLayer(data_list[layer_ind], layer_list[layer_ind], normalize_to='sum', plot_trial_figs=True, save_fig=False)
+    mean_diff_matrix, sem_mean_diff_matrix, max_diff_matrix, min_diff_matrix, ptt_diff_matrix = getWindowMetricsFromLayer(data_list[layer_ind], layer_list[layer_ind], normalize_to='sum', plot_trial_figs=True, save_fig=True)
     fly_indicies = list_to_use[layer_ind]
     # Gets dimensions of metric arrays 
     num_flies, num_opto, num_windows = mean_diff_matrix.shape   
@@ -674,7 +680,7 @@ if save_fig == True:
     save_directory
     + "Cross-Fly.Cross-Layer.control.LinePlot."
     + ".pdf",
-    dpi=300, bbox_inches='tight',
+    dpi=300, bbox_inches='tight', transparent=True,
     )
 
 
