@@ -156,12 +156,12 @@ def interpolate_to_common_trial_length(ID, original_values):
 
 
 #%% Pulling Traces separated by opto and unique parameter values
-layer = astar1_fly3_alt_prox  #astar1_alt_prox_all, astar1_fly5_alt_prox
+layer = astar1_alt_prox_all  #astar1_alt_prox_all, astar1_fly5_alt_prox
 background_subtraction = False
-alt_pre_time = 2 # this now is backwards from the vis stim time
+alt_pre_time = 0 # this now is backwards from the vis stim time
 dff = False
 display_fix = True
-layer_name = 'astar1_fly3_alt_prox'
+layer_name = 'astar1_alt_prox_all'
 
 print('\n\n\n')
 print('======================================================================================')
@@ -265,111 +265,70 @@ across_roi_mean_minus_sem_yopto = across_roi_mean_yopto - across_roi_sem_yopto
 optoless_unique_parameter_values = np.unique(np.delete((unique_parameter_values), 0, axis=1), axis=0)
 
 
-# %% Separate pipeline just for looking at pre and post conditions for individual flies
-fly_id = astar1_fly1_pre_prox
-layer_name = 'astar1_fly1_pre_prox'
-display_fix = False
-save_fig = True
 
-spatial_periods = [10, 20, 40, 80]
-temporal_frequencies = [0.5, 1, 2, 4]
+# %%  MTS.1 Plot the whole trace averaging across ROIs
+savefig = True
+darkmode = True
 
-file_path = os.path.join(fly_id[0][0], fly_id[0][1] + ".hdf5")
-if display_fix == True:
-  cfg_dict = {'timing_channel_ind': 1}
-  ID = imaging_data.ImagingDataObject(file_path, fly_id[0][2], quiet=True, cfg_dict = cfg_dict)
-else:  
-  ID = imaging_data.ImagingDataObject(file_path, fly_id[0][2], quiet=True)
-roi_data = ID.getRoiResponses(fly_id[0][3])
-time_vector, epoch_response = ID.getEpochResponseMatrix(np.vstack(roi_data['roi_response']))
-parameter_keys = ('current_spatial_period', 'current_temporal_frequency')
-unique_parameter_values, mean_response, sem_response, _ = ID.getTrialAverages(epoch_response, parameter_key=parameter_keys)
-unique_parameter_values = np.array(unique_parameter_values)
-# instantiate empty arrays
-reordered_fly_mean = np.zeros((mean_response.shape[0], len(spatial_periods), len(temporal_frequencies), mean_response.shape[-1]))
-reordered_fly_mean[:] = np.nan
-reordered_fly_sem = np.zeros((sem_response.shape[0], len(spatial_periods), len(temporal_frequencies), sem_response.shape[-1]))
-reordered_fly_sem[:] = np.nan
+if darkmode == True:
+  # Set the plots to a dark grid background
+  with plt.style.context('dark_background'):
+    # define the plot color
+    c = [193/255, 70/255, 255/255]
 
-# Put mean responses into reordered_mean based on spatial_periods and temporal_frequencies
-for spatial_ind, spatial in enumerate(spatial_periods):
-  for temporal_ind, temporal in enumerate(temporal_frequencies):
-    tmp_ind = np.intersect1d(np.where(spatial == unique_parameter_values[:, 0]),
-                              np.where(temporal == unique_parameter_values[:, 1]))
-    if len(tmp_ind) == 0:
-      pass # skip
-    elif len(tmp_ind) == 1:
-      reordered_fly_mean[:, spatial_ind, temporal_ind, :] = mean_response[:, tmp_ind[0], :]
-      reordered_fly_sem[:, spatial_ind, temporal_ind, :] = sem_response[:, tmp_ind[0], :]
-    else:
-      print('This should never happen')
-if np.any(np.isnan(reordered_fly_mean)):
-  print('Nans found - missing param combo')
+    fh, ax = plt.subplots(len(spatial_periods), len(temporal_frequencies), figsize=(32, 24))
+    for sp_ind, spatial in enumerate(spatial_periods):
+      for tf_ind, temporal in enumerate(temporal_frequencies):
 
-# calculate the number of ROIs
-num_rois = len(reordered_fly_mean)
-# calculate the mean and sem across ROIs
-fly_mean = np.nanmean(reordered_fly_mean, axis=0)
-# calculate the standard error of the mean across ROIs
-fly_sem = np.nanstd(reordered_fly_mean, axis=0) / np.sqrt(np.sum(~np.isnan(reordered_fly_mean), axis=0))
-# calculate the sem_plus and sem_minus
-fly_sem_plus = fly_mean + fly_sem
-fly_sem_minus = fly_mean - fly_sem
+        ax[sp_ind, tf_ind].plot(interp_time, across_roi_mean_nopto[sp_ind, tf_ind, :], color='w', alpha=0.9, label='no opto')
+        ax[sp_ind, tf_ind].plot(interp_time, across_roi_mean_yopto[sp_ind, tf_ind, :], color=c, alpha=0.9, label='opto')
+        ax[sp_ind, tf_ind].fill_between(interp_time, across_roi_mean_plus_sem_nopto[sp_ind, tf_ind, :], across_roi_mean_minus_sem_nopto[sp_ind, tf_ind, :],
+                                        color='w', alpha=0.15) 
+        ax[sp_ind, tf_ind].fill_between(interp_time, across_roi_mean_plus_sem_yopto[sp_ind, tf_ind, :], across_roi_mean_minus_sem_yopto[sp_ind, tf_ind, :],
+                                          color=c, alpha=0.3)
+        
+        # Legend, Grid, Axis
+        #ax[sp_ind, tf_ind].legend()
+        ax[sp_ind, tf_ind].grid(axis="x", color="w", alpha=.1, linewidth=1, linestyle=":")
+        #x_locator = FixedLocator(list(range(-1, 20)))
+        #ax.xaxis.set_major_locator(x_locator)
+        ax[sp_ind, tf_ind].tick_params(axis="x", direction="in", length=10, width=1, color="k")
+        ax[sp_ind, tf_ind].grid(axis="y", color="w", alpha=.1, linewidth=.5)
+        ax[sp_ind, tf_ind].set_xlabel('Frames')
+        #ax[sp_ind, tf_ind].set_ylabel('Response')
+        ax[sp_ind, tf_ind].set_title(f'spatal: {spatial} | temporal: {temporal}')
+    # fig suptitle
+    fh.suptitle(f"Average Traces Across ROIs for {layer_name}", fontsize=16)
+    fh.text(0.09, 0.5, 'Response', ha='center', va='center', rotation='vertical', fontsize=14)
 
-# Plot the average trace across ROIs for each spatial_period and temporal_frequency
-# define the plot color
-c = [193/255, 70/255, 255/255]
+    handles, labels = ax[0,0].get_legend_handles_labels()
+    fh.legend(handles, labels, loc=2)
 
-fh, ax = plt.subplots(len(spatial_periods), len(temporal_frequencies), figsize=(8*len(spatial_periods), 8*len(temporal_frequencies)))
-for sp_ind, spatial in enumerate(spatial_periods):
-  for tf_ind, temporal in enumerate(temporal_frequencies):
+else:
+  fh, ax = plt.subplots(len(spatial_periods), len(temporal_frequencies), figsize=(8*len(spatial_periods), 8*len(temporal_frequencies)))
+  for sp_ind, spatial in enumerate(spatial_periods):
+    for tf_ind, temporal in enumerate(temporal_frequencies):
 
-    ax[sp_ind, tf_ind].plot(time_vector, fly_mean[sp_ind, tf_ind, :], color='black')
-    ax[sp_ind, tf_ind].fill_between(time_vector, fly_sem_plus[sp_ind, tf_ind, :], fly_sem_minus[sp_ind, tf_ind, :], color=c, alpha=0.5)
-    
-    ax[sp_ind, tf_ind].set_title('Spatial Period = ' + str(spatial) + ' Temporal Frequency = ' + str(temporal))
-    ax[sp_ind, tf_ind].set_xlabel('time (s)')
-    ax[sp_ind, tf_ind].set_ylabel('dF/F')
-fh.suptitle(f'{layer_name} Mean Response Across {str(num_rois)} ROIs')
+      ax[sp_ind, tf_ind].plot(interp_time, across_roi_mean_nopto[sp_ind, tf_ind, :], color='black', alpha=0.9, label='no opto')
+      ax[sp_ind, tf_ind].plot(interp_time, across_roi_mean_yopto[sp_ind, tf_ind, :], color='red', alpha=0.9, label='opto')
+      ax[sp_ind, tf_ind].fill_between(interp_time, across_roi_mean_plus_sem_nopto[sp_ind, tf_ind, :], across_roi_mean_minus_sem_nopto[sp_ind, tf_ind, :],
+                                      color='black', alpha=0.1) 
+      ax[sp_ind, tf_ind].fill_between(interp_time, across_roi_mean_plus_sem_yopto[sp_ind, tf_ind, :], across_roi_mean_minus_sem_yopto[sp_ind, tf_ind, :],
+                                        color='red', alpha=0.1)
+      
+      # Legend, Grid, Axis
+      ax[sp_ind, tf_ind].legend()
+      ax[sp_ind, tf_ind].grid(axis="x", color="k", alpha=.1, linewidth=1, linestyle=":")
+      #x_locator = FixedLocator(list(range(-1, 20)))
+      #ax.xaxis.set_major_locator(x_locator)
+      ax[sp_ind, tf_ind].tick_params(axis="x", direction="in", length=10, width=1, color="k")
+      ax[sp_ind, tf_ind].grid(axis="y", color="k", alpha=.1, linewidth=.5)
+      ax[sp_ind, tf_ind].set_xlabel('Time in Seconds')
+      ax[sp_ind, tf_ind].set_ylabel('DF/F')
+      ax[sp_ind, tf_ind].set_title(f'spatal: {spatial} | temporal: {temporal}')
+  # fig suptitle
+  fh.suptitle(f"Average Traces Across ROIs for {layer_name}", fontsize=20)
 
-# save figure
-if save_fig == True:
-  fh.savefig(os.path.join(save_directory, f'{layer_name}_mean_response_across_{str(num_rois)}_ROIs.pdf'), dpi=300, bbox_inches='tight')
-plt.close('all')
- 
-
-
-
-
-
-
-
-# %%  Plot the whole trace averaging across ROIs
-savefig = False
-
-fh, ax = plt.subplots(len(spatial_periods), len(temporal_frequencies), figsize=(8*len(spatial_periods), 8*len(temporal_frequencies)))
-for sp_ind, spatial in enumerate(spatial_periods):
-  for tf_ind, temporal in enumerate(temporal_frequencies):
-
-    ax[sp_ind, tf_ind].plot(interp_time, across_roi_mean_nopto[sp_ind, tf_ind, :], color='black', alpha=0.9, label='no opto')
-    ax[sp_ind, tf_ind].plot(interp_time, across_roi_mean_yopto[sp_ind, tf_ind, :], color='red', alpha=0.9, label='opto')
-    ax[sp_ind, tf_ind].fill_between(interp_time, across_roi_mean_plus_sem_nopto[sp_ind, tf_ind, :], across_roi_mean_minus_sem_nopto[sp_ind, tf_ind, :],
-                                     color='black', alpha=0.1) 
-    ax[sp_ind, tf_ind].fill_between(interp_time, across_roi_mean_plus_sem_yopto[sp_ind, tf_ind, :], across_roi_mean_minus_sem_yopto[sp_ind, tf_ind, :],
-                                      color='red', alpha=0.1)
-    
-    # Legend, Grid, Axis
-    ax[sp_ind, tf_ind].legend()
-    ax[sp_ind, tf_ind].grid(axis="x", color="k", alpha=.1, linewidth=1, linestyle=":")
-    #x_locator = FixedLocator(list(range(-1, 20)))
-    #ax.xaxis.set_major_locator(x_locator)
-    ax[sp_ind, tf_ind].tick_params(axis="x", direction="in", length=10, width=1, color="k")
-    ax[sp_ind, tf_ind].grid(axis="y", color="k", alpha=.1, linewidth=.5)
-    ax[sp_ind, tf_ind].set_xlabel('Time in Seconds')
-    ax[sp_ind, tf_ind].set_ylabel('DF/F')
-    ax[sp_ind, tf_ind].set_title(f'spatal: {spatial} | temporal: {temporal}')
-# fig suptitle
-fh.suptitle(f"Average Traces Across ROIs", fontsize=20)
 
 if savefig == True:
     fh.savefig(
@@ -380,8 +339,10 @@ if savefig == True:
     + str(dff)
     + "AltPreTime: "
     + str(alt_pre_time)
+    + "Darkmode="
+    + str(darkmode)
     + ".pdf",
-    dpi=300,
+    dpi=300, bbox_inches='tight', transparent=True,
     )
 
 # %% For each unique parameter value, plot every ROI
@@ -502,6 +463,112 @@ for roi_ind in range(len(flies_yopto_mean_response)):
   ax[roi_ind].set_title(f'ROI: {roi_ind}')
 
 
+
+# %% MTS.2 Separate pipeline just for looking at pre and post conditions for individual flies
+fly_id = astar1_fly2_pre_prox
+layer_name = 'astar1_fly2_pre_prox'
+display_fix = False
+save_fig = True
+darkmode = True
+
+spatial_periods = [10, 20, 40, 80]
+temporal_frequencies = [0.5, 1, 2, 4]
+
+file_path = os.path.join(fly_id[0][0], fly_id[0][1] + ".hdf5")
+if display_fix == True:
+  cfg_dict = {'timing_channel_ind': 1}
+  ID = imaging_data.ImagingDataObject(file_path, fly_id[0][2], quiet=True, cfg_dict = cfg_dict)
+else:  
+  ID = imaging_data.ImagingDataObject(file_path, fly_id[0][2], quiet=True)
+roi_data = ID.getRoiResponses(fly_id[0][3])
+time_vector, epoch_response = ID.getEpochResponseMatrix(np.vstack(roi_data['roi_response']))
+parameter_keys = ('current_spatial_period', 'current_temporal_frequency')
+unique_parameter_values, mean_response, sem_response, _ = ID.getTrialAverages(epoch_response, parameter_key=parameter_keys)
+unique_parameter_values = np.array(unique_parameter_values)
+# instantiate empty arrays
+reordered_fly_mean = np.zeros((mean_response.shape[0], len(spatial_periods), len(temporal_frequencies), mean_response.shape[-1]))
+reordered_fly_mean[:] = np.nan
+reordered_fly_sem = np.zeros((sem_response.shape[0], len(spatial_periods), len(temporal_frequencies), sem_response.shape[-1]))
+reordered_fly_sem[:] = np.nan
+
+# Put mean responses into reordered_mean based on spatial_periods and temporal_frequencies
+for spatial_ind, spatial in enumerate(spatial_periods):
+  for temporal_ind, temporal in enumerate(temporal_frequencies):
+    tmp_ind = np.intersect1d(np.where(spatial == unique_parameter_values[:, 0]),
+                              np.where(temporal == unique_parameter_values[:, 1]))
+    if len(tmp_ind) == 0:
+      pass # skip
+    elif len(tmp_ind) == 1:
+      reordered_fly_mean[:, spatial_ind, temporal_ind, :] = mean_response[:, tmp_ind[0], :]
+      reordered_fly_sem[:, spatial_ind, temporal_ind, :] = sem_response[:, tmp_ind[0], :]
+    else:
+      print('This should never happen')
+if np.any(np.isnan(reordered_fly_mean)):
+  print('Nans found - missing param combo')
+
+# calculate the number of ROIs
+num_rois = len(reordered_fly_mean)
+# calculate the mean and sem across ROIs
+fly_mean = np.nanmean(reordered_fly_mean, axis=0)
+# calculate the standard error of the mean across ROIs
+fly_sem = np.nanstd(reordered_fly_mean, axis=0) / np.sqrt(np.sum(~np.isnan(reordered_fly_mean), axis=0))
+# calculate the sem_plus and sem_minus
+fly_sem_plus = fly_mean + fly_sem
+fly_sem_minus = fly_mean - fly_sem
+
+# Plot the average trace across ROIs for each spatial_period and temporal_frequency
+# define the plot color
+c = [193/255, 70/255, 255/255]
+
+if darkmode == True:
+  # Set the plots to a dark grid background
+  with plt.style.context('dark_background'):
+    fh, ax = plt.subplots(len(spatial_periods), len(temporal_frequencies), figsize=(20,20))
+    for sp_ind, spatial in enumerate(spatial_periods):
+      for tf_ind, temporal in enumerate(temporal_frequencies):
+
+        ax[sp_ind, tf_ind].plot(time_vector, fly_mean[sp_ind, tf_ind, :], color='w')
+        ax[sp_ind, tf_ind].fill_between(time_vector, fly_sem_plus[sp_ind, tf_ind, :], fly_sem_minus[sp_ind, tf_ind, :], color='w', alpha=0.3)
+        
+        ax[sp_ind, tf_ind].set_title('Spatial Period = ' + str(spatial) + ' |  Temporal Frequency = ' + str(temporal))
+        ax[sp_ind, tf_ind].set_xlabel('time (s)')
+        #ax[sp_ind, tf_ind].set_ylabel('dF/F')
+
+        ax[sp_ind, tf_ind].grid(False)
+    fh.suptitle(f'{layer_name} Mean Response Across {str(num_rois)} ROIs', y=1.01, fontsize=16)
+    #plt.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
+    fh.set_tight_layout(True)
+    fh.text(0.0, 0.5, 'dF/F', ha='center', va='center', rotation='vertical', fontsize=14)
+    #fh.tight_layout(rect=[0, 0.03, 1, 0.8])
+    #plt.subplots_adjust(top=0.85)
+
+
+else: # not darkmode
+  fh, ax = plt.subplots(len(spatial_periods), len(temporal_frequencies), figsize=(8*len(spatial_periods), 8*len(temporal_frequencies)))
+  for sp_ind, spatial in enumerate(spatial_periods):
+    for tf_ind, temporal in enumerate(temporal_frequencies):
+
+      ax[sp_ind, tf_ind].plot(time_vector, fly_mean[sp_ind, tf_ind, :], color='black')
+      ax[sp_ind, tf_ind].fill_between(time_vector, fly_sem_plus[sp_ind, tf_ind, :], fly_sem_minus[sp_ind, tf_ind, :], color=c, alpha=0.5)
+      
+      ax[sp_ind, tf_ind].set_title('Spatial Period = ' + str(spatial) + ' Temporal Frequency = ' + str(temporal))
+      ax[sp_ind, tf_ind].set_xlabel('time (s)')
+      ax[sp_ind, tf_ind].set_ylabel('dF/F')
+  fh.suptitle(f'{layer_name} Mean Response Across {str(num_rois)} ROIs')
+
+# save figure
+if save_fig == True:
+  fh.savefig(os.path.join(save_directory, f'{layer_name}_mean_response_across_{str(num_rois)}_ROIs.pdf'), dpi=300, bbox_inches='tight', transparent=True)
+
+# plt.close('all')
+ 
+
+
+
+
+
+
+
 # %% Functions for extracting metrics from a window across flies and plotting those metrics
 
 # New function to extract metrics from individual ROIs
@@ -573,7 +640,7 @@ peek_at_progress = False
 
 nopto_windows, yopto_windows, nopto_windows_mean, yopto_windows_mean, nopto_windows_max, yopto_windows_max = getMetricsFromROIs(flies_nopto_mean_response, flies_yopto_mean_response)
 
-  if peek_at_progress == True:
+if peek_at_progress == True:
   # create a new figure
   fh, ax = plt.subplots(1, figsize=(16, 8))
   ax.plot(flies_nopto_mean_response[0, 2, 2, :])
@@ -587,63 +654,93 @@ nopto_windows, yopto_windows, nopto_windows_mean, yopto_windows_mean, nopto_wind
 # Run compareMetrics
 mean_diff_norm, mean_diff_norm_ROI_avg, mean_diff_norm_ROI_sem, max_diff_norm, max_diff_norm_ROI_avg, max_diff_norm_ROI_sem = compareMetrics(nopto_windows_mean, yopto_windows_mean, nopto_windows_max, yopto_windows_max)
 
-# %% Plot the metrics
-
-# Create a new figure for the mean metric, with a subplot for each spatial_period and temporal_frequency
-fh, ax = plt.subplots(len(spatial_periods), len(temporal_frequencies), figsize=(24, 16))
-# Loop through spatial_periods and temporal_frequences, and for each parameter, plot the mean metric as a barplot
-for sp_ind in range(len(spatial_periods)):
-  for tf_ind in range(len(temporal_frequencies)):
-    ax[sp_ind, tf_ind].bar([0, 1], [mean_diff_norm_ROI_avg[sp_ind, tf_ind], max_diff_norm_ROI_avg[sp_ind, tf_ind]], yerr=[mean_diff_norm_ROI_sem[sp_ind, tf_ind], max_diff_norm_ROI_sem[sp_ind, tf_ind]])
-    ax[sp_ind, tf_ind].set_title('spatial_period: ' + str(spatial_periods[sp_ind]) + ', temporal_frequency: ' + str(temporal_frequencies[tf_ind]))
-    # create labels
-    ax[sp_ind, tf_ind].set_xticks([0, 1])
-    ax[sp_ind, tf_ind].set_xticklabels(['mean', 'max'])
-    ax[sp_ind, tf_ind].set_ylabel('normalized difference')
-fh.suptitle('Mean and max normalized difference between opto and no opto windows')
 
 
+# %% MTS.3 Plot the metrics  Metric Plotting - Good
 # Loop through spatial_periods and temporal_frequences, and for each parameter, make a boxplot for mean_diff_norm and max_diff_norm
 save_fig = True
+darkmode = True
 
-fh, ax = plt.subplots(len(spatial_periods), len(temporal_frequencies), figsize=(24, 16))
-for sp_ind in range(len(spatial_periods)):
-  for tf_ind in range(len(temporal_frequencies)):
-    # first filter out nan values from mean_diff_norm and max_diff_norm
-    mean_diff_norm_filtered = mean_diff_norm[:, sp_ind, tf_ind][~np.isnan(mean_diff_norm[:, sp_ind, tf_ind])]
-    max_diff_norm_filtered = max_diff_norm[:, sp_ind, tf_ind][~np.isnan(max_diff_norm[:, sp_ind, tf_ind])]
-    # create a boxplot for mean_diff_norm_filtered and max_diff_norm_filtered and fill the boxplots with blue and red
-    c = [193/255, 70/255, 255/255]
-    ax[sp_ind, tf_ind].boxplot(mean_diff_norm_filtered, positions=[1.2], notch=True, patch_artist=True,
-                               boxprops=dict(facecolor=c, color='k'),
-                                capprops=dict(color=c),
-                                whiskerprops=dict(color=c),
-                                flierprops=dict(color=c, markeredgecolor=c),
-                                medianprops=dict(color='k'))
-    c = [70/255, 185/255, 255/255]
-    ax[sp_ind, tf_ind].boxplot(max_diff_norm_filtered, positions=[1.8], notch=True, patch_artist=True,
-                                boxprops=dict(facecolor=c, color='k'),
-                                capprops=dict(color=c),
-                                whiskerprops=dict(color=c),
-                                flierprops=dict(color=c, markeredgecolor=c),
-                                medianprops=dict(color='k'))
-     
-    # plot a dotted line at y=0
-    ax[sp_ind, tf_ind].plot([0.9, 2.1], [0, 0], 'g--', alpha=0.2)
-    ax[sp_ind, tf_ind].set_title('spatial_period: ' + str(spatial_periods[sp_ind]) + ', temporal_frequency: ' + str(temporal_frequencies[tf_ind]))
-    ax[sp_ind, tf_ind].set_ylabel('normalized difference')
-    # create labels
-    ax[sp_ind, tf_ind].set_xticks([1.2, 1.8])
-    ax[sp_ind, tf_ind].set_xticklabels(['mean', 'max'])
+if darkmode == True:
+  # Set the plots to a dark grid background
+  with plt.style.context('dark_background'):
 
-# create a super title
-fh.suptitle('Comparison of mean and max normalized difference between opto and no opto across ROIs, for each spatial period and temporal frequency')
+    fh, ax = plt.subplots(len(spatial_periods), len(temporal_frequencies), figsize=(24, 16))
+    for sp_ind in range(len(spatial_periods)):
+      for tf_ind in range(len(temporal_frequencies)):
+        # first filter out nan values from mean_diff_norm and max_diff_norm
+        mean_diff_norm_filtered = mean_diff_norm[:, sp_ind, tf_ind][~np.isnan(mean_diff_norm[:, sp_ind, tf_ind])]
+        max_diff_norm_filtered = max_diff_norm[:, sp_ind, tf_ind][~np.isnan(max_diff_norm[:, sp_ind, tf_ind])]
+        # create a boxplot for mean_diff_norm_filtered and max_diff_norm_filtered and fill the boxplots with blue and red
+        c = [167/255, 66/255, 247/255]
+        ax[sp_ind, tf_ind].boxplot(mean_diff_norm_filtered, positions=[1.2], notch=True, patch_artist=True,
+                                  boxprops=dict(facecolor=c, color='w'),
+                                    capprops=dict(color=c),
+                                    whiskerprops=dict(color=c),
+                                    flierprops=dict(markeredgecolor='w', markerfacecolor=c, marker='.', markersize=15),
+                                    medianprops=dict(color='w'))
+        c = [70/255, 185/255, 255/255]
+        ax[sp_ind, tf_ind].boxplot(max_diff_norm_filtered, positions=[1.8], notch=True, patch_artist=True,
+                                    boxprops=dict(facecolor=c, color='w'),
+                                    capprops=dict(color=c),
+                                    whiskerprops=dict(color=c),
+                                    flierprops=dict(markeredgecolor='w', markerfacecolor=c, marker='.', markersize=15),
+                                    medianprops=dict(color='w'))
+        
+        # plot a dotted line at y=0
+        ax[sp_ind, tf_ind].plot([0.9, 2.1], [0, 0], 'w--', alpha=0.2)
+        ax[sp_ind, tf_ind].set_title('spatial_period: ' + str(spatial_periods[sp_ind]) + ', temporal_frequency: ' + str(temporal_frequencies[tf_ind]))
+        #ax[sp_ind, tf_ind].set_ylabel('normalized difference')
+        # create labels
+        ax[sp_ind, tf_ind].set_xticks([1.2, 1.8])
+        ax[sp_ind, tf_ind].set_xticklabels(['mean', 'max'])
+        fh.text(0.0, 0.5, 'Normalized Difference', ha='center', va='center', rotation='vertical', fontsize=12)
+
+    fh.suptitle('Comparison of mean and max normalized difference between opto and no opto across ROIs across spatial period and temporal frequencies', y=1.01, fontsize=16)
+    fh.set_tight_layout(True)
+
+else:
+    fh, ax = plt.subplots(len(spatial_periods), len(temporal_frequencies), figsize=(24, 16))
+    for sp_ind in range(len(spatial_periods)):
+      for tf_ind in range(len(temporal_frequencies)):
+        # first filter out nan values from mean_diff_norm and max_diff_norm
+        mean_diff_norm_filtered = mean_diff_norm[:, sp_ind, tf_ind][~np.isnan(mean_diff_norm[:, sp_ind, tf_ind])]
+        max_diff_norm_filtered = max_diff_norm[:, sp_ind, tf_ind][~np.isnan(max_diff_norm[:, sp_ind, tf_ind])]
+        # create a boxplot for mean_diff_norm_filtered and max_diff_norm_filtered and fill the boxplots with blue and red
+        c = [193/255, 70/255, 255/255]
+        ax[sp_ind, tf_ind].boxplot(mean_diff_norm_filtered, positions=[1.2], notch=True, patch_artist=True,
+                                  boxprops=dict(facecolor=c, color='k'),
+                                    capprops=dict(color=c),
+                                    whiskerprops=dict(color=c),
+                                    flierprops=dict(color=c, markeredgecolor=c),
+                                    medianprops=dict(color='k'))
+        c = [70/255, 185/255, 255/255]
+        ax[sp_ind, tf_ind].boxplot(max_diff_norm_filtered, positions=[1.8], notch=True, patch_artist=True,
+                                    boxprops=dict(facecolor=c, color='k'),
+                                    capprops=dict(color=c),
+                                    whiskerprops=dict(color=c),
+                                    flierprops=dict(color=c, markeredgecolor=c),
+                                    medianprops=dict(color='k'))
+        
+        # plot a dotted line at y=0
+        ax[sp_ind, tf_ind].plot([0.9, 2.1], [0, 0], 'g--', alpha=0.2)
+        ax[sp_ind, tf_ind].set_title('spatial_period: ' + str(spatial_periods[sp_ind]) + ', temporal_frequency: ' + str(temporal_frequencies[tf_ind]))
+        ax[sp_ind, tf_ind].set_ylabel('normalized difference')
+        # create labels
+        ax[sp_ind, tf_ind].set_xticks([1.2, 1.8])
+        ax[sp_ind, tf_ind].set_xticklabels(['mean', 'max'])
+
+    fh.suptitle('Comparison of mean and max normalized difference between opto and no opto across ROIs across spatial period and temporal frequencies', y=1.01, fontsize=16)
+    fh.set_tight_layout(True)
 
 if save_fig == True:
     fh.savefig(
     save_directory
-    + 'comparison_of_mean_and_max_normalized_difference_between_opto_and_no_opto.pdf',
-    dpi=300,
+    + 'comparison_of_mean_and_max_normalized_difference_between_opto_and_no_opto.'
+    + 'Darkmode='
+    + str(darkmode)
+    + '.pdf',
+    dpi=300, bbox_inches='tight', transparent=True
     )
 
 
@@ -662,7 +759,20 @@ if save_fig == True:
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# %% Metric Plotting  - meh
 
+# Create a new figure for the mean metric, with a subplot for each spatial_period and temporal_frequency
+fh, ax = plt.subplots(len(spatial_periods), len(temporal_frequencies), figsize=(24, 16))
+# Loop through spatial_periods and temporal_frequences, and for each parameter, plot the mean metric as a barplot
+for sp_ind in range(len(spatial_periods)):
+  for tf_ind in range(len(temporal_frequencies)):
+    ax[sp_ind, tf_ind].bar([0, 1], [mean_diff_norm_ROI_avg[sp_ind, tf_ind], max_diff_norm_ROI_avg[sp_ind, tf_ind]], yerr=[mean_diff_norm_ROI_sem[sp_ind, tf_ind], max_diff_norm_ROI_sem[sp_ind, tf_ind]])
+    ax[sp_ind, tf_ind].set_title('spatial_period: ' + str(spatial_periods[sp_ind]) + ', temporal_frequency: ' + str(temporal_frequencies[tf_ind]))
+    # create labels
+    ax[sp_ind, tf_ind].set_xticks([0, 1])
+    ax[sp_ind, tf_ind].set_xticklabels(['mean', 'max'])
+    ax[sp_ind, tf_ind].set_ylabel('normalized difference')
+fh.suptitle('Mean and max normalized difference between opto and no opto windows')
 
 # %%
 #TODO: 
