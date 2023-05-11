@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --mail-type=END,FAIL
-#SBATCH --job-name=moco_common
+#SBATCH --job-name=moco_c_ak
 #SBATCH --time=48:00:00
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=24
