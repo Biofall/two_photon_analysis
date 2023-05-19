@@ -66,3 +66,20 @@ def dropTrials(roi_trfs, n_trials_to_drop):
 # fh, ax = plt.subplots(1, 2, figsize=(8, 4))
 # ax[0].plot(opto_traces.T, 'k')
 # ax[1].plot(no_opto_traces.T, 'r')
+
+# Plotting functions
+
+def config_matplotlib():
+    plt.rcParams['svg.fonttype'] = 'none'
+    plt.rcParams.update({'font.family': 'sans-serif'})
+    plt.rcParams.update({'font.sans-serif': 'Helvetica'})
+    
+def clean_axes(ax):
+    ax.yaxis.set_major_locator(plt.NullLocator())
+    ax.xaxis.set_major_formatter(plt.NullFormatter())
+    ax.spines['bottom'].set_visible(False)
+    ax.spines['left'].set_visible(False)
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.get_xaxis().set_ticks([])
+    ax.get_yaxis().set_ticks([])
