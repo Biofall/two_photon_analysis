@@ -44,9 +44,9 @@ mi1_fly3_post_dist = [["/Volumes/ABK2TBData/data_repo/bruker/20230327", "2023-03
 
 # Fly 4 - Proximal, Medial, Distal
 ## Proximal
-mi1_fly4_pre_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230327", "2023-03-27", "10", "mi1_proximal_multiple_lowvar"]]
-mi1_fly4_perf_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230327", "2023-03-27", "11", "mi1_proximal_multiple_lowvar"]]
-mi1_fly4_post_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230327", "2023-03-27", "12", "mi1_proximal_multiple_lowvar"]]
+mi1_fly4_pre_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230327", "2023-03-27", "10", "mi1_proximal_multiple"]]
+mi1_fly4_perf_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230327", "2023-03-27", "11", "mi1_proximal_multiple"]]
+mi1_fly4_post_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230327", "2023-03-27", "12", "mi1_proximal_multiple"]]
 ## Medial
 mi1_fly4_pre_medi = [["/Volumes/ABK2TBData/data_repo/bruker/20230327", "2023-03-27", "10", "mi1_medial_multiple"]]
 mi1_fly4_perf_medi = [["/Volumes/ABK2TBData/data_repo/bruker/20230327", "2023-03-27", "11", "mi1_medial_multiple"]]
@@ -69,7 +69,7 @@ fly_list_dist = [3, 4]
 # Concatenate them all by block
 ## Proximal
 mi1_prox_pre_all = np.concatenate( #removed mi1_fly3_pre_prox
-                                  (mi1_fly1_pre_prox, mi1_fly2_pre_prox, mi1_fly3_pre_prox, mi1_fly4_pre_prox,),
+                                  (mi1_fly1_pre_prox, mi1_fly2_pre_prox, mi1_fly3_pre_prox, mi1_fly4_pre_prox, mi1_fly5_pre_prox,),
                                   #mi1_fly5_pre_prox,),
                                   axis = 0,
                                  )
@@ -79,13 +79,13 @@ mi1_prox_pre_5 = np.concatenate(
 )
 mi1_prox_pre_5_list = [5]
 
-mi1_prox_pre_list = [1, 2, 3, 4]
+mi1_prox_pre_list = [1, 2, 3, 4, 5]
 mi1_prox_perf_all = np.concatenate(
-                                   (mi1_fly1_perf_prox, mi1_fly2_perf_prox, mi1_fly3_perf_prox, mi1_fly4_perf_prox,),
+                                   (mi1_fly1_perf_prox, mi1_fly2_perf_prox, mi1_fly3_perf_prox, mi1_fly4_perf_prox, mi1_fly5_perf_prox,),
                                    #mi1_fly5_perf_prox,),
                                    axis = 0,
                                   )
-mi1_prox_perf_list = [1, 2, 3, 4]
+mi1_prox_perf_list = [1, 2, 3, 4, 5]
 mi1_prox_perf_5 = np.concatenate(
                                     (mi1_fly5_perf_prox,),
                                     axis = 0,
@@ -180,7 +180,14 @@ exp_block_type = ["Pre", "Perfusion", "Wash"]
 save_directory = "/Volumes/ABK2TBData/lab_repo/analysis/outputs/uniform_flash/"
 Path(save_directory).mkdir(exist_ok=True)
 
-# %% function that pulls out the mean and sem responses
+
+# # %% Lil test space
+
+# experiment = mi1_fly3_pre_prox
+# file_path = os.path.join(experiment[0][0], experiment[0][1] + ".hdf5")
+# ID = imaging_data.ImagingDataObject(file_path, experiment[0][2], quiet=True)
+
+#  function that pulls out the mean and sem responses
 def getMetrics(which_experiment):
     file_path = os.path.join(which_experiment[0], which_experiment[1] + ".hdf5")
     ID = imaging_data.ImagingDataObject(file_path, which_experiment[2], quiet=True)
@@ -355,14 +362,15 @@ if save_figures:
 
 
 # %% UNF.2 Plot max values using ID.getResponseAmplitude across all ROIs. End to end across blocks
-save_fig = True
+save_fig = False
 darkmode = True
 
 # Proximal, Medial, or Distal (0, 1, or 2)
-layer = 2
+layer = 0
 which_layer = mi1_all_good 
 skip_trials = 1
-incomplete_flies = [0, 0] # flies that are missing a block
+incomplete_flies = [[2, 0], [4, 2]] # flies that are missing a block
+incomp_index = 0
 
 exp_count = len(which_layer[0][layer]) # number of experiments
 
@@ -376,20 +384,33 @@ if darkmode == True:
         t0 = 0
         for exp_ind in range(exp_count):
             for block_ind in range(len(exp_block_type)):
-                # DEBUG:
-                print(f'exp_ind: {exp_ind} | block_ind: {block_ind}')
-                print(f'which experiment: {which_layer[block_ind][layer][exp_ind]}')
 
-                _, _, _, _, _, _, _, _, mean_by_trial, max_by_trial, _, sem_mean_by_trial, sem_max_by_trial, _, epoch_timestamps = getMetrics(which_layer[block_ind][layer][exp_ind])
-                if block_ind == 0:
-                    t0 = epoch_timestamps[0]
-                plot_timestamps = epoch_timestamps - t0
-
-                if exp_ind == incomplete_flies[0] and block_ind == incomplete_flies[1]:
+                if exp_ind == incomplete_flies[incomp_index][0] and block_ind == incomplete_flies[incomp_index][1]:
+                    print('Skipping incomplete fly. Block: ', block_ind, ' Fly: ', exp_ind)
+                    incomp_index+=1
                     pass
                 else:
+                    # DEBUG:
+                    print(f'exp_ind: {exp_ind} | block_ind: {block_ind}')
+                    print(f'which experiment: {which_layer[block_ind][layer][exp_ind]}')
+                    _, _, _, _, _, _, _, _, mean_by_trial, max_by_trial, _, sem_mean_by_trial, sem_max_by_trial, _, epoch_timestamps = getMetrics(which_layer[block_ind][layer][exp_ind])
+                    if block_ind == 0:
+                        t0 = epoch_timestamps[0]
+                        print(f't0: {t0}')
+                    
+                    # subtract the first timepoint from all timepoints to get a relative time to 0
+                    plot_timestamps = epoch_timestamps - t0
+
+                    # catching weird case where the first block isn't there
+                    if exp_ind == incomplete_flies[0][0] and block_ind == incomplete_flies[0][1]+1:
+                        _, _, _, _, _, _, _, _, _, _, _, _, _, _, epoch_timestamps = getMetrics(which_layer[block_ind+1][layer][exp_ind])
+                        t0 = epoch_timestamps[0]
+                        plot_timestamps = epoch_timestamps - t0
+                    print(f'epoch_timestamps: {epoch_timestamps}')
+                    print(f'plot_timestamps: {plot_timestamps}')
+
                     # plot the max_across_rois
-                    met_ax[exp_ind, 0].plot(plot_timestamps[skip_trials:], max_by_trial[skip_trials:], color=colors[block_ind], label=exp_block_type[block_ind])
+                    met_ax[exp_ind, 0].plot(plot_timestamps[skip_trials:], max_by_trial[skip_trials:], marker='o', color=colors[block_ind], label=exp_block_type[block_ind])
                     met_ax[exp_ind, 0].fill_between(plot_timestamps[skip_trials:], max_by_trial[skip_trials:] + sem_max_by_trial[skip_trials:], max_by_trial[skip_trials:] - sem_max_by_trial[skip_trials:], color=colors[block_ind], alpha=0.4)
                     # plot linear regression of max_across_rois
                     slope, intercept, r_value, p_value, std_err = st.linregress(plot_timestamps[skip_trials:], max_by_trial[skip_trials:])
@@ -410,6 +431,8 @@ if darkmode == True:
                     # Y axis label
                     met_ax[exp_ind, 0].set_ylabel('Max Response (dF/F)')
                     met_ax[exp_ind, 1].set_ylabel('Mean Response (dF/F)')
+
+                    # Keeping track of biggest x-value
 
                     # set x axis to start at 0
                     met_ax[exp_ind, 0].set_xlim(-20, plot_timestamps[-1]+40)
@@ -481,6 +504,7 @@ if darkmode == True:
                 met_ax_mean[j].grid(alpha=0.5, color='white')
                 # set the plots to have a black background
                 #met_ax[j, i].set_facecolor('black')
+
         met_fig_mean.suptitle(f'All {exp_layer[0]} Means Averaged Across ROIs', y=1.01, fontsize=16)
         met_fig_max.suptitle(f'All {exp_layer[0]} Maxes Averaged Across ROIs', y=1.01, fontsize=16)
         met_fig_mean.set_tight_layout(True)
