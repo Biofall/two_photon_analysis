@@ -7,6 +7,7 @@ from matplotlib.ticker import FixedLocator, FixedFormatter
 
 import os
 import numpy as np
+from pathlib import Path
 
 # Single ROI
 mi1_prox_single = ["/Volumes/ABK2TBData/data_repo/bruker/20221129", "2022-11-29", "1", "Mi1_proximal"]
@@ -15,17 +16,16 @@ mi1_dist_single = ["/Volumes/ABK2TBData/data_repo/bruker/20221129", "2022-11-29"
 
 # also Mi1_cell_bodies, Mi1_cell_bodies1, distal, medial, proximal, proximal_2
 
+save_directory = "/Volumes/ABK2TBData/lab_repo/analysis/outputs/opto_step_series/" #+ experiment_file_name + "/"
+Path(save_directory).mkdir(exist_ok=True)
 
 
-# %%
-# Which one to plot
-layer = mi1_dist_single
+# %% Load the data
+layer = mi1_prox_single
 
 file_path = os.path.join(layer[0], layer[1] + ".hdf5")
 ID = imaging_data.ImagingDataObject(file_path, layer[2], quiet=True)
 roi_data = ID.getRoiResponses(layer[3])
-
-
 
 # %% Pull the trial's data based on the parameter key
 start_trial = 0
@@ -65,16 +65,16 @@ sem_minus_duration = mean_response_duration - sem_response_duration
 
 
 # %% Plotting functions
-def plotOptoStepSeries(parameter_keys, unique_parameter_values, mean_response, sem_plus, sem_minus):
+def plotOptoStepSeries(parameter_keys, unique_parameter_values, mean_response, sem_plus, sem_minus, grid_plot = False):
     opto_on_time = 2
-    cmap = plt.get_cmap('winter') # also 'cool' 'winter' 'PRGn' 'Pastel1' 'YlGnBu' 'twilight'
+    cmap = plt.get_cmap('Pastel1') # also 'cool' 'winter' 'PRGn' 'Pastel1' 'YlGnBu' 'twilight'
     colors = [cmap(i) for i in np.linspace(0.0, 1.0, len(unique_parameter_values))]
     x_locator = FixedLocator(list(range(-1, int(np.ceil(roi_data['time_vector'][-1]))+1)))
     n_params = len(unique_parameter_values)
 
     # Plotting
     fh, ax = plt.subplots(1, 1, figsize=(16, 8))
-    figg, axiss = plt.subplots(n_params, 1, figsize=(16, 8*n_params))
+    figg, axiss = plt.subplots(n_params, 1, figsize=(8, 4*n_params))
     for up_ind, up in enumerate(unique_parameter_values): # up = unique parameter
         # Plot each individual unique parameter value on the same plot
         ax.fill_between(roi_data['time_vector'], sem_plus[:, up_ind, :].mean(axis=0), 
@@ -84,10 +84,10 @@ def plotOptoStepSeries(parameter_keys, unique_parameter_values, mean_response, s
 
         # Plot each individual unique parameter value on its own sub plot
         #figg, axiss = plt.subplots(1, 1, figsize=(16, 8))
-        axiss[up_ind].plot(roi_data['time_vector'], mean_response[:, up_ind, :].mean(axis=0), color='white', alpha=1)
+        axiss[up_ind].plot(roi_data['time_vector'], mean_response[:, up_ind, :].mean(axis=0), color='black', alpha=1)
         axiss[up_ind].fill_between(roi_data['time_vector'], sem_plus[:, up_ind, :].mean(axis=0), 
                         sem_minus[:, up_ind, :].mean(axis=0),
-                        color=colors[up_ind], alpha=0.9)
+                        color=colors[up_ind], alpha=1)
 
         
         # Opto Stim Plotting
@@ -140,5 +140,49 @@ plotOptoStepSeries(parameter_keys=parameter_key_duration, unique_parameter_value
 # %%
 # Plots for intensity sweep
 plotOptoStepSeries(parameter_keys=parameter_key_intensity, unique_parameter_values=unique_parameter_values_intensity, mean_response= mean_response_intensity, sem_plus= sem_plus_intensity, sem_minus=sem_minus_intensity)
+
+# %% Plot in a grid
+save_fig = True
+
+opto_on_time = 2
+cmap = plt.get_cmap('viridis') # also 'cool' 'winter' 'PRGn' 'Pastel1' 'YlGnBu' 'twilight'
+colors = [cmap(i) for i in np.linspace(0.0, 1.0, len(unique_parameter_values))]
+x_locator = FixedLocator(list(range(-1, int(np.ceil(roi_data['time_vector'][-1]))+1)))
+n_params = len(unique_parameter_values)
+durations = [0.25, 0.5, 2, 4]
+intensities = [0.25, 0.5, 1, 2, 4]
+
+# Plotting
+fig_grid, ax_grid = plt.subplots(len(intensities), len(durations), figsize=(6*len(durations), 4*len(intensities)+5), sharex=True, sharey=True, tight_layout=True)
+for up_ind, ax in zip(range(len(unique_parameter_values)), ax_grid.flatten()): # up = unique parameter
+    ax.plot(roi_data['time_vector'], mean_response[:, up_ind, :].mean(axis=0), color='black', alpha=1)
+    ax.fill_between(roi_data['time_vector'], sem_plus[:, up_ind, :].mean(axis=0),
+                    sem_minus[:, up_ind, :].mean(axis=0), color=colors[up_ind], alpha=0.8)
+    
+    # Opto Stim Plotting
+    response_ind = 11 #the first index after the response
+    min_val = np.min(mean_response[:, up_ind, response_ind:].mean(axis=0))
+    min_x = np.where(mean_response[:, up_ind, :].mean(axis=0)==min_val)[0][0]
+    max_val = np.max(sem_plus[:, up_ind, response_ind:].mean(axis=0))
+    max_x = np.where(sem_plus[:, up_ind, :].mean(axis=0)==max_val)[0][0]
+    y_low = min_val-abs(0.01*min_val)
+    y_high = max_val+abs(0.01*max_val)
+    led_start_time = ID.getRunParameters('pre_time')
+    led_end_time = led_start_time + unique_parameter_values[up_ind][1]
+    ax.fill_between([led_start_time, led_end_time], y_low, y_high,
+                    alpha=0.1, edgecolor='r', facecolor='r', linewidth=2)
+    ax.grid(axis="x", color="k", alpha=.1, linewidth=1, linestyle=":")
+    ax.xaxis.set_major_locator(x_locator)
+    ax.tick_params(axis="x", direction="in", length=10, width=1, color="k")
+    ax.grid(axis="y", color="k", alpha=.1, linewidth=.5)
+    ax.set_title(f'LED Intensity: {unique_parameter_values[up_ind][0]}  |  LED Duration: {unique_parameter_values[up_ind][1]}')
+fig_grid.supxlabel('Time (s)')
+fig_grid.supylabel('dF/F')
+# fig_grid.suptitle('LED Intensity and Duration Sweep')
+
+if save_fig == True:
+    fig_grid.savefig(f'{save_directory}opto_step_series_grid.pdf', dpi=300, bbox_inches='tight', transparent=True,)
+
+
 
 # %%
