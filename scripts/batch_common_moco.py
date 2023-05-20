@@ -6,7 +6,7 @@ import nibabel as nib
 import numpy as np
 
 imports_dir = '/oak/stanford/groups/trc/data/krave/bruker_data/imports'
-date_dir = '20230509'
+date_dir = '20230519'
 
 data_directory = os.path.join(imports_dir, date_dir)
 
@@ -16,11 +16,17 @@ data_directory = os.path.join(imports_dir, date_dir)
 moco_pairs = {
               'TSeries-20230509-001_channel_1': [],
               'TSeries-20230509-002_channel_1': [],
-              'TSeries-20230509-003_channel_1': [],
-              'TSeries-20230509-004_channel_1': [],
               'TSeries-20230509-005_channel_1': [],
               'TSeries-20230509-006_channel_1': [],
               'TSeries-20230509-007_channel_1': [],
+              'TSeries-20230509-008_channel_1': [],
+              'TSeries-20230509-009_channel_1': [],
+              'TSeries-20230509-010_channel_1': [],
+              'TSeries-20230509-013_channel_1': [],
+              'TSeries-20230509-014_channel_1': [],
+              'TSeries-20230509-015_channel_1': [],
+              'TSeries-20230509-016_channel_1': [],
+              'TSeries-20230509-018_channel_1': [],
              }
 
 # moco_pairs = {
