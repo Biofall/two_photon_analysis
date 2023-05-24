@@ -13,12 +13,8 @@ data_directory = os.path.join(imports_dir, date_dir)
 # Key: file name base of reference image
 # Value: list of file name bases for target images, to register to reference
 # For non-paired moco, put the key and an empty list for value
-moco_pairs = {'TSeries-20230522-001_channel_1': [],
-              'TSeries-20230522-002_channel_1': ['TSeries-20230522-004_channel_1', 'TSeries-20230522-005_channel_1'],
-              'TSeries-20230522-005_channel_1': [],
-              'TSeries-20230522-006_channel_1': ['TSeries-20230522-007_channel_1', 'TSeries-20230522-008_channel_1'],
-              'TSeries-20230522-011_channel_1': [],
-              'TSeries-20230522-012_channel_1': ['TSeries-20230522-013_channel_1', 'TSeries-20230522-014_channel_1'],
+moco_pairs = {
+              'TSeries-20230522-007_channel_1': ['TSeries-20230522-008_channel_1', 'TSeries-20230522-010_channel_1'],
              }
 
 # moco_pairs = {
