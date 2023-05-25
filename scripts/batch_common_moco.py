@@ -6,7 +6,7 @@ import nibabel as nib
 import numpy as np
 
 imports_dir = '/oak/stanford/groups/trc/data/krave/bruker_data/imports'
-date_dir = '20230522'
+date_dir = '20230524'
 
 data_directory = os.path.join(imports_dir, date_dir)
 
@@ -14,7 +14,9 @@ data_directory = os.path.join(imports_dir, date_dir)
 # Value: list of file name bases for target images, to register to reference
 # For non-paired moco, put the key and an empty list for value
 moco_pairs = {
-              'TSeries-20230522-007_channel_1': ['TSeries-20230522-008_channel_1', 'TSeries-20230522-010_channel_1'],
+              'TSeries-20230524-001_channel_1': ['TSeries-20230524-002_channel_1', 'TSeries-20230524-003_channel_1'],
+              'TSeries-20230524-004_channel_1': ['TSeries-20230524-005_channel_1', 'TSeries-20230524-006_channel_1'],
+              'TSeries-20230524-007_channel_1': ['TSeries-20230524-008_channel_1', 'TSeries-20230524-009_channel_1'],
              }
 
 # moco_pairs = {
