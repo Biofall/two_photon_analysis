@@ -225,6 +225,7 @@ def getMetrics(which_experiment):
 # %% UNF.1 Plot individual traces by layer 
 save_figures = False
 darkmode = True
+which_style = 'seaborn-white'
 
 which_layer = mi1_all_good 
 layer = 0
@@ -234,7 +235,7 @@ exp_count = len(which_layer[0][0]) # number of experiments
 
 if darkmode == True:
   # Set the plots to a dark grid background
-  with plt.style.context('dark_background'):
+  with plt.style.context(which_style):
     # set the color map
     cmap = plt.get_cmap('Set3') # also 'cool' 'winter' 'PRGn' 'Pastel1' 'YlGnBu' 'twilight'
     colors = [cmap(i) for i in np.linspace(0.0, 1.0, 12)]
@@ -293,7 +294,7 @@ else: # lightmode
 
 
 if save_figures:
-    save_name = f'All_{exp_layer[layer]}_Traces_Averaged_Across_ROIs.Darkmode={str(darkmode)}.UNF.1.pdf'
+    save_name = f'All_{exp_layer[layer]}_Traces_Averaged_Across_ROIs.Darkmode={str(darkmode)}.UNF.1.{which_style}.pdf'
     save_path = os.path.join(save_directory, save_name)
     fh.savefig(save_path, dpi=300, bbox_inches='tight', transparent=True,)
 
@@ -364,6 +365,7 @@ if save_figures:
 # %% UNF.2 Plot max values using ID.getResponseAmplitude across all ROIs. End to end across blocks
 save_fig = False
 darkmode = True
+which_style = 'seaborn-white'
 
 # Proximal, Medial, or Distal (0, 1, or 2)
 layer = 0
@@ -376,7 +378,7 @@ exp_count = len(which_layer[0][layer]) # number of experiments
 
 if darkmode == True:
   # Set the plots to a dark grid background
-  with plt.style.context('dark_background'):
+  with plt.style.context(which_style):
         met_fig, met_ax = plt.subplots(exp_count, 2, figsize=(16*3, 8*exp_count))
         # set the color map
         cmap = plt.get_cmap('Pastel2') # also 'cool' 'winter' 'PRGn' 'Pastel1' 'YlGnBu' 'twilight'
@@ -512,10 +514,10 @@ if darkmode == True:
 
         # Save the figures
         if save_fig == True:
-            save_name_mean = f'All_{str(exp_layer[0])}_Just_Mean_Averaged_Across_ROIs.{str(exp_count)}Flies.UNF.2.pdf'
+            save_name_mean = f'All_{str(exp_layer[0])}_Just_Mean_Averaged_Across_ROIs.{str(exp_count)}Flies.UNF.2.{which_style}.pdf'
             save_path = os.path.join(save_directory, save_name_mean)
             met_fig_mean.savefig(save_path, dpi=300, bbox_inches='tight', transparent=True,)
-            save_name_max = f'All_{str(exp_layer[0])}_Just_Max_Averaged_Across_ROIs.{str(exp_count)}Flies.UNF.2.pdf'
+            save_name_max = f'All_{str(exp_layer[0])}_Just_Max_Averaged_Across_ROIs.{str(exp_count)}Flies.UNF.2.{which_style}.pdf'
             save_path = os.path.join(save_directory, save_name_max) 
             met_fig_max.savefig(save_path, dpi=300, bbox_inches='tight', transparent=True,)
 
