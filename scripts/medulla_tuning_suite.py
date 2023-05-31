@@ -156,12 +156,12 @@ def interpolate_to_common_trial_length(ID, original_values):
 
 
 #%% Pulling Traces separated by opto and unique parameter values
-layer = astar1_alt_prox_all  #astar1_alt_prox_all, astar1_fly5_alt_prox
+layer = astar1_alt_dist_all  #astar1_alt_prox_all, astar1_fly5_alt_prox
 background_subtraction = False
 alt_pre_time = 0 # this now is backwards from the vis stim time
 dff = False
 display_fix = True
-layer_name = 'astar1_alt_prox_all'
+layer_name = 'astar1_alt_dist_all'
 
 print('\n\n\n')
 print('======================================================================================')
@@ -269,10 +269,11 @@ optoless_unique_parameter_values = np.unique(np.delete((unique_parameter_values)
 # %%  MTS.1 Plot the whole trace averaging across ROIs
 savefig = True
 darkmode = True
+which_style = 'seaborn-white'
 
 if darkmode == True:
   # Set the plots to a dark grid background
-  with plt.style.context('dark_background'):
+  with plt.style.context(which_style):
     # define the plot color
     c = [193/255, 70/255, 255/255]
 
@@ -339,8 +340,8 @@ if savefig == True:
     + str(dff)
     + "AltPreTime: "
     + str(alt_pre_time)
-    + "Darkmode="
-    + str(darkmode)
+    + "."
+    + which_style
     + ".pdf",
     dpi=300, bbox_inches='tight', transparent=True,
     )
@@ -470,6 +471,7 @@ layer_name = 'astar1_fly2_pre_prox'
 display_fix = False
 save_fig = True
 darkmode = True
+which_style = 'seaborn-darkgrid'
 
 spatial_periods = [10, 20, 40, 80]
 temporal_frequencies = [0.5, 1, 2, 4]
@@ -522,7 +524,7 @@ c = [193/255, 70/255, 255/255]
 
 if darkmode == True:
   # Set the plots to a dark grid background
-  with plt.style.context('dark_background'):
+  with plt.style.context(which_style):
     fh, ax = plt.subplots(len(spatial_periods), len(temporal_frequencies), figsize=(20,20))
     for sp_ind, spatial in enumerate(spatial_periods):
       for tf_ind, temporal in enumerate(temporal_frequencies):
@@ -558,7 +560,7 @@ else: # not darkmode
 
 # save figure
 if save_fig == True:
-  fh.savefig(os.path.join(save_directory, f'{layer_name}_mean_response_across_{str(num_rois)}_ROIs.pdf'), dpi=300, bbox_inches='tight', transparent=True)
+  fh.savefig(os.path.join(save_directory, f'{layer_name}_mean_response_across_{str(num_rois)}_ROIs.{which_style}.pdf'), dpi=300, bbox_inches='tight', transparent=True)
 
 # plt.close('all')
  
@@ -658,12 +660,13 @@ mean_diff_norm, mean_diff_norm_ROI_avg, mean_diff_norm_ROI_sem, max_diff_norm, m
 
 # %% MTS.3 Plot the metrics  Metric Plotting - Good
 # Loop through spatial_periods and temporal_frequences, and for each parameter, make a boxplot for mean_diff_norm and max_diff_norm
-save_fig = True
+save_fig = False
 darkmode = True
+which_style = 'seaborn-darkgrid'
 
 if darkmode == True:
   # Set the plots to a dark grid background
-  with plt.style.context('dark_background'):
+  with plt.style.context(which_style):
 
     fh, ax = plt.subplots(len(spatial_periods), len(temporal_frequencies), figsize=(24, 16))
     for sp_ind in range(len(spatial_periods)):
@@ -737,8 +740,7 @@ if save_fig == True:
     fh.savefig(
     save_directory
     + 'comparison_of_mean_and_max_normalized_difference_between_opto_and_no_opto.'
-    + 'Darkmode='
-    + str(darkmode)
+    + which_style
     + '.pdf',
     dpi=300, bbox_inches='tight', transparent=True
     )
