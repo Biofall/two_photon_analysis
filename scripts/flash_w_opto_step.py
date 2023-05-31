@@ -12,7 +12,6 @@ import numpy as np
 import seaborn as sns
 import pandas as pd
 
-# %%
 # Opto intensity sweep w/ flash experiments (with MoCo!) 2/8/22
 
 # Multiple ROIs
@@ -77,6 +76,15 @@ mi1_fly19_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230427.moco", "2023-0
 mi1_fly20_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230427.moco", "2023-04-27", "3", "mi1_proximal_multiple"]]
 # Fly 21
 mi1_fly21_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230427.moco", "2023-04-27", "5", "mi1_proximal_multiple"]]
+# Fly 22 #5/09/23
+mi1_fly22_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230509.selected", "2023-05-09", "3", "mi1_proximal_multiple"]]
+mi1_fly22_dist = [["/Volumes/ABK2TBData/data_repo/bruker/20230509.selected", "2023-05-09", "3", "mi1_distal_multiple"]]
+# Fly 23 #5/09/23
+mi1_fly23_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230509.selected", "2023-05-09", "4", "mi1_proximal_multiple"]]
+mi1_fly23_dist = [["/Volumes/ABK2TBData/data_repo/bruker/20230509.selected", "2023-05-09", "4", "mi1_distal_multiple"]]
+# Fly 24 #5/09/23
+mi1_fly24_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230509.selected", "2023-05-09", "5", "mi1_proximal_multiple"]]
+mi1_fly24_dist = [["/Volumes/ABK2TBData/data_repo/bruker/20230509.selected", "2023-05-09", "5", "mi1_distal_multiple"]]
 
 
 # CONTROL FLIES
@@ -86,6 +94,15 @@ mi1_control1_medi = [["/Volumes/ABK2TBData/data_repo/bruker/20230317", "2023-03-
 mi1_control1_dist = [["/Volumes/ABK2TBData/data_repo/bruker/20230317", "2023-03-17", "4", "mi1_distal_multiple"]]
 # control fly 2
 mi1_control2_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230317", "2023-03-17", "5", "mi1_proximal_multiple"]]
+# control fly 3
+mi1_control3_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230509.selected", "2023-05-09", "1", "mi1_proximal_multiple"]]
+mi1_control3_dist = [["/Volumes/ABK2TBData/data_repo/bruker/20230509.selected", "2023-05-09", "1", "mi1_distal_multiple"]]
+# control fly 4
+mi1_control4_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230509.selected", "2023-05-09", "2", "mi1_proximal_multiple"]]
+# control fly 5
+mi1_control5_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230509.selected", "2023-05-09", "6", "mi1_proximal_multiple"]]
+mi1_control5_dist = [["/Volumes/ABK2TBData/data_repo/bruker/20230509.selected", "2023-05-09", "6", "mi1_distal_multiple"]]
+
 
 
 
@@ -94,7 +111,8 @@ mi1_prox_all = np.concatenate(
                              mi1_fly4_prox, mi1_fly5_prox, mi1_fly6_prox,
                              mi1_fly7_prox, mi1_fly8_prox, mi1_fly9_prox,
                              mi1_fly10_prox, mi1_fly11_prox, mi1_fly12_prox,
-                             mi1_fly13_prox, mi1_fly14_prox, mi1_fly15_prox,), 
+                             mi1_fly13_prox, mi1_fly14_prox, mi1_fly15_prox,
+                             ), 
                              axis = 0,
                             )
 
@@ -110,18 +128,19 @@ mi1_prox_goodish = np.concatenate(
 
 mi1_prox_good = np.concatenate(
                              (mi1_fly6_prox, mi1_fly8_prox, mi1_fly16_prox, mi1_fly17_prox,
-                              mi1_fly18_prox, mi1_fly19_prox, mi1_fly20_prox, mi1_fly21_prox,),
+                              mi1_fly18_prox, mi1_fly19_prox, mi1_fly20_prox, mi1_fly21_prox,
+                              mi1_fly22_prox, mi1_fly23_prox, mi1_fly24_prox,),
                              axis = 0,
                              )
 
-fly_list_prox = [6, 8, 16, 17, 18, 19, 20, 21]
+fly_list_prox = [6, 8, 16, 17, 18, 19, 20, 21, 22, 23, 24]
 
 mi1_dist_good = np.concatenate(
-                             (mi1_fly6_dist,
+                             (mi1_fly6_dist, mi1_fly22_dist, mi1_fly23_dist, mi1_fly24_dist,
                              ),
                              axis = 0,
                              )
-fly_list_dist = [6]
+fly_list_dist = [6, 22, 23, 24]
 
 mi1_medi_good = np.concatenate(
                              (mi1_fly6_medi,
@@ -147,12 +166,18 @@ mi1_all_multiple = np.concatenate(
 
 # control flies
 mi1_control_prox = np.concatenate(
-                                  (mi1_control1_prox, mi1_control2_prox,),
+                                  (mi1_control1_prox, mi1_control2_prox, mi1_control3_prox, mi1_control4_prox, mi1_control5_prox,),
                                   axis = 0,
                                  )
-fly_list_control_prox = [1, 2]
+fly_list_control_prox = [1, 2, 3, 4, 5]
+
+mi1_control_dist = np.concatenate(
+                                  (mi1_control1_prox, mi1_control3_prox, mi1_control5_prox,),
+                                  axis = 0,
+                                 )
+fly_list_control_dist = [1, 3, 5]
+
 fly_list_control_medi = [1]
-fly_list_control_dist = [1]
 
 # all good flies
 mi1_all_good = [mi1_prox_good, mi1_medi_good, mi1_dist_good]
@@ -205,7 +230,7 @@ def metricDifNormalizer(metric_in, normalize_to = "sum"):
     return metric_out
 
 # Giant function that takes in layer and outputs metric matrices
-def getWindowMetricsFromLayer(layer, condition_name, normalize_to=False, plot_trial_figs=False, save_fig=False):
+def getWindowMetricsFromLayer(layer, condition_name, per_ROI=False, normalize_to=False, plot_trial_figs=False, save_fig=False):
     which_layer = layer
     # Make the metric arrays - each will be experiment x unique opto params x visual flash window
     n_exps = len(which_layer)
@@ -221,6 +246,19 @@ def getWindowMetricsFromLayer(layer, condition_name, normalize_to=False, plot_tr
     min_matrix[:] = np.nan
     ptt_matrix = np.empty((n_exps, n_opto_params, n_vis_flashes))
     ptt_matrix[:] = np.nan
+
+    if per_ROI == True: # initializing. Going to have to append b/c we don't know how many ROIs there are
+        mean_matrix_per_ROI = np.empty((1, n_exps, n_opto_params, n_vis_flashes))
+        mean_matrix_per_ROI[:] = np.nan
+        sem_mean_matrix_per_ROI = np.empty((1, n_exps, n_opto_params, n_vis_flashes))
+        sem_mean_matrix_per_ROI[:] = np.nan
+        max_matrix_per_ROI = np.empty((1, n_exps, n_opto_params, n_vis_flashes))
+        max_matrix_per_ROI[:] = np.nan
+        min_matrix_per_ROI = np.empty((1, n_exps, n_opto_params, n_vis_flashes))
+        min_matrix_per_ROI[:] = np.nan
+        ptt_matrix_per_ROI = np.empty((1, n_exps, n_opto_params, n_vis_flashes))
+        ptt_matrix_per_ROI[:] = np.nan
+
 
     for pull_ind in range(len(which_layer)):
         file_path = os.path.join(which_layer[pull_ind][0], which_layer[pull_ind][1] + ".hdf5")
@@ -253,7 +291,8 @@ def getWindowMetricsFromLayer(layer, condition_name, normalize_to=False, plot_tr
         y_high = max_val+abs(0.05*max_val)
 
         # Set the plots to a dark grid background
-        plt.style.use("dark_background")
+        which_style = "seaborn-white" # | 'seaborn-white' ' darkgrid'
+        plt.style.use(which_style)
 
         if plot_trial_figs == True:
             # Colormap setting
@@ -304,6 +343,8 @@ def getWindowMetricsFromLayer(layer, condition_name, normalize_to=False, plot_tr
                 + str(which_layer[pull_ind][3])
                 + ".Conditions:"
                 + str(condition_name)
+                + "."
+                + which_style
                 + ".pdf",
                 dpi=300, bbox_inches='tight', transparent=True,
                 )
@@ -317,8 +358,14 @@ def getWindowMetricsFromLayer(layer, condition_name, normalize_to=False, plot_tr
         window_frames = int(np.ceil(window_length / ID.getResponseTiming().get('sample_period')))
         windows = np.zeros((len(unique_parameter_values), len(window_times), window_frames))
         windows_sem = np.zeros((len(unique_parameter_values), len(window_times), window_frames))
-        num_windows = len(window_times)
+        if per_ROI == True:
+            windows_by_ROI = np.zeros((len(mean_response), len(unique_parameter_values), len(window_times), window_frames))
+            windows_by_ROI[:] = np.nan
+            windows_sem_by_ROI = np.zeros((len(mean_response), len(unique_parameter_values), len(window_times), window_frames))
+            windows_sem_by_ROI[:] = np.nan
 
+        num_windows = len(window_times)
+            
         if plot_trial_figs == True:
             fh, ax = plt.subplots(1, len(unique_parameter_values), figsize=(18, 4))
 
@@ -328,9 +375,15 @@ def getWindowMetricsFromLayer(layer, condition_name, normalize_to=False, plot_tr
         for up_ind, up in enumerate(unique_parameter_values): # Opto intensities
             for w_ind, w in enumerate(window_times): # windows
                 start_index = np.where(roi_data.get('time_vector') > window_times[w_ind])[0][0]
+                # Collect windows responses for the cross-ROI
                 windows[up_ind, w_ind, :] = cross_roi_mean_response[up_ind, start_index:(start_index+window_frames)]
                 windows_sem[up_ind, w_ind, :] = cross_roi_sem_response[up_ind, start_index:(start_index+window_frames)] # This is using the correct cross-ROI SEM calculation
-        
+
+                if per_ROI == True:
+                    # Collect windows responses for each individual ROI
+                    windows_by_ROI[:, up_ind, w_ind, :] = mean_response[:, up_ind, start_index:(start_index+window_frames)]
+                    windows_sem_by_ROI[:, up_ind, w_ind, :] = sem_response[:, up_ind, start_index:(start_index+window_frames)] # This is using the correct cross-ROI SEM calculation
+
                 if plot_trial_figs == True:
                     # Plot: Each Window for a given LED Intensity
                     ax[up_ind].plot(windows[up_ind, w_ind, :], color=colors[w_ind], label=w if up_ind==0 else '')
@@ -352,6 +405,8 @@ def getWindowMetricsFromLayer(layer, condition_name, normalize_to=False, plot_tr
                 + str(which_layer[pull_ind][3])
                 + ".Conditions:"
                 + str(condition_name)
+                + "."
+                + which_style
                 + ".pdf",
                 dpi=300, bbox_inches='tight', transparent=True,
                 )
@@ -387,6 +442,8 @@ def getWindowMetricsFromLayer(layer, condition_name, normalize_to=False, plot_tr
                 + str(which_layer[pull_ind][3])
                 + ".Conditions:"
                 + str(condition_name)
+                + "."
+                + which_style
                 + ".pdf",
                 dpi=300, bbox_inches='tight', transparent=True,
                 )
@@ -407,6 +464,30 @@ def getWindowMetricsFromLayer(layer, condition_name, normalize_to=False, plot_tr
         max_matrix[pull_ind] = response_max
         min_matrix[pull_ind] = response_min
         ptt_matrix[pull_ind] = response_PtT
+
+        if per_ROI == True:
+            # This step takes windows = ROIs X UniqueOptoParams X Window X Time) and averages across time, so:
+            # response_mean = ROIs X Unique Opto Params x Windows
+            response_mean_by_ROI = np.mean(windows_by_ROI, axis = -1)
+            # NOTE: easy to use the wrong SEM calculation again. If mean(windows_sem) is used, then it's the wrong SEM calculation. Recalculate. 
+            response_sem_by_ROI = np.std(windows_by_ROI, axis = -1) / np.sqrt(window_frames)
+            response_max_by_ROI = np.max(windows_by_ROI, axis = -1)
+            response_min_by_ROI = np.min(windows_by_ROI, axis = -1)
+            response_PtT_by_ROI = response_max_by_ROI - response_min_by_ROI
+
+            # storage time!
+            if pull_ind == 0:
+                mean_matrix_by_ROI = response_mean_by_ROI
+                sem_mean_matrix_by_ROI = response_sem_by_ROI
+                max_matrix_by_ROI = response_max_by_ROI
+                min_matrix_by_ROI = response_min_by_ROI
+                ptt_matrix_by_ROI = response_PtT_by_ROI
+            mean_matrix_by_ROI = np.append(mean_matrix_by_ROI, response_mean_by_ROI, axis=0)
+            sem_mean_matrix_by_ROI = np.append(sem_mean_matrix_by_ROI, response_sem_by_ROI, axis=0)
+            max_matrix_by_ROI = np.append(max_matrix_by_ROI, response_max_by_ROI, axis=0)
+            min_matrix_by_ROI = np.append(min_matrix_by_ROI, response_min_by_ROI, axis=0)
+            ptt_matrix_by_ROI = np.append(ptt_matrix_by_ROI, response_PtT_by_ROI, axis=0)
+
 
         if plot_trial_figs == True:
             cmap = plt.get_cmap('cool') # also 'cool' 'winter' 'PRGn' 'Pastel1' 'YlGnBu' 'twilight'
@@ -436,6 +517,7 @@ def getWindowMetricsFromLayer(layer, condition_name, normalize_to=False, plot_tr
 
                     ax[0, w_ind].set_title(f'Visual Flash {w_ind+2} | Window Time: {window_times[w_ind+1]}')
                     ax[up_ind, w_ind].grid(False)
+
 
                 # Finding unity params - Max
                 unity_lower_max = min(min(response_max[:, w_ind]), min(response_max[:, w_ind+1]))*0.8
@@ -485,15 +567,15 @@ def getWindowMetricsFromLayer(layer, condition_name, normalize_to=False, plot_tr
             for w_ind in range(len(window_times)-1): # sets all the axes to be the same
                 ax[0,w_ind].set_xlim(left=temp_lower_max, right=temp_upper_max)
                 ax[0,w_ind].set_ylim(bottom=temp_lower_max, top=temp_upper_max)
-                ax[0,w_ind].plot([temp_lower_max, temp_upper_max], [temp_lower_max, temp_upper_max], 'w--', alpha=0.7)
+                ax[0,w_ind].plot([temp_lower_max, temp_upper_max], [temp_lower_max, temp_upper_max], 'k--', alpha=0.7)
 
                 ax[1,w_ind].set_xlim(left=temp_lower_min, right=temp_upper_min)
                 ax[1,w_ind].set_ylim(bottom=temp_lower_min, top=temp_upper_min)
-                ax[1,w_ind].plot([temp_lower_min, temp_upper_min], [temp_lower_min, temp_upper_min], 'w--', alpha=0.7)
+                ax[1,w_ind].plot([temp_lower_min, temp_upper_min], [temp_lower_min, temp_upper_min], 'k--', alpha=0.7)
 
                 ax[2,w_ind].set_xlim(left=temp_lower_PtT, right=temp_upper_PtT)
                 ax[2,w_ind].set_ylim(bottom=temp_lower_PtT, top=temp_upper_PtT)
-                ax[2,w_ind].plot([temp_lower_PtT, temp_upper_PtT], [temp_lower_PtT, temp_upper_PtT], 'w--', alpha=0.7)
+                ax[2,w_ind].plot([temp_lower_PtT, temp_upper_PtT], [temp_lower_PtT, temp_upper_PtT], 'k--', alpha=0.7)
 
             #ax[0,0].setp(xlim=temp_upper_max, ylim=temp_upper_max)
             #ax[0,1].setp(xlim=temp_upper_max, ylim=temp_upper_max)
@@ -518,17 +600,13 @@ def getWindowMetricsFromLayer(layer, condition_name, normalize_to=False, plot_tr
                 + str(which_layer[pull_ind][3])
                 + ".Conditions:"
                 + str(condition_name)
+                + "."
+                + which_style
                 + ".pdf",
                 dpi=300, bbox_inches='tight', transparent=True,
                 )
     
-    if normalize_to == 'sum':
-        mean_matrix = metricDifNormalizer(mean_matrix, normalize_to)
-        sem_mean_matrix = metricDifNormalizer(sem_mean_matrix, normalize_to)
-        max_matrix = metricDifNormalizer(max_matrix, normalize_to)
-        min_matrix = metricDifNormalizer(min_matrix, normalize_to)
-        ptt_matrix = metricDifNormalizer(ptt_matrix, normalize_to)
-    elif normalize_to == 'first':
+    if normalize_to == 'sum' or normalize_to == 'first':
         mean_matrix = metricDifNormalizer(mean_matrix, normalize_to)
         sem_mean_matrix = metricDifNormalizer(sem_mean_matrix, normalize_to)
         max_matrix = metricDifNormalizer(max_matrix, normalize_to)
@@ -537,7 +615,20 @@ def getWindowMetricsFromLayer(layer, condition_name, normalize_to=False, plot_tr
     else:
         print("NO NORMALIZING HAPPENED BTW")
 
-    return mean_matrix, sem_mean_matrix, max_matrix, min_matrix, ptt_matrix
+    if per_ROI == True:
+        # if normalize_to exists, then normalize the mean_matrix and sem_mean_matrix
+        if normalize_to == 'sum' or normalize_to == 'first':
+            mean_matrix_by_ROI = metricDifNormalizer(mean_matrix_by_ROI, normalize_to)
+            sem_mean_matrix_by_ROI = metricDifNormalizer(sem_mean_matrix_by_ROI, normalize_to)
+            max_matrix_by_ROI = metricDifNormalizer(max_matrix_by_ROI, normalize_to)
+            min_matrix_by_ROI = metricDifNormalizer(min_matrix_by_ROI, normalize_to)
+            ptt_matrix_by_ROI = metricDifNormalizer(ptt_matrix_by_ROI, normalize_to)
+        else:
+            print("NO NORMALIZING HAPPENED BTW")
+    
+        return mean_matrix_by_ROI, sem_mean_matrix_by_ROI, max_matrix_by_ROI, min_matrix_by_ROI, ptt_matrix_by_ROI
+    else:
+        return mean_matrix, sem_mean_matrix, max_matrix, min_matrix, ptt_matrix
 
 # %% RUN ALL THE SHIT
 #--------------------------------------------------------------------------------------------------------#
@@ -546,8 +637,10 @@ def getWindowMetricsFromLayer(layer, condition_name, normalize_to=False, plot_tr
 #--------------------------------------------------------------------------------------------------------#
 #--------------------------------------------------------------------------------------------------------#
 # Set meeeeeeeeeeee
-data_list = mi1_all_good # mi1_all_good | mi1_control_all | mi1_prox_good
-list_to_use = fly_list_exp # fly_list_exp | fly_list_control | fly_list_prox
+data_list = mi1_control_all # mi1_all_good | mi1_control_all | mi1_prox_good
+which_str = 'mi1_control_all'
+list_to_use = fly_list_control # fly_list_exp | fly_list_control | fly_list_prox
+per_ROI = True
 
 # Making a data frame the way it's supposed to be....
 # Currently have:
@@ -560,29 +653,39 @@ list_to_use = fly_list_exp # fly_list_exp | fly_list_control | fly_list_prox
 # Defines dataframe with desired columns
 metric_df = pd.DataFrame(columns=['Fly', 'Layer', 'Mean', 'SEM_Mean', 'Min', 'Max', 'PtT', 'Opto', 'Window'])
 
+if per_ROI == True:
+    metric_df = pd.DataFrame(columns=['ROI', 'Layer', 'Mean', 'SEM_Mean', 'Min', 'Max', 'PtT', 'Opto', 'Window'])
 # Adds all metrics to dataframe one row at a time
 row_idx = 0
 # Print statement that explains loop is starting
 print(f"\nBeginning Loops for extracting data.")
 for layer_ind in range(len(layer_list)):
-    mean_diff_matrix, sem_mean_diff_matrix, max_diff_matrix, min_diff_matrix, ptt_diff_matrix = getWindowMetricsFromLayer(data_list[layer_ind], layer_list[layer_ind], normalize_to='sum', plot_trial_figs=True, save_fig=True)
+    mean_diff_matrix, sem_mean_diff_matrix, max_diff_matrix, min_diff_matrix, ptt_diff_matrix = getWindowMetricsFromLayer(data_list[layer_ind], layer_list[layer_ind], per_ROI = True, normalize_to='nah', plot_trial_figs=True, save_fig=False)
     fly_indicies = list_to_use[layer_ind]
     # Gets dimensions of metric arrays 
     num_flies, num_opto, num_windows = mean_diff_matrix.shape   
     for fly in range(num_flies):
         for opto in range(num_opto):
             for window in range(num_windows):
-                # print progress
-                print(f'Fly: {fly} of {num_flies} | Opto: {opto} | Window: {window}')
-                metric_df.loc[row_idx] = [
-                    fly_indicies[fly], layer_list[layer_ind], mean_diff_matrix[fly, opto, window], sem_mean_diff_matrix[fly, opto, window],
-                    min_diff_matrix[fly, opto, window], max_diff_matrix[fly, opto, window], 
-                    ptt_diff_matrix[fly, opto, window], opto, window,
-                    ]
+                if per_ROI == True:
+                    metric_df.loc[row_idx] = [
+                        fly, layer_list[layer_ind], mean_diff_matrix[fly, opto, window], sem_mean_diff_matrix[fly, opto, window],
+                        min_diff_matrix[fly, opto, window], max_diff_matrix[fly, opto, window],
+                        ptt_diff_matrix[fly, opto, window], opto, window,
+                        ]
+                else:
+                    metric_df.loc[row_idx] = [
+                        fly_indicies[fly], layer_list[layer_ind], mean_diff_matrix[fly, opto, window], sem_mean_diff_matrix[fly, opto, window],
+                        min_diff_matrix[fly, opto, window], max_diff_matrix[fly, opto, window], 
+                        ptt_diff_matrix[fly, opto, window], opto, window,
+                        ]
                 row_idx += 1
 
-# Convert the floats which were indicies to ints           
-metric_df['Fly'] = metric_df['Fly'].astype(int)
+# Convert the floats which were indicies to ints   
+if per_ROI == True:
+    metric_df['ROI'] = metric_df['ROI'].astype(int)   
+else:
+    metric_df['Fly'] = metric_df['Fly'].astype(int)
 metric_df['Opto'] = metric_df['Opto'].astype(int)
 metric_df['Window'] = metric_df['Window'].astype(int)
 
@@ -594,6 +697,32 @@ print('-------------------------------------------------------------------------
 print('------------------------------------------------------------------------------------------')
 print('------------------------------------------------------------------------------------------')
 
+plt.close('all')
+
+# %% Combine experimental and control data, then export as pickle. also lets you unpickle
+
+# 1) run the above loop for control data
+
+# 2) save control data
+# metric_df_control_byroi = metric_df # metric_df_control_byfly | metric_df_control_byoi
+
+# 3) run the above loop for experimental data
+
+# 4) save the experimental data
+# metric_df_exp_byroi = metric_df # metric_df_exp_byfly | metric_df_exp_byroi
+
+# 5) append a column label for experimental / control designations
+# metric_df_exp_byroi['Type'] = 'Experimental' # metric_df_exp_byfly | metric_df_exp_byroi
+# metric_df_control_byroi['Type'] = 'Control' # metric_df_control_byfly | metric_df_control_byoi
+
+# 6) concat them
+# both_metric_df_byroi = pd.concat([metric_df_exp_byroi, metric_df_control_byroi]) # metric_df_exp_byfly | metric_df_exp_byroi
+
+# 7) To save/read in summarized data as .pkl file
+# both_metric_df_byroi.to_pickle(save_directory + 'both_metric_df_byroi.pkl')  # metric_df_exp_byfly | metric_df_exp_byroi
+
+# To unpickle: 
+# both_metric_df_byfly = pd.read_pickle(save_directory + 'both_metric_df_byfly.pkl')  # metric_df_exp_byfly | metric_df_exp_byroi
 
 
 # %% Seaborn plots for values over windows (Fig 4)
@@ -601,7 +730,7 @@ print('-------------------------------------------------------------------------
 # FIGURE: Subplot grid where each row is a metric and each column is a layer
 save_fig=True
 bigfig, bigaxes = plt.subplots(4,3, figsize=(36,27))
-bigfig.suptitle(f'PLACEHOLDER SUPERTITLE')
+bigfig.suptitle(f'Metric x Layer for {which_str}')
 
 # Proximal = Col 1
 # Mean
@@ -684,12 +813,15 @@ if save_fig == True:
     )
 
 
-
 # %% FIGURE: Create a histogram of the difference between the first and third window for each fly (that's window 2)
 # seaborn histogram guide: https://seaborn.pydata.org/generated/seaborn.histplot.html 
 # Initialize some shit:
 # subset df for layer and window
 prox_win02_df = metric_df.loc[(metric_df['Window'] == 1) & (metric_df['Layer'] == 'Proximal')]
+df_to_plot = prox_win02_df
+which_str2 = 'exp'
+plot_style = 'seaborn-white' # 'dark_background' or 'seaborn-white'
+
 
 # Parameters for histplots
 kde = True
@@ -699,47 +831,76 @@ multiple = 'stack' # dodge | stack | layer | fill
 #binwidth = 0.05 #0.025 # supercedes bins |  0.025
 pally = 'Set3' # Set3 pastel
 
-save_fig = True
+save_fig = False
 # Histogram of Mean values for third - first windows
 sns.set_theme()
-with plt.style.context('dark_background'):
+with plt.style.context(plot_style):
     sns.set_context("talk")
 
     fig_hist_mean, ax_hist_mean = plt.subplots(1, figsize = (12,9))
     sns.histplot(
-        ax=ax_hist_mean, x="Mean", hue="Opto", data=prox_win02_df, multiple=multiple, element=element, kde=kde, palette=pally, 
+        ax=ax_hist_mean, x="Mean", hue="Opto", data=df_to_plot, multiple=multiple, element=element, kde=kde, palette=pally, 
         )
     ax_hist_mean.set(xlabel='Mean Value of Third Window - Mean Value of First Window')
-    ax_hist_mean.set_title(f'Mean Response - Mi1 Proximal Layer - Opto Effect')
+    ax_hist_mean.set_title(f'Mean Response for {which_str2} condition - Mi1 Proximal Layer - Opto Effect')
     ax_hist_mean.grid(False)
     sns.despine(fig=fig_hist_mean)
 
 if save_fig == True:
     fig_hist_mean.savefig(
     save_directory
-    + "SummaryMeanHistogramThirdWindow.Proximal.Dark"
+    + "SummaryMeanHistogramThirdWindow.Proximal."
+    + plot_style
+    + "."
+    + which_str2
     + ".pdf",
     dpi=300, bbox_inches='tight', transparent=True,
     )
 
 # Histogram of Max values for third - first windows
 # save_fig = True
-with plt.style.context('dark_background'):
+with plt.style.context(plot_style):
     sns.set_context("talk")
 
     fig_hist_max, ax_hist_max = plt.subplots(1, figsize = (12,9))
     sns.histplot(
-        ax=ax_hist_max, x="Max", hue="Opto", data=prox_win02_df, multiple=multiple, element=element, kde=kde, palette=pally, 
+        ax=ax_hist_max, x="Max", hue="Opto", data=df_to_plot, multiple=multiple, element=element, kde=kde, palette=pally, 
         )
     ax_hist_max.set(xlabel='Max Value of Third Window - Max Value of First Window')
-    ax_hist_max.set_title(f'Max Response - Mi1 Proximal Layer - Opto Effect')
+    ax_hist_max.set_title(f'Max Response for {which_str2} condition - Mi1 Proximal Layer - Opto Effect')
     ax_hist_max.grid(False)
     sns.despine(fig=fig_hist_max)
-
 if save_fig == True:
     fig_hist_max.savefig(
     save_directory
-    + "SummaryMaxHistogramThirdWindow.Proximal.Dark"
+    + "SummaryMaxHistogramThirdWindow.Proximal."
+    + plot_style
+    + "."
+    + which_str2
+    + ".pdf",
+    dpi=300, bbox_inches='tight', transparent=True,
+    )
+
+# Histogram of Peak-to-Trough values for third - first windows
+# save_fig = True
+with plt.style.context(plot_style):
+    sns.set_context("talk")
+
+    fig_hist_ptt, ax_hist_ptt = plt.subplots(1, figsize = (12,9))
+    sns.histplot(
+        ax=ax_hist_ptt, x="PtT", hue="Opto", data=df_to_plot, multiple=multiple, element=element, kde=kde, palette=pally, 
+        )
+    ax_hist_ptt.set(xlabel='Peak-to-Trough Value of Third Window - Peak-to-Trough Value of First Window')
+    ax_hist_ptt.set_title(f'Peak-to-Trough Response for {which_str2} condition - Mi1 Proximal Layer - Opto Effect')
+    ax_hist_ptt.grid(False)
+    sns.despine(fig=fig_hist_ptt)
+if save_fig == True:
+    fig_hist_ptt.savefig(
+    save_directory
+    + "SummaryPtTHistogramThirdWindow.Proximal."
+    + plot_style
+    + "."
+    + which_str2
     + ".pdf",
     dpi=300, bbox_inches='tight', transparent=True,
     )
@@ -747,61 +908,200 @@ if save_fig == True:
 # FIGURE: Create a series of boxplots with the differences between the first and third window for each fly
 # save_fig = True
 pally = 'Set3' # Set3 pastel
-
-with plt.style.context('dark_background'):
+with plt.style.context(plot_style):
     sns.set_context("talk")
     sns.axes_style("whitegrid", {'grid.linestyle': '--'})
     contrast_color = "coral"
 
     fig_box, ax_box_mean = plt.subplots(1, figsize = (10, 10))
-    sns.boxplot(
-        ax=ax_box_mean, data=prox_win02_df, x="Mean", y="Opto", palette=pally, orient="h", order=[2,1,0],
+    sns.violinplot(
+        ax=ax_box_mean, data=df_to_plot, x="Mean", y="Opto", palette=pally, orient="h", order=[2,1,0],
         medianprops={"color": contrast_color}, whiskerprops={"color":contrast_color}, capprops={"color":contrast_color}, 
         flierprops={"markerfacecolor":contrast_color, "markeredgecolor":contrast_color, 'markersize': 10}, boxprops={"edgecolor":contrast_color},        
         )
     ax_box_mean.set(xlabel='Mean Value of Third Window - Mean Value of First Window')
     ax_box_mean.set(ylabel='Opto Intensity')
-    ax_box_mean.set_title(f'Mean Response - Mi1 Proximal Layer - Opto Effect')
+    ax_box_mean.set_title(f'Mean Response for {which_str2} condition - Mi1 Proximal Layer - Opto Effect')
     sns.despine(fig=fig_box, left=True)
     sns.set_context("talk")
     ax_box_mean.grid(alpha=0.3)
+
+    # calculate the number of obs per group & median to position labels
+    medians = df_to_plot.groupby(['Opto'])['Mean'].median().values
+    nobs = df_to_plot['Opto'].value_counts().values
+    nobs = [str(x) for x in nobs.tolist()]
+    nobs = ["n: " + i for i in nobs]
+    pos = range(len(nobs))
+    for tick, label in zip(pos, ax_box_mean.get_yticklabels()):
+        ax_box_mean.text(
+            0.1, pos[tick], nobs[tick], horizontalalignment='center', size='small', color='w', weight='semibold'
+        )  
 if save_fig == True:
     fig_box.savefig(
     save_directory
-    + "SummaryMeanBoxPlotThirdWindow.Proximal.Dark"
+    + "SummaryMeanBoxPlotThirdWindow.Proximal."
+    + plot_style
+    + "."
+    + which_str2
     + ".pdf",
     dpi=300, bbox_inches='tight', transparent=True,
     )
 
 # same figure as above, but max
 # save_fig = True
-with plt.style.context('dark_background'):
+with plt.style.context(plot_style):
     sns.set_context("talk")
     sns.axes_style("whitegrid", {'grid.linestyle': '--'})
     contrast_color = "coral"
 
     fig_box_max, ax_box_max = plt.subplots(1, figsize = (10, 10))
-    sns.boxplot(
-        ax=ax_box_max, data=prox_win02_df, x="Max", y="Opto", palette=pally, orient="h", order=[2,1,0],
+    sns.violinplot(
+        ax=ax_box_max, data=df_to_plot, x="Max", y="Opto", palette=pally, orient="h", order=[2,1,0],
         medianprops={"color": contrast_color}, whiskerprops={"color":contrast_color}, capprops={"color":contrast_color}, 
         flierprops={"markerfacecolor":contrast_color, "markeredgecolor":contrast_color, 'markersize': 10}, boxprops={"edgecolor":contrast_color},
         )
     ax_box_max.set(xlabel='Max Value of Third Window - Max Value of First Window')
     ax_box_max.set(ylabel='Opto Intensity')
-    ax_box_max.set_title(f'Max Response - Mi1 Proximal Layer - Opto Effect')
+    ax_box_max.set_title(f'Max Response for {which_str2} condition - Mi1 Proximal Layer - Opto Effect')
     sns.despine(fig=fig_box_max, left=True)
     sns.set_context("talk")
     ax_box_max.grid(alpha=0.3)
+    # calculate the number of obs per group & median to position labels
+    medians = df_to_plot.groupby(['Opto'])['Max'].median().values
+    nobs = df_to_plot['Opto'].value_counts().values
+    nobs = [str(x) for x in nobs.tolist()]
+    nobs = ["n: " + i for i in nobs]
+    pos = range(len(nobs))
+    for tick, label in zip(pos, ax_box_max.get_yticklabels()):
+        ax_box_max.text(
+            0.1, pos[tick], nobs[tick], horizontalalignment='center', size='small', color='w', weight='semibold'
+        )
 if save_fig == True:
     fig_box_max.savefig(
     save_directory
-    + "SummaryMaxBoxPlotThirdWindow.Proximal.Dark"
+    + "SummaryMaxBoxPlotThirdWindow.Proximal."
+    + plot_style
+    + "."
+    + which_str2
+    + ".pdf",
+    dpi=300, bbox_inches='tight', transparent=True,
+    )
+
+# same figure as above, but PtT
+# save_fig = True
+with plt.style.context(plot_style):
+    sns.set_context("talk")
+    sns.axes_style("whitegrid", {'grid.linestyle': '--'})
+    contrast_color = "coral"
+
+    fig_box_ptt, ax_box_ptt = plt.subplots(1, figsize = (10, 10))
+    sns.violinplot(
+        ax=ax_box_ptt, data=df_to_plot, x="PtT", y="Opto", palette=pally, orient="h", order=[2,1,0],
+        medianprops={"color": contrast_color}, whiskerprops={"color":contrast_color}, capprops={"color":contrast_color}, 
+        flierprops={"markerfacecolor":contrast_color, "markeredgecolor":contrast_color, 'markersize': 10}, boxprops={"edgecolor":contrast_color},
+        )
+    ax_box_ptt.set(xlabel='Peak to Trough Value of Third Window - Peak to Trough Value of First Window')
+    ax_box_ptt.set(ylabel='Opto Intensity')
+    ax_box_ptt.set_title(f'Peak to Trough Response for {which_str2} condition - Mi1 Proximal Layer - Opto Effect')
+    sns.despine(fig=fig_box_ptt, left=True)
+    sns.set_context("talk")
+    ax_box_ptt.grid(alpha=0.3)
+
+    # calculate the number of obs per group & median to position labels
+    medians = df_to_plot.groupby(['Opto'])['PtT'].median().values
+    nobs = df_to_plot['Opto'].value_counts().values
+    nobs = [str(x) for x in nobs.tolist()]
+    nobs = ["n: " + i for i in nobs]
+    pos = range(len(nobs))
+    for tick, label in zip(pos, ax_box_ptt.get_yticklabels()):
+        ax_box_ptt.text(
+            0.1, pos[tick], nobs[tick], horizontalalignment='center', size='small', color='w', weight='semibold'
+        )
+if save_fig == True:
+    fig_box_ptt.savefig(
+    save_directory
+    + "SummaryPtTBoxPlotThirdWindow.Proximal."
+    + plot_style
+    + "."
+    + which_str2
     + ".pdf",
     dpi=300, bbox_inches='tight', transparent=True,
     )
 
 
+# %% Plot the scatter of the control vs experimental data for window 2
+save_fig = False
+plot_style = 'seaborn-white' # 'dark_background' or 'seaborn-white'
 
+
+#  Violin plots of exp vs control data
+
+# both = unpickled_df
+# create a figure
+with plt.style.context(plot_style):
+    fig_box_means, ax_box_means = plt.subplots(1, figsize = (14, 8))
+    sns.violinplot(ax=ax_box_means, data = both, x = 'Mean', y = 'kind', medianprops={"color": contrast_color}, whiskerprops={"color":contrast_color}, capprops={"color":contrast_color}, 
+        flierprops={"markerfacecolor":contrast_color, "markeredgecolor":contrast_color, 'markersize': 10}, boxprops={"edgecolor":contrast_color},)
+    # calculate the number of obs per group & median to position labels
+    medians = both.groupby(['kind'])['Mean'].median().values
+    nobs = both['kind'].value_counts().values
+    nobs = [str(x) for x in nobs.tolist()]
+    nobs = ["n: " + i for i in nobs]
+    # add it to the plot
+    pos = range(len(nobs))
+    for tick, label in zip(pos, ax_box_means.get_yticklabels()):
+        ax_box_means.text(
+            0.3, pos[tick], nobs[tick], horizontalalignment='center', size='large', color=contrast_color, weight='semibold'
+        )
+
+    fig_box_maxes, ax_box_maxes = plt.subplots(1, figsize = (14, 8))
+    sns.violinplot(ax=ax_box_maxes, data = both, x = 'Max', y = 'kind', medianprops={"color": contrast_color}, whiskerprops={"color":contrast_color}, capprops={"color":contrast_color}, 
+        flierprops={"markerfacecolor":contrast_color, "markeredgecolor":contrast_color, 'markersize': 10}, boxprops={"edgecolor":contrast_color},)
+    # add it to the plot
+    pos = range(len(nobs))
+    for tick, label in zip(pos, ax_box_maxes.get_yticklabels()):
+        ax_box_maxes.text(
+            0.3, pos[tick], nobs[tick], horizontalalignment='center', size='large', color=contrast_color, weight='semibold'
+        )
+
+    fig_box_ptt, ax_box_ptt = plt.subplots(1, figsize = (14, 8))
+    sns.violinplot(ax=ax_box_ptt, data = both, x = 'PtT', y = 'kind', medianprops={"color": contrast_color}, whiskerprops={"color":contrast_color}, capprops={"color":contrast_color}, 
+        flierprops={"markerfacecolor":contrast_color, "markeredgecolor":contrast_color, 'markersize': 10}, boxprops={"edgecolor":contrast_color},)
+    # add it to the plot
+    pos = range(len(nobs))
+    for tick, label in zip(pos, ax_box_ptt.get_yticklabels()):
+        ax_box_ptt.text(
+            0.3, pos[tick], nobs[tick], horizontalalignment='center', size='large', color=contrast_color, weight='semibold'
+        )
+
+    # titles for the figures
+    ax_box_means.set_title(f'Mean Response - Mi1 Proximal Layer - Opto Effect for Window 3 - Window 1')
+    ax_box_maxes.set_title(f'Max Response - Mi1 Proximal Layer - Opto Effect for Window 3 - Window 1')
+    ax_box_ptt.set_title(f'Peak to Trough Response - Mi1 Proximal Layer - Opto Effect for Window 3 - Window 1')
+
+    # save the figures
+    if save_fig == True:
+        fig_box_means.savefig(
+            save_directory
+            + "ConVExp.SummaryMeanBoxPlotThirdWindow.Proximal."
+            + plot_style
+            + ".pdf",
+            dpi=300, bbox_inches='tight', transparent=True,
+        )
+        fig_box_maxes.savefig(
+            save_directory
+            + "ConVExp.SummaryMaxBoxPlotThirdWindow.Proximal."
+            + plot_style
+            + ".pdf",
+            dpi=300, bbox_inches='tight', transparent=True,
+        )
+        fig_box_ptt.savefig(
+            save_directory
+            + "ConVExp.SummaryPtTBoxPlotThirdWindow.Proximal."
+            + plot_style
+            + ".pdf",
+            dpi=300, bbox_inches='tight', transparent=True,
+        )
 
 
 
