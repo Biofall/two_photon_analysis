@@ -6,7 +6,7 @@ import nibabel as nib
 import numpy as np
 
 imports_dir = '/oak/stanford/groups/trc/data/krave/bruker_data/imports'
-date_dir = '20230524'
+date_dir = '20230531'
 
 data_directory = os.path.join(imports_dir, date_dir)
 
@@ -14,10 +14,15 @@ data_directory = os.path.join(imports_dir, date_dir)
 # Value: list of file name bases for target images, to register to reference
 # For non-paired moco, put the key and an empty list for value
 moco_pairs = {
-              'TSeries-20230524-001_channel_1': ['TSeries-20230524-002_channel_1', 'TSeries-20230524-003_channel_1'],
-              'TSeries-20230524-004_channel_1': ['TSeries-20230524-005_channel_1', 'TSeries-20230524-006_channel_1'],
-              'TSeries-20230524-007_channel_1': ['TSeries-20230524-008_channel_1', 'TSeries-20230524-009_channel_1'],
-             }
+              'TSeries-20230531-001_channel_1': ['TSeries-20230531-002_channel_1'],
+              'TSeries-20230531-004_channel_1': ['TSeries-20230531-0036_channel_1'],
+                            'TSeries-20230531-006_channel_1': ['TSeries-20230531-005_channel_1'],
+                'TSeries-20230531-008_channel_1': ['TSeries-20230531-007_channel_1'],
+                'TSeries-20230531-010_channel_1': ['TSeries-20230531-009_channel_1', 'TSeries-20230531-013_channel_1'],
+                'TSeries-20230531-014_channel_1': ['TSeries-20230531-015_channel_1', 'TSeries-20230531-016_channel_1'],
+                'TSeries-20230531-017_channel_1': ['TSeries-20230531-019_channel_1', 'TSeries-20230531-020_channel_1'],
+                'TSeries-20230531-021_channel_1': ['TSeries-20230531-022_channel_1', 'TSeries-20230531-024_channel_1', 'TSeries-20230531-025_channel_1'],
+                 }
 
 # moco_pairs = {
 #               'TSeries-20230327-001_channel_1': ['TSeries-20230327-002_channel_1', 'TSeries-20230327-003_channel_1'],
