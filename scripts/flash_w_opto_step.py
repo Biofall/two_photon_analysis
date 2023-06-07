@@ -5,6 +5,7 @@ from visanalysis.util import plot_tools
 from matplotlib import pyplot as plt
 from matplotlib.ticker import FixedLocator, FixedFormatter
 from scipy import stats
+from scipy.stats import wilcoxon
 
 import os
 from pathlib import Path
@@ -103,8 +104,11 @@ mi1_control4_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230509.selected", 
 mi1_control5_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230509.selected", "2023-05-09", "6", "mi1_proximal_multiple"]]
 mi1_control5_dist = [["/Volumes/ABK2TBData/data_repo/bruker/20230509.selected", "2023-05-09", "6", "mi1_distal_multiple"]]
 
-
-
+# RNAI FLIES
+# RNAi fly 1
+mi1_rnai_fly1_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230531.moco", "2023-05-31", "4", "proximal_multiple"]]
+mi1_rnai_fly2_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230531.moco", "2023-05-31", "6", "proximal_multiple"]]
+mi1_rnai_fly3_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230531.moco", "2023-05-31", "13", "proximal_multiple"]]
 
 mi1_prox_all = np.concatenate(
                              (mi1_fly1_prox, mi1_fly2_prox, mi1_fly3_prox, 
@@ -178,6 +182,13 @@ mi1_control_dist = np.concatenate(
 fly_list_control_dist = [1, 3, 5]
 
 fly_list_control_medi = [1]
+
+# RNAi Flies
+mi1_rnai_prox = np.concatenate(
+                                (mi1_rnai_fly1_prox, mi1_rnai_fly2_prox, mi1_rnai_fly3_prox),
+                                axis = 0,
+                                )
+mi1_rnai_prox_list = [1, 2, 3]
 
 # all good flies
 mi1_all_good = [mi1_prox_good, mi1_medi_good, mi1_dist_good]
@@ -637,11 +648,11 @@ def getWindowMetricsFromLayer(layer, condition_name, per_ROI=False, normalize_to
 #--------------------------------------------------------------------------------------------------------#
 #--------------------------------------------------------------------------------------------------------#
 # Set meeeeeeeeeeee
-data_list = mi1_control_all # mi1_all_good | mi1_control_all | mi1_prox_good
-which_str = 'mi1_control_all'
-list_to_use = fly_list_control # fly_list_exp | fly_list_control | fly_list_prox
+data_list = [mi1_rnai_prox] # mi1_all_good | mi1_control_all | mi1_prox_good
+which_str = 'mi1_rnai_prox'
+list_to_use = mi1_rnai_prox_list # fly_list_exp | fly_list_control | fly_list_prox
 per_ROI = True
-
+layer_list = ['Proximal']
 # Making a data frame the way it's supposed to be....
 # Currently have:
 # metric_matrix = Fly x unique_opto_param x window which is 11 x 3 x 3
@@ -660,10 +671,11 @@ row_idx = 0
 # Print statement that explains loop is starting
 print(f"\nBeginning Loops for extracting data.")
 for layer_ind in range(len(layer_list)):
-    mean_diff_matrix, sem_mean_diff_matrix, max_diff_matrix, min_diff_matrix, ptt_diff_matrix = getWindowMetricsFromLayer(data_list[layer_ind], layer_list[layer_ind], per_ROI = True, normalize_to='nah', plot_trial_figs=True, save_fig=False)
-    fly_indicies = list_to_use[layer_ind]
+    mean_diff_matrix, sem_mean_diff_matrix, max_diff_matrix, min_diff_matrix, ptt_diff_matrix = getWindowMetricsFromLayer(data_list[layer_ind], layer_list[layer_ind], per_ROI = True, normalize_to='sum', plot_trial_figs=True, save_fig=False)
+    fly_indicies = list_to_use#[layer_ind]
     # Gets dimensions of metric arrays 
     num_flies, num_opto, num_windows = mean_diff_matrix.shape   
+    print(f'mean_diff_matrix.shape = {mean_diff_matrix.shape}')
     for fly in range(num_flies):
         for opto in range(num_opto):
             for window in range(num_windows):
@@ -714,6 +726,7 @@ plt.close('all')
 # 5) append a column label for experimental / control designations
 # metric_df_exp_byroi['Type'] = 'Experimental' # metric_df_exp_byfly | metric_df_exp_byroi
 # metric_df_control_byroi['Type'] = 'Control' # metric_df_control_byfly | metric_df_control_byoi
+# rnai_df['Type'] = 'RNAi'
 
 # 6) concat them
 # both_metric_df_byroi = pd.concat([metric_df_exp_byroi, metric_df_control_byroi]) # metric_df_exp_byfly | metric_df_exp_byroi
@@ -722,8 +735,10 @@ plt.close('all')
 # both_metric_df_byroi.to_pickle(save_directory + 'both_metric_df_byroi.pkl')  # metric_df_exp_byfly | metric_df_exp_byroi
 
 # To unpickle: 
-# both_metric_df_byfly = pd.read_pickle(save_directory + 'both_metric_df_byfly.pkl')  # metric_df_exp_byfly | metric_df_exp_byroi
+# both_metric_df_byroi = pd.read_pickle(save_directory + 'both_metric_df_byroi.pkl')  # metric_df_exp_byfly | metric_df_exp_byroi
+# exp_control_rnai_by_roi = pd.concat([both_metric_df_byroi, rnai_df])
 
+# exp_control_rnai_by_roi.to_pickle(save_directory + 'exp_control_rnai_by_roi.pkl')
 
 # %% Seaborn plots for values over windows (Fig 4)
 
@@ -817,9 +832,9 @@ if save_fig == True:
 # seaborn histogram guide: https://seaborn.pydata.org/generated/seaborn.histplot.html 
 # Initialize some shit:
 # subset df for layer and window
-prox_win02_df = metric_df.loc[(metric_df['Window'] == 1) & (metric_df['Layer'] == 'Proximal')]
+prox_win02_df = rnai_df.loc[(metric_df['Window'] == 1) & (metric_df['Layer'] == 'Proximal')]
 df_to_plot = prox_win02_df
-which_str2 = 'exp'
+which_str2 = 'RNAi'
 plot_style = 'seaborn-white' # 'dark_background' or 'seaborn-white'
 
 
@@ -905,8 +920,14 @@ if save_fig == True:
     dpi=300, bbox_inches='tight', transparent=True,
     )
 
-# FIGURE: Create a series of boxplots with the differences between the first and third window for each fly
-# save_fig = True
+#%% FIGURE: Create a series of violin plots with the differences between the first and third window for each fly
+which_df = exp_control_rnai_by_roi
+which_str2 = 'RNAi'
+save_fig = False
+
+prox_win02_df = which_df.loc[(which_df['Window'] == 1) & (which_df['Layer'] == 'Proximal') & (which_df['Type'] == which_str2)]
+df_to_plot = prox_win02_df
+
 pally = 'Set3' # Set3 pastel
 with plt.style.context(plot_style):
     sns.set_context("talk")
@@ -1030,21 +1051,25 @@ if save_fig == True:
 
 
 # %% Plot the scatter of the control vs experimental data for window 2
-save_fig = False
-plot_style = 'seaborn-white' # 'dark_background' or 'seaborn-white'
+which_df_placeholder = exp_control_rnai_by_roi
+save_fig = True
+plot_style = 'seaborn-whitegrid' # 'dark_background' or 'seaborn-white'
 
+which_opto = 2
+prox_win02_opto2_df = which_df_placeholder.loc[(which_df_placeholder['Window'] == 1) & (which_df_placeholder['Layer'] == 'Proximal') & (which_df_placeholder['Opto'] != 1)]
+#prox_win02_opto2_df = which_df_placeholder.loc[(which_df_placeholder['Window'] == 1) & (which_df_placeholder['Layer'] == 'Proximal')]
 
-#  Violin plots of exp vs control data
+df_to_plot = prox_win02_opto2_df
 
-# both = unpickled_df
+#  Violin plots of exp vs control data vs rnai
 # create a figure
 with plt.style.context(plot_style):
     fig_box_means, ax_box_means = plt.subplots(1, figsize = (14, 8))
-    sns.violinplot(ax=ax_box_means, data = both, x = 'Mean', y = 'kind', medianprops={"color": contrast_color}, whiskerprops={"color":contrast_color}, capprops={"color":contrast_color}, 
+    sns.violinplot(ax=ax_box_means, data = df_to_plot, x = 'Mean', y = 'Type', hue='Opto', split=True, medianprops={"color": contrast_color}, whiskerprops={"color":contrast_color}, capprops={"color":contrast_color}, 
         flierprops={"markerfacecolor":contrast_color, "markeredgecolor":contrast_color, 'markersize': 10}, boxprops={"edgecolor":contrast_color},)
     # calculate the number of obs per group & median to position labels
-    medians = both.groupby(['kind'])['Mean'].median().values
-    nobs = both['kind'].value_counts().values
+    medians = df_to_plot.groupby(['Type'])['Mean'].median().values
+    nobs = df_to_plot['Type'].value_counts().values
     nobs = [str(x) for x in nobs.tolist()]
     nobs = ["n: " + i for i in nobs]
     # add it to the plot
@@ -1055,7 +1080,7 @@ with plt.style.context(plot_style):
         )
 
     fig_box_maxes, ax_box_maxes = plt.subplots(1, figsize = (14, 8))
-    sns.violinplot(ax=ax_box_maxes, data = both, x = 'Max', y = 'kind', medianprops={"color": contrast_color}, whiskerprops={"color":contrast_color}, capprops={"color":contrast_color}, 
+    sns.violinplot(ax=ax_box_maxes, data = df_to_plot, x = 'Max', y = 'Type', hue='Opto', split=False, bw=.3, medianprops={"color": contrast_color}, whiskerprops={"color":contrast_color}, capprops={"color":contrast_color}, 
         flierprops={"markerfacecolor":contrast_color, "markeredgecolor":contrast_color, 'markersize': 10}, boxprops={"edgecolor":contrast_color},)
     # add it to the plot
     pos = range(len(nobs))
@@ -1065,7 +1090,7 @@ with plt.style.context(plot_style):
         )
 
     fig_box_ptt, ax_box_ptt = plt.subplots(1, figsize = (14, 8))
-    sns.violinplot(ax=ax_box_ptt, data = both, x = 'PtT', y = 'kind', medianprops={"color": contrast_color}, whiskerprops={"color":contrast_color}, capprops={"color":contrast_color}, 
+    sns.violinplot(ax=ax_box_ptt, data = df_to_plot, x = 'PtT', y = 'Type', hue='Opto', split=True, medianprops={"color": contrast_color}, whiskerprops={"color":contrast_color}, capprops={"color":contrast_color}, 
         flierprops={"markerfacecolor":contrast_color, "markeredgecolor":contrast_color, 'markersize': 10}, boxprops={"edgecolor":contrast_color},)
     # add it to the plot
     pos = range(len(nobs))
@@ -1083,21 +1108,21 @@ with plt.style.context(plot_style):
     if save_fig == True:
         fig_box_means.savefig(
             save_directory
-            + "ConVExp.SummaryMeanBoxPlotThirdWindow.Proximal."
+            + "ConVExpVRNAi.SummaryMeanBoxPlotThirdWindow.Proximal."
             + plot_style
             + ".pdf",
             dpi=300, bbox_inches='tight', transparent=True,
         )
         fig_box_maxes.savefig(
             save_directory
-            + "ConVExp.SummaryMaxBoxPlotThirdWindow.Proximal."
+            + "ConVExpVRNAi.SummaryMaxBoxPlotThirdWindow.Proximal."
             + plot_style
             + ".pdf",
             dpi=300, bbox_inches='tight', transparent=True,
         )
         fig_box_ptt.savefig(
             save_directory
-            + "ConVExp.SummaryPtTBoxPlotThirdWindow.Proximal."
+            + "ConVExpVRNAi.SummaryPtTBoxPlotThirdWindow.Proximal."
             + plot_style
             + ".pdf",
             dpi=300, bbox_inches='tight', transparent=True,
@@ -1252,3 +1277,13 @@ if save_fig == True:
 
 
 plt.close('all')
+# %% Stats time baby
+# from https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.wilcoxon.html 
+
+which_df = exp_control_rnai_by_roi
+
+# All experimental types, one window and opto
+prox_win02_opto2_df = which_df.loc[(which_df['Window'] == 1) & (which_df['Layer'] == 'Proximal') & (which_df['Opto'] == 2)]
+
+res_
+# %%
