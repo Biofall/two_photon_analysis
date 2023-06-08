@@ -6,6 +6,8 @@ from matplotlib import pyplot as plt
 from matplotlib.ticker import FixedLocator, FixedFormatter
 from scipy import stats
 from scipy.stats import wilcoxon
+import pingouin as pg
+
 
 import os
 from pathlib import Path
@@ -730,13 +732,14 @@ plt.close('all')
 
 # 6) concat them
 # both_metric_df_byroi = pd.concat([metric_df_exp_byroi, metric_df_control_byroi]) # metric_df_exp_byfly | metric_df_exp_byroi
+# exp_control_rnai_by_roi = pd.concat([both_metric_df_byroi, rnai_df])
 
 # 7) To save/read in summarized data as .pkl file
 # both_metric_df_byroi.to_pickle(save_directory + 'both_metric_df_byroi.pkl')  # metric_df_exp_byfly | metric_df_exp_byroi
 
 # To unpickle: 
 # both_metric_df_byroi = pd.read_pickle(save_directory + 'both_metric_df_byroi.pkl')  # metric_df_exp_byfly | metric_df_exp_byroi
-# exp_control_rnai_by_roi = pd.concat([both_metric_df_byroi, rnai_df])
+exp_control_rnai_by_roi = pd.read_pickle(save_directory + 'exp_control_rnai_by_roi.pkl')  # metric_df_exp_byfly | metric_df_exp_byroi
 
 # exp_control_rnai_by_roi.to_pickle(save_directory + 'exp_control_rnai_by_roi.pkl')
 
@@ -1278,12 +1281,168 @@ if save_fig == True:
 
 plt.close('all')
 # %% Stats time baby
-# from https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.wilcoxon.html 
+
+# Assumption testing
+which_df = exp_control_rnai_by_roi
+win = 1
+opto = 2
+dv = 'PtT' # Max, Min, PtT, Mean
+exp_sub_df = which_df.loc[(which_df['Window'] == win) & (which_df['Layer'] == 'Proximal') & (which_df['Opto'] == opto) & (which_df['Type'] == 'Experimental')][dv]
+con_sub_df = which_df.loc[(which_df['Window'] == win) & (which_df['Layer'] == 'Proximal') & (which_df['Opto'] == opto) & (which_df['Type'] == 'Control')][dv]
+rnai_sub_df = which_df.loc[(which_df['Window'] == win) & (which_df['Layer'] == 'Proximal') & (which_df['Opto'] == opto) & (which_df['Type'] == 'RNAi')][dv]
+
+# Testing for homogeneity. P-value > 0.05 means we can assume homogeneity of variance
+print('-------------------------------------------')
+print('HOMOGENEITY TESTING')
+expXcon_stat, expXcon_pval = stats.levene(exp_sub_df, con_sub_df)
+print(f'Experimental and Control conditions:')
+print(f'    P-value = {expXcon_pval}')
+print(f'    Test-stat = {expXcon_stat}\n')
+
+expXrnai_stat, expXrnai_pval = stats.levene(exp_sub_df, rnai_sub_df)
+print(f'Experimental and RNAi conditions:')
+print(f'    P-value = {expXrnai_pval}')
+print(f'    Test-stat = {expXrnai_stat}\n')
+
+conXrnai_stat, conXrnai_pval = stats.levene(con_sub_df, rnai_sub_df)
+print(f'Control and RNAi conditions:')
+print(f'    P-value = {conXrnai_pval}')
+print(f'    Test-stat = {conXrnai_stat}\n')
+
+# - Exp v Control not homogeneous, exp v rnai not homogeneous, control v rnai YES homogeneous
+
+print('-------------------------------------------')
+# Testing for normality - Shapiro-Wilk test
+print('NORMALITY TESTING')
+exp_norm_stat, exp_norm_pval = stats.shapiro(exp_sub_df)
+print('Experimental condition:')
+print(f'    P-value = {exp_norm_pval}')
+print(f'    Test-stat = {exp_norm_stat}\n')
+con_norm_stat, con_norm_pval = stats.shapiro(con_sub_df)
+print('Control condition:')
+print(f'    P-value = {con_norm_pval}')
+print(f'    Test-stat = {con_norm_stat}\n')
+rnai_norm_stat, rnai_norm_pval = stats.shapiro(rnai_sub_df)
+print('RNAi condition:')
+print(f'    P-value = {rnai_norm_pval}')
+print(f'    Test-stat = {rnai_norm_stat}\n')
+
+# - All conditions are normal
+
+# NOTE: Do this again but combine opto intensity 1 and 2
+# When combining opto intensity 1 and 2, we need to make sure that the data is still normal and homogeneous
+# I did it. It's not. Already wasn't homogenous, but when combined, also not normal 
+
+
+# %% from https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.wilcoxon.html 
 
 which_df = exp_control_rnai_by_roi
-
 # All experimental types, one window and opto
-prox_win02_opto2_df = which_df.loc[(which_df['Window'] == 1) & (which_df['Layer'] == 'Proximal') & (which_df['Opto'] == 2)]
+win_set = [0, 1, 2]
+opto_set = [0, 1, 2]
+type_set = ['Experimental', 'Control', 'RNAi']
+dv = 'Max' # 'Max', 'Mean', 'PtT'
+for win_ind, win in enumerate(win_set):
+    print(f'Stats for {dv} metric, single conditions, window {win_set[win_ind]+2} - window 1')
+    for opto_ind, opto in enumerate(opto_set):
+        print(f'            - Opto intensity value = {opto} -')
+        for type_ind, type_i in enumerate(type_set):
+            prox_df = which_df.loc[(which_df['Window'] == win) & (which_df['Layer'] == 'Proximal') & (which_df['Opto'] == opto)]
+            # Test of differences for one specific condition and opto, for a single metric
+            res_exp = wilcoxon(prox_df[prox_df['Type'] == type_set[type_ind]][[dv]], alternative='greater', correction=True)
+            print(f'{type_set[type_ind]} Condition:         P-value = {res_exp.pvalue}  |   statistic = {res_exp.statistic}')
+        #print('\n')
+    print('\n')
+# %%
+print('--------------------------------------------------------------------------------------')
+print('When straight combining opto intensity 1 and 2...')
+# Again but combining opto intensity 1 and 2
+comb_df = exp_control_rnai_by_roi.copy()
+comb_df.loc[comb_df['Opto'] == 2, 'Opto'] = 1
+win_set = [0, 1, 2]
+opto_set = [0, 1]
+type_set = ['Experimental', 'Control', 'RNAi']
+dv = 'Max' # 'Max', 'Mean', 'PtT'
+for win_ind, win in enumerate(win_set):
+    print(f'Stats for {dv} metric, single conditions, window {win_set[win_ind]+2} - window 1')
+    for opto_ind, opto in enumerate(opto_set):
+        print(f'            - Opto intensity value = {opto} -')
+        for type_ind, type_i in enumerate(type_set):
+            prox_df = comb_df.loc[(comb_df['Window'] == win) & (comb_df['Layer'] == 'Proximal') & (comb_df['Opto'] == opto)]
+            # Test of differences for one specific condition and opto, for a single metric
+            res_exp = wilcoxon(prox_df[prox_df['Type'] == type_set[type_ind]][[dv]], alternative='greater', correction=True)
+            print(f'{type_set[type_ind]} Condition:         P-value = {res_exp.pvalue}  |   statistic = {res_exp.statistic}')
+        #print('\n')
+    print('\n')
 
-res_
+# %%
+# Test of differences across two conditions, single opto, for a single metric
+
+# the Exp v control and exp vs RNAi violate homogeneity assumption, so we should use a Kruskal-Wallis test
+
+# But I'll do an ANOVA anyway, just to see what happens
+opto = 2
+dv = 'PtT' # 'Max'
+only_types = which_df.loc[(which_df['Window'] == win) & (which_df['Layer'] == 'Proximal') & (which_df['Opto'] == opto)][["Type", dv]]
+aov = pg.anova(data=only_types, dv=dv, between='Type', detailed=True)
+print('--------------------------------------------------------------------------------------')
+print(f'ANOVA Test for differences across conditions, window 3-1, opto {opto}')
+print(aov)
+
+# Kruskal-Wallis test
+kruskal = pg.kruskal(data=only_types, dv=dv, between='Type', detailed=True) # Neat
+print('--------------------------------------------------------------------------------------')
+print(f'KRUSKAL-WALLIS Test for differences across conditions, window 3-1, opto {opto}')
+print(kruskal)
+
+# Paired T-tests and Wilcoxon signed-rank tests
+is_par = True
+adj_type = 'none' # 'bonf'
+alt_hypo = 'less' # 'two-sided' or 'greater'
+paired_t_results = pg.pairwise_tests(data=only_types, dv=dv, between='Type', parametric=is_par, padjust=adj_type, effsize='cohen', alternative=alt_hypo)
+
+print('--------------------------------------------------------------------------------------')
+print('PAIRED T-TESTS for differences across conditions, window 3-1, opto {opto}')
+print('Wilcoxon signed-rank test results b/c non-parametric:')
+print(f'Parameters: parametric = {is_par}, padjust = {adj_type}, alternative = {alt_hypo}')
+print(f'Experimental v Control: {paired_t_results.loc[0, "p-unc"]}')
+print(f'Control v RNAi: {paired_t_results.loc[1, "p-unc"]}')
+print(f'Experimental v RNAi: {1-paired_t_results.loc[2, "p-unc"]}')
+
+
+
+# %% Paired t-tests like above, but combining opto intensities 1 and 2
+dv = 'Max' # 'Max' 'Mean' 'PtT'
+opto_1 = which_df.loc[(which_df['Window'] == win) & (which_df['Layer'] == 'Proximal') & (which_df['Opto'] == 1)][["Type", dv]]
+opto_2 = which_df.loc[(which_df['Window'] == win) & (which_df['Layer'] == 'Proximal') & (which_df['Opto'] == 2)][["Type", dv]]
+# concatenate the two dataframes
+opto_1_2 = pd.concat([opto_1, opto_2])
+
+aov = pg.anova(data=opto_1_2, dv=dv, between='Type', detailed=True)
+print('--------------------------------------------------------------------------------------')
+print(f'ANOVA Test for {dv} differences across conditions, window 3-1, opto 1 and 2 combined')
+print(aov)
+
+# Kruskal-Wallis test
+kruskal = pg.kruskal(data=opto_1_2, dv=dv, between='Type', detailed=True) # Neat
+print('--------------------------------------------------------------------------------------')
+print(f'KRUSKAL-WALLIS Test for {dv} differences across conditions, window 3-1, opto 1 and 2 combined')
+print(kruskal)
+
+# Paired T-tests and Wilcoxon signed-rank tests
+is_par = False
+adj_type = 'bonf' # 'bonf'
+alt_hypo = 'less' # 'two-sided' or 'greater'
+paired_t_results = pg.pairwise_tests(data=opto_1_2, dv=dv, between='Type', parametric=is_par, padjust=adj_type, effsize='cohen', alternative=alt_hypo)
+
+print('--------------------------------------------------------------------------------------')
+print(f'PAIRED T-TESTS for {dv} differences across conditions, window 3-1, opto 1 and 2 combined')
+print('This is Wilcoxon signed-rank test results b/c non-parametric:')
+print(f'Parameters - parametric = {is_par}, padjust = {adj_type}, alternative = {alt_hypo}')
+print(f'Exp v Con:      P-Value: {paired_t_results.loc[0, "p-unc"]}, effect size = {paired_t_results.loc[0, "cohen"]}')
+print(f'Con v RNAi:     P-Value: {paired_t_results.loc[1, "p-unc"]}, effect size = {paired_t_results.loc[1, "cohen"]}')
+print(f'Exp v RNAi:     P-Value: {1-paired_t_results.loc[2, "p-unc"]}, effect size = {paired_t_results.loc[2, "cohen"]}')
+
+
+
 # %%
