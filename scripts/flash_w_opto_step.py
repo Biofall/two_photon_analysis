@@ -111,6 +111,7 @@ mi1_control5_dist = [["/Volumes/ABK2TBData/data_repo/bruker/20230509.selected", 
 mi1_rnai_fly1_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230531.moco", "2023-05-31", "4", "proximal_multiple"]]
 mi1_rnai_fly2_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230531.moco", "2023-05-31", "6", "proximal_multiple"]]
 mi1_rnai_fly3_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230531.moco", "2023-05-31", "13", "proximal_multiple"]]
+mi1_rnai_fly4_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230531.moco", "2023-05-31", "8", "proximal_multiple"]]
 
 mi1_prox_all = np.concatenate(
                              (mi1_fly1_prox, mi1_fly2_prox, mi1_fly3_prox, 
@@ -187,10 +188,16 @@ fly_list_control_medi = [1]
 
 # RNAi Flies
 mi1_rnai_prox = np.concatenate(
-                                (mi1_rnai_fly1_prox, mi1_rnai_fly2_prox, mi1_rnai_fly3_prox),
+                                (mi1_rnai_fly1_prox, mi1_rnai_fly2_prox, mi1_rnai_fly3_prox, mi1_rnai_fly4_prox),
                                 axis = 0,
                                 )
-mi1_rnai_prox_list = [1, 2, 3]
+mi1_rnai_prox_list = [1, 2, 3, 4]
+
+mi1_rnai_test = np.concatenate(
+                                (mi1_rnai_fly4_prox, mi1_rnai_fly4_prox, ),
+                                axis = 0,
+                                )
+mi1_rnai_test_list = [4, 5, 6]
 
 # all good flies
 mi1_all_good = [mi1_prox_good, mi1_medi_good, mi1_dist_good]
@@ -275,9 +282,17 @@ def getWindowMetricsFromLayer(layer, condition_name, per_ROI=False, normalize_to
 
     for pull_ind in range(len(which_layer)):
         file_path = os.path.join(which_layer[pull_ind][0], which_layer[pull_ind][1] + ".hdf5")
-        ID = imaging_data.ImagingDataObject(file_path, which_layer[pull_ind][2], quiet=True)
-        roi_data = ID.getRoiResponses(which_layer[pull_ind][3], background_roi_name='bg_proximal_lessbi', background_subtraction=False)
+        #ID = imaging_data.ImagingDataObject(file_path, which_layer[pull_ind][2], quiet=True)
+        ## DEBUG
+        cfg_dict = {'timing_channel_ind': 1}
+        ID = imaging_data.ImagingDataObject(file_path,
+                                        which_layer[pull_ind][2],
+                                        quiet=True,
+                                        cfg_dict=cfg_dict)
 
+        roi_data = ID.getRoiResponses(which_layer[pull_ind][3], background_roi_name='bg_proximal_lessbi', background_subtraction=False)
+        ID.getStimulusTiming(plot_trace_flag=True)
+        
 
         # Plot the average Traces of the whole trial followed by the avg traces of the windows
 
@@ -361,6 +376,16 @@ def getWindowMetricsFromLayer(layer, condition_name, per_ROI=False, normalize_to
                 + ".pdf",
                 dpi=300, bbox_inches='tight', transparent=True,
                 )
+
+            # make a subplot fig for each ROI
+            fig, ax = plt.subplots(len(mean_response), 1, figsize=(16, 4*len(mean_response)))
+            for roi_ind in range(len(mean_response)):
+                for up_ind, up in enumerate(unique_parameter_values):
+                    ax[roi_ind].plot(roi_data['time_vector'], mean_response[roi_ind, up_ind, :], color=colors[up_ind], alpha=0.9, label=up)
+            # title
+            fig.suptitle(f'{which_layer[pull_ind][1]} Series: {which_layer[pull_ind][2]} | DFF=True | Conditions: {condition_name} | ROI={which_layer[pull_ind][3]}', fontsize=20)
+                    
+
 
         #  Windows to analyze for metrics
         flash_start = ID.getRunParameters('flash_times') + ID.getRunParameters('pre_time')
@@ -495,11 +520,12 @@ def getWindowMetricsFromLayer(layer, condition_name, per_ROI=False, normalize_to
                 max_matrix_by_ROI = response_max_by_ROI
                 min_matrix_by_ROI = response_min_by_ROI
                 ptt_matrix_by_ROI = response_PtT_by_ROI
-            mean_matrix_by_ROI = np.append(mean_matrix_by_ROI, response_mean_by_ROI, axis=0)
-            sem_mean_matrix_by_ROI = np.append(sem_mean_matrix_by_ROI, response_sem_by_ROI, axis=0)
-            max_matrix_by_ROI = np.append(max_matrix_by_ROI, response_max_by_ROI, axis=0)
-            min_matrix_by_ROI = np.append(min_matrix_by_ROI, response_min_by_ROI, axis=0)
-            ptt_matrix_by_ROI = np.append(ptt_matrix_by_ROI, response_PtT_by_ROI, axis=0)
+            else:
+                mean_matrix_by_ROI = np.append(mean_matrix_by_ROI, response_mean_by_ROI, axis=0)
+                sem_mean_matrix_by_ROI = np.append(sem_mean_matrix_by_ROI, response_sem_by_ROI, axis=0)
+                max_matrix_by_ROI = np.append(max_matrix_by_ROI, response_max_by_ROI, axis=0)
+                min_matrix_by_ROI = np.append(min_matrix_by_ROI, response_min_by_ROI, axis=0)
+                ptt_matrix_by_ROI = np.append(ptt_matrix_by_ROI, response_PtT_by_ROI, axis=0)
 
 
         if plot_trial_figs == True:
@@ -650,11 +676,11 @@ def getWindowMetricsFromLayer(layer, condition_name, per_ROI=False, normalize_to
 #--------------------------------------------------------------------------------------------------------#
 #--------------------------------------------------------------------------------------------------------#
 # Set meeeeeeeeeeee
-data_list = [mi1_rnai_prox] # mi1_all_good | mi1_control_all | mi1_prox_good
+data_list = [mi1_rnai_prox] # mi1_all_good | mi1_control_all | [mi1_rnai_prox]
 which_str = 'mi1_rnai_prox'
-list_to_use = mi1_rnai_prox_list # fly_list_exp | fly_list_control | fly_list_prox
+list_to_use =mi1_rnai_prox_list # fly_list_exp | fly_list_control | fly_list_prox | mi1_rnai_prox_list
 per_ROI = True
-layer_list = ['Proximal']
+layer_list = ['Proximal'] # only for RNAi
 # Making a data frame the way it's supposed to be....
 # Currently have:
 # metric_matrix = Fly x unique_opto_param x window which is 11 x 3 x 3
@@ -664,21 +690,26 @@ layer_list = ['Proximal']
 # Loop through everything!
 
 # Defines dataframe with desired columns
-metric_df = pd.DataFrame(columns=['Fly', 'Layer', 'Mean', 'SEM_Mean', 'Min', 'Max', 'PtT', 'Opto', 'Window'])
-
 if per_ROI == True:
     metric_df = pd.DataFrame(columns=['ROI', 'Layer', 'Mean', 'SEM_Mean', 'Min', 'Max', 'PtT', 'Opto', 'Window'])
+else:
+    metric_df = pd.DataFrame(columns=['Fly', 'Layer', 'Mean', 'SEM_Mean', 'Min', 'Max', 'PtT', 'Opto', 'Window'])
+
 # Adds all metrics to dataframe one row at a time
 row_idx = 0
 # Print statement that explains loop is starting
 print(f"\nBeginning Loops for extracting data.")
 for layer_ind in range(len(layer_list)):
-    mean_diff_matrix, sem_mean_diff_matrix, max_diff_matrix, min_diff_matrix, ptt_diff_matrix = getWindowMetricsFromLayer(data_list[layer_ind], layer_list[layer_ind], per_ROI = True, normalize_to='sum', plot_trial_figs=True, save_fig=False)
-    fly_indicies = list_to_use#[layer_ind]
+#for layer_ind in [0]:
+    mean_diff_matrix, sem_mean_diff_matrix, max_diff_matrix, min_diff_matrix, ptt_diff_matrix = getWindowMetricsFromLayer(data_list[layer_ind], layer_list[layer_ind], per_ROI = per_ROI, normalize_to='sum', plot_trial_figs=False, save_fig=False)
+    fly_indicies = list_to_use[layer_ind]
+    if data_list == [mi1_rnai_prox]:
+        fly_indicies = list_to_use
     # Gets dimensions of metric arrays 
     num_flies, num_opto, num_windows = mean_diff_matrix.shape   
     print(f'mean_diff_matrix.shape = {mean_diff_matrix.shape}')
     for fly in range(num_flies):
+    #for fly in range(len(fly_indicies)):
         for opto in range(num_opto):
             for window in range(num_windows):
                 if per_ROI == True:
@@ -688,6 +719,11 @@ for layer_ind in range(len(layer_list)):
                         ptt_diff_matrix[fly, opto, window], opto, window,
                         ]
                 else:
+                    print(f'layer_list[layer_ind] = {layer_list[layer_ind]}')
+                    print(f'fly_indicies[fly] = {fly_indicies[fly]}')
+                    print(f'opto = {opto}')
+                    print(f'window = {window}')
+
                     metric_df.loc[row_idx] = [
                         fly_indicies[fly], layer_list[layer_ind], mean_diff_matrix[fly, opto, window], sem_mean_diff_matrix[fly, opto, window],
                         min_diff_matrix[fly, opto, window], max_diff_matrix[fly, opto, window], 
@@ -711,7 +747,13 @@ print('-------------------------------------------------------------------------
 print('------------------------------------------------------------------------------------------')
 print('------------------------------------------------------------------------------------------')
 
+
+
+# %%
 plt.close('all')
+#control_metric_df_by_fly = metric_df.copy()
+#exp_metric_df_by_fly = metric_df.copy()
+rnai_metric_df_by_roi = metric_df.copy()
 
 # %% Combine experimental and control data, then export as pickle. also lets you unpickle
 
@@ -719,6 +761,7 @@ plt.close('all')
 
 # 2) save control data
 # metric_df_control_byroi = metric_df # metric_df_control_byfly | metric_df_control_byoi
+#rnai_metric_df_by_roi = metric_df.copy()
 
 # 3) run the above loop for experimental data
 
@@ -726,20 +769,27 @@ plt.close('all')
 # metric_df_exp_byroi = metric_df # metric_df_exp_byfly | metric_df_exp_byroi
 
 # 5) append a column label for experimental / control designations
-# metric_df_exp_byroi['Type'] = 'Experimental' # metric_df_exp_byfly | metric_df_exp_byroi
-# metric_df_control_byroi['Type'] = 'Control' # metric_df_control_byfly | metric_df_control_byoi
-# rnai_df['Type'] = 'RNAi'
+# exp_metric_df_by_roi['Type'] = 'Experimental' # metric_df_exp_byfly | metric_df_exp_byroi
+# control_metric_df_by_roi['Type'] = 'Control' # metric_df_control_byfly | metric_df_control_byoi
+rnai_metric_df_by_roi['Type'] = 'RNAi2'
+#exp_metric_df_by_fly['Type'] = 'Experimental' # metric_df_exp_byfly | metric_df_exp_byroi
+#control_metric_df_by_fly['Type'] = 'Control' # metric_df_control_byfly | metric_df_control_byoi
+#rnai_metric_df_by_fly['Type'] = 'RNAi'
 
 # 6) concat them
 # both_metric_df_byroi = pd.concat([metric_df_exp_byroi, metric_df_control_byroi]) # metric_df_exp_byfly | metric_df_exp_byroi
 # exp_control_rnai_by_roi = pd.concat([both_metric_df_byroi, rnai_df])
+#exp_control_rnai_by_roi = pd.concat([exp_metric_df_by_roi,control_metric_df_by_roi, rnai_metric_df_by_roi])
+exp_control_rnai_by_roi3 = pd.concat([exp_control_rnai_by_roi2, rnai_metric_df_by_roi])
 
 # 7) To save/read in summarized data as .pkl file
 # both_metric_df_byroi.to_pickle(save_directory + 'both_metric_df_byroi.pkl')  # metric_df_exp_byfly | metric_df_exp_byroi
-
+#rnai_by_fly_df.to_pickle(save_directory + 'rnai_metric_df_byfly.pkl')  # metric_df_exp_byfly | metric_df_exp_byroi
+exp_control_rnai_by_roi3.to_pickle(save_directory + 'exp_control_rnai_by_roi3.pkl') 
+#exp_control_rnai_by_fly.to_pickle(save_directory + 'exp_control_rnai_by_fly2.pkl') 
 # To unpickle: 
-# both_metric_df_byroi = pd.read_pickle(save_directory + 'both_metric_df_byroi.pkl')  # metric_df_exp_byfly | metric_df_exp_byroi
-exp_control_rnai_by_roi = pd.read_pickle(save_directory + 'exp_control_rnai_by_roi.pkl')  # metric_df_exp_byfly | metric_df_exp_byroi
+#both_metric_df_byfly = pd.read_pickle(save_directory + 'both_metric_df_byfly.pkl')  # metric_df_exp_byfly | metric_df_exp_byroi
+#exp_control_rnai_by_roi = pd.read_pickle(save_directory + 'exp_control_rnai_by_roi.pkl')  # metric_df_exp_byfly | metric_df_exp_byroi
 
 # exp_control_rnai_by_roi.to_pickle(save_directory + 'exp_control_rnai_by_roi.pkl')
 
@@ -1055,7 +1105,7 @@ if save_fig == True:
 
 # %% Plot the scatter of the control vs experimental data for window 2
 which_df_placeholder = exp_control_rnai_by_roi
-save_fig = True
+save_fig = False
 plot_style = 'seaborn-whitegrid' # 'dark_background' or 'seaborn-white'
 
 which_opto = 2
