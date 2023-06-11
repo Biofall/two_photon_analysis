@@ -10,3 +10,7 @@ outputs/mi1_dist_duration_start20.png
 outputs/mi1_dist_duration.png
 TEST Opto Start Time.pdf
 TEST Opto Start Time.pdf
+notebooks/C.cross_max_response.png
+notebooks/C.cross_max_response.svg
+notebooks/C.cross_ptt_response.png
+notebooks/C.cross_ptt_response.svg
