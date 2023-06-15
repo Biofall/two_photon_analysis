@@ -112,6 +112,7 @@ mi1_rnai_fly1_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230531.moco", "20
 mi1_rnai_fly2_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230531.moco", "2023-05-31", "6", "proximal_multiple"]]
 mi1_rnai_fly3_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230531.moco", "2023-05-31", "13", "proximal_multiple"]]
 mi1_rnai_fly4_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230531.moco", "2023-05-31", "8", "proximal_multiple"]]
+mi1_rnai_fly5_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230531.moco", "2023-05-31", "1", "proximal_multiple"]]
 
 mi1_prox_all = np.concatenate(
                              (mi1_fly1_prox, mi1_fly2_prox, mi1_fly3_prox, 
@@ -194,10 +195,10 @@ mi1_rnai_prox = np.concatenate(
 mi1_rnai_prox_list = [1, 2, 3, 4]
 
 mi1_rnai_test = np.concatenate(
-                                (mi1_rnai_fly4_prox, mi1_rnai_fly4_prox, ),
+                                (mi1_rnai_fly4_prox, mi1_rnai_fly5_prox,),
                                 axis = 0,
                                 )
-mi1_rnai_test_list = [4, 5, 6]
+mi1_rnai_test_list = [4, 5]
 
 # all good flies
 mi1_all_good = [mi1_prox_good, mi1_medi_good, mi1_dist_good]
@@ -302,7 +303,7 @@ def getWindowMetricsFromLayer(layer, condition_name, per_ROI=False, normalize_to
         # instead calculate the SEM when averaging across ROIs
         # sem_plus = mean_response + sem_response
         # sem_minus = mean_response - sem_response
-
+        print(unique_parameter_values)
         # Calculate the mean and SEM of mean_response across ROIs
         cross_roi_mean_response = np.mean(mean_response, axis=0)
         cross_roi_sem_response = np.std(mean_response, axis=0) / np.sqrt(mean_response.shape[0])
@@ -676,11 +677,11 @@ def getWindowMetricsFromLayer(layer, condition_name, per_ROI=False, normalize_to
 #--------------------------------------------------------------------------------------------------------#
 #--------------------------------------------------------------------------------------------------------#
 # Set meeeeeeeeeeee
-data_list = [mi1_rnai_prox] # mi1_all_good | mi1_control_all | [mi1_rnai_prox]
-which_str = 'mi1_rnai_prox'
-list_to_use =mi1_rnai_prox_list # fly_list_exp | fly_list_control | fly_list_prox | mi1_rnai_prox_list
-per_ROI = True
-layer_list = ['Proximal'] # only for RNAi
+data_list = mi1_all_good # mi1_all_good | mi1_control_all | [mi1_rnai_prox] | [mi1_rnai_test]
+which_str = 'mi1_all_good'
+list_to_use = fly_list_exp # fly_list_exp | fly_list_control | fly_list_prox | mi1_rnai_prox_list | mi1_rnai_test_list
+per_ROI = False
+#layer_list = ['Proximal'] # only for RNAi
 # Making a data frame the way it's supposed to be....
 # Currently have:
 # metric_matrix = Fly x unique_opto_param x window which is 11 x 3 x 3
@@ -701,7 +702,7 @@ row_idx = 0
 print(f"\nBeginning Loops for extracting data.")
 for layer_ind in range(len(layer_list)):
 #for layer_ind in [0]:
-    mean_diff_matrix, sem_mean_diff_matrix, max_diff_matrix, min_diff_matrix, ptt_diff_matrix = getWindowMetricsFromLayer(data_list[layer_ind], layer_list[layer_ind], per_ROI = per_ROI, normalize_to='sum', plot_trial_figs=False, save_fig=False)
+    mean_diff_matrix, sem_mean_diff_matrix, max_diff_matrix, min_diff_matrix, ptt_diff_matrix = getWindowMetricsFromLayer(data_list[layer_ind], layer_list[layer_ind], per_ROI = per_ROI, normalize_to='sum', plot_trial_figs=True, save_fig=False)
     fly_indicies = list_to_use[layer_ind]
     if data_list == [mi1_rnai_prox]:
         fly_indicies = list_to_use
@@ -753,7 +754,7 @@ print('-------------------------------------------------------------------------
 plt.close('all')
 #control_metric_df_by_fly = metric_df.copy()
 #exp_metric_df_by_fly = metric_df.copy()
-rnai_metric_df_by_roi = metric_df.copy()
+rnai_metric_df_by_fly = metric_df.copy()
 
 # %% Combine experimental and control data, then export as pickle. also lets you unpickle
 
@@ -771,7 +772,7 @@ rnai_metric_df_by_roi = metric_df.copy()
 # 5) append a column label for experimental / control designations
 # exp_metric_df_by_roi['Type'] = 'Experimental' # metric_df_exp_byfly | metric_df_exp_byroi
 # control_metric_df_by_roi['Type'] = 'Control' # metric_df_control_byfly | metric_df_control_byoi
-rnai_metric_df_by_roi['Type'] = 'RNAi2'
+rnai_metric_df_by_fly['Type'] = 'RNAi2'
 #exp_metric_df_by_fly['Type'] = 'Experimental' # metric_df_exp_byfly | metric_df_exp_byroi
 #control_metric_df_by_fly['Type'] = 'Control' # metric_df_control_byfly | metric_df_control_byoi
 #rnai_metric_df_by_fly['Type'] = 'RNAi'
@@ -780,13 +781,16 @@ rnai_metric_df_by_roi['Type'] = 'RNAi2'
 # both_metric_df_byroi = pd.concat([metric_df_exp_byroi, metric_df_control_byroi]) # metric_df_exp_byfly | metric_df_exp_byroi
 # exp_control_rnai_by_roi = pd.concat([both_metric_df_byroi, rnai_df])
 #exp_control_rnai_by_roi = pd.concat([exp_metric_df_by_roi,control_metric_df_by_roi, rnai_metric_df_by_roi])
-exp_control_rnai_by_roi3 = pd.concat([exp_control_rnai_by_roi2, rnai_metric_df_by_roi])
+#exp_control_rnai_by_roi3 = pd.concat([exp_control_rnai_by_roi2, rnai_metric_df_by_roi])
+çexp_control_rnai_by_fly3 = pd.concat([exp_control_rnai_by_fly2, rnai_metric_df_by_fly])
+
 
 # 7) To save/read in summarized data as .pkl file
 # both_metric_df_byroi.to_pickle(save_directory + 'both_metric_df_byroi.pkl')  # metric_df_exp_byfly | metric_df_exp_byroi
 #rnai_by_fly_df.to_pickle(save_directory + 'rnai_metric_df_byfly.pkl')  # metric_df_exp_byfly | metric_df_exp_byroi
-exp_control_rnai_by_roi3.to_pickle(save_directory + 'exp_control_rnai_by_roi3.pkl') 
+#exp_control_rnai_by_roi3.to_pickle(save_directory + 'exp_control_rnai_by_roi3.pkl') 
 #exp_control_rnai_by_fly.to_pickle(save_directory + 'exp_control_rnai_by_fly2.pkl') 
+exp_control_rnai_by_fly3.to_pickle(save_directory + 'exp_control_rnai_by_fly3.pkl') 
 # To unpickle: 
 #both_metric_df_byfly = pd.read_pickle(save_directory + 'both_metric_df_byfly.pkl')  # metric_df_exp_byfly | metric_df_exp_byroi
 #exp_control_rnai_by_roi = pd.read_pickle(save_directory + 'exp_control_rnai_by_roi.pkl')  # metric_df_exp_byfly | metric_df_exp_byroi
