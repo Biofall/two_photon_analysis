@@ -108,10 +108,10 @@ mi1_control5_dist = [["/Volumes/ABK2TBData/data_repo/bruker/20230509.selected", 
 
 # RNAI FLIES
 # RNAi fly 1
-mi1_rnai_fly1_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230531.moco", "2023-05-31", "4", "proximal_multiple"]]
-mi1_rnai_fly2_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230531.moco", "2023-05-31", "6", "proximal_multiple"]]
-mi1_rnai_fly3_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230531.moco", "2023-05-31", "13", "proximal_multiple"]]
-mi1_rnai_fly4_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230531.moco", "2023-05-31", "8", "proximal_multiple"]]
+mi1_rnai_fly1_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230531.moco", "2023-05-31", "4", "proximal_multiple"]] # Feeling good about central, but weird shift
+mi1_rnai_fly2_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230531.moco", "2023-05-31", "6", "proximal_multiple"]] # kind of sharp but look like normal control
+mi1_rnai_fly3_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230531.moco", "2023-05-31", "13", "proximal_multiple"]] # yeah
+mi1_rnai_fly4_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230531.moco", "2023-05-31", "8", "proximal_multiple"]] # seems good
 mi1_rnai_fly5_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230531.moco", "2023-05-31", "1", "proximal_multiple"]]
 
 mi1_prox_all = np.concatenate(
@@ -189,10 +189,10 @@ fly_list_control_medi = [1]
 
 # RNAi Flies
 mi1_rnai_prox = np.concatenate(
-                                (mi1_rnai_fly1_prox, mi1_rnai_fly2_prox, mi1_rnai_fly3_prox, mi1_rnai_fly4_prox),
+                                (mi1_rnai_fly1_prox, mi1_rnai_fly2_prox, mi1_rnai_fly3_prox, mi1_rnai_fly4_prox,),
                                 axis = 0,
                                 )
-mi1_rnai_prox_list = [1, 2, 3, 4]
+mi1_rnai_prox_list = [1, 2, 3, 4,]
 
 mi1_rnai_test = np.concatenate(
                                 (mi1_rnai_fly4_prox, mi1_rnai_fly5_prox,),
@@ -266,9 +266,25 @@ def getWindowMetricsFromLayer(layer, condition_name, per_ROI=False, normalize_to
     min_matrix = np.empty((n_exps, n_opto_params, n_vis_flashes))
     min_matrix[:] = np.nan
     ptt_matrix = np.empty((n_exps, n_opto_params, n_vis_flashes))
-    ptt_matrix[:] = np.nan
+    ptt_matrix[:] = np.nan 
 
-    if per_ROI == True: # initializing. Going to have to append b/c we don't know how many ROIs there are
+    # Calculating new metrics for exploring AstA-R1-RNAi impact of shape 
+    ptt_ratio = np.empty((n_exps, n_opto_params, n_vis_flashes))
+    ptt_ratio[:] = np.nan
+    integral_positive_matrix = np.empty((n_exps, n_opto_params, n_vis_flashes))
+    integral_positive_matrix[:] = np.nan
+    integral_negative_matrix = np.empty((n_exps, n_opto_params, n_vis_flashes))
+    integral_negative_matrix[:] = np.nan
+    integral_ratio_matrix = np.empty((n_exps, n_opto_params, n_vis_flashes))
+    integral_ratio_matrix[:] = np.nan
+    peak_index_matrix = np.empty((n_exps, n_opto_params, n_vis_flashes))
+    peak_index_matrix[:] = np.nan
+    trough_index_matrix = np.empty((n_exps, n_opto_params, n_vis_flashes))
+    trough_index_matrix[:] = np.nan
+
+
+    # NOTE: I don't think this is actually being used
+    if per_ROI == True: # initializing. Going to have to append b/c we don't know how many ROIs there are 
         mean_matrix_per_ROI = np.empty((1, n_exps, n_opto_params, n_vis_flashes))
         mean_matrix_per_ROI[:] = np.nan
         sem_mean_matrix_per_ROI = np.empty((1, n_exps, n_opto_params, n_vis_flashes))
@@ -280,16 +296,30 @@ def getWindowMetricsFromLayer(layer, condition_name, per_ROI=False, normalize_to
         ptt_matrix_per_ROI = np.empty((1, n_exps, n_opto_params, n_vis_flashes))
         ptt_matrix_per_ROI[:] = np.nan
 
+        ptt_ratio_per_ROI = np.empty((1, n_opto_params, n_vis_flashes))
+        ptt_ratio_per_ROI [:] = np.nan
+        integral_positive_matrix_per_ROI = np.empty((1, n_opto_params, n_vis_flashes))
+        integral_positive_matrix_per_ROI[:] = np.nan
+        integral_negative_matrix_per_ROI = np.empty((1, n_opto_params, n_vis_flashes))
+        integral_negative_matrix_per_ROI[:] = np.nan
+        integral_ratio_matrix_per_ROI = np.empty((1, n_opto_params, n_vis_flashes))
+        integral_ratio_matrix_per_ROI[:] = np.nan
+        peak_index_matrix_per_ROI = np.empty((1, n_opto_params, n_vis_flashes))
+        peak_index_matrix_per_ROI[:] = np.nan
+        trough_index_matrix_per_ROI = np.empty((1, n_opto_params, n_vis_flashes))
+        trough_index_matrix_per_ROI[:] = np.nan
 
+
+    count = 0 # this is to help with the per_ROI stuff later
     for pull_ind in range(len(which_layer)):
         file_path = os.path.join(which_layer[pull_ind][0], which_layer[pull_ind][1] + ".hdf5")
         #ID = imaging_data.ImagingDataObject(file_path, which_layer[pull_ind][2], quiet=True)
         ## DEBUG
         cfg_dict = {'timing_channel_ind': 1}
         ID = imaging_data.ImagingDataObject(file_path,
-                                        which_layer[pull_ind][2],
-                                        quiet=True,
-                                        cfg_dict=cfg_dict)
+        #                                 which_layer[pull_ind][2],
+        #                                 quiet=True,
+        #                                 cfg_dict=cfg_dict)
 
         roi_data = ID.getRoiResponses(which_layer[pull_ind][3], background_roi_name='bg_proximal_lessbi', background_subtraction=False)
         ID.getStimulusTiming(plot_trace_flag=True)
@@ -387,12 +417,13 @@ def getWindowMetricsFromLayer(layer, condition_name, per_ROI=False, normalize_to
             fig.suptitle(f'{which_layer[pull_ind][1]} Series: {which_layer[pull_ind][2]} | DFF=True | Conditions: {condition_name} | ROI={which_layer[pull_ind][3]}', fontsize=20)
                     
 
-
         #  Windows to analyze for metrics
         flash_start = ID.getRunParameters('flash_times') + ID.getRunParameters('pre_time')
+        # flash starts are flash starts = [ 3.   6.5 10.  13.5]
+
         flash_width = ID.getRunParameters('flash_width')
-        window_lag = 0.25  # sec
-        window_length = flash_width + 1.3  # sec
+        window_lag = 0.38  # sec (initially 0.25)
+        window_length = flash_width + 3  # sec
         window_times = flash_start - window_lag
         window_frames = int(np.ceil(window_length / ID.getResponseTiming().get('sample_period')))
         windows = np.zeros((len(unique_parameter_values), len(window_times), window_frames))
@@ -497,12 +528,28 @@ def getWindowMetricsFromLayer(layer, condition_name, per_ROI=False, normalize_to
         response_min = np.min(windows, axis = -1)
         response_PtT = response_max - response_min
 
+        # Call the function that calculates more in-depth window metrics HERE
+        (ratio_peak_to_trough_matrix,
+        integral_positives,
+        integral_negatives,
+        integral_ratios,
+        peak_indecies,
+        trough_indecies
+         ) = getAdvancedWindowMetrics(windows)
+
         # storage time!
         mean_matrix[pull_ind] = response_mean
         sem_mean_matrix[pull_ind] = response_sem
         max_matrix[pull_ind] = response_max
         min_matrix[pull_ind] = response_min
         ptt_matrix[pull_ind] = response_PtT
+
+        ptt_ratio[pull_ind] = ratio_peak_to_trough_matrix
+        integral_positive_matrix[pull_ind] = integral_positives
+        integral_negative_matrix[pull_ind] = integral_negatives
+        integral_ratio_matrix[pull_ind] = integral_ratios
+        peak_index_matrix[pull_ind] = peak_indecies
+        trough_index_matrix[pull_ind] = trough_indecies
 
         if per_ROI == True:
             # This step takes windows = ROIs X UniqueOptoParams X Window X Time) and averages across time, so:
@@ -513,7 +560,40 @@ def getWindowMetricsFromLayer(layer, condition_name, per_ROI=False, normalize_to
             response_max_by_ROI = np.max(windows_by_ROI, axis = -1)
             response_min_by_ROI = np.min(windows_by_ROI, axis = -1)
             response_PtT_by_ROI = response_max_by_ROI - response_min_by_ROI
+            print(f'windows by ROI shape[0] = {windows_by_ROI.shape[0]}')
+            for roi_ind in range(windows_by_ROI.shape[0]):
+                (
+                    ratio_peak_to_trough_matrix_per_roi,
+                    integral_positive_matrix_per_roi,
+                    integral_negative_matrix_per_roi,
+                    ratio_integral_positive_to_negative_matrix_per_roi,
+                    peak_index_per_roi,
+                    trough_index_per_roi
+                ) = getAdvancedWindowMetrics(windows_by_ROI[roi_ind, :, :])   
 
+                # DEBUG PRINT:
+                print(f'shape of ratio_peak_to_trough_matrix_per_roi: {ratio_peak_to_trough_matrix_per_roi.shape}')
+
+                # storage for weirder metrics
+                if pull_ind == 0 and roi_ind == 0:
+                    ptt_ratio_per_ROI[0, :, :] = ratio_peak_to_trough_matrix_per_roi
+                    integral_positive_matrix_per_ROI[0] = integral_positive_matrix_per_roi
+                    integral_negative_matrix_per_ROI[0] = integral_negative_matrix_per_roi
+                    integral_ratio_matrix_per_ROI[0] = ratio_integral_positive_to_negative_matrix_per_roi
+                    peak_index_matrix_per_ROI[0] = peak_index_per_roi
+                    trough_index_matrix_per_ROI[0] = trough_index_per_roi
+                    # DEBUG PRINT:
+                    print(f'shape of ratio_peak_to_trough_matrix_per_ROI a: {ptt_ratio_per_ROI.shape}')
+                else:
+                    ptt_ratio_per_ROI = np.append(ptt_ratio_per_ROI, np.expand_dims(ratio_peak_to_trough_matrix_per_roi, axis=0), axis=0)
+                    integral_positive_matrix_per_ROI = np.append(integral_positive_matrix_per_ROI, np.expand_dims(integral_positive_matrix_per_roi, axis=0), axis=0)
+                    integral_negative_matrix_per_ROI = np.append(integral_negative_matrix_per_ROI, np.expand_dims(integral_negative_matrix_per_roi, axis=0), axis=0)
+                    integral_ratio_matrix_per_ROI = np.append(integral_ratio_matrix_per_ROI, np.expand_dims(ratio_integral_positive_to_negative_matrix_per_roi, axis=0), axis=0)
+                    peak_index_matrix_per_ROI = np.append(peak_index_matrix_per_ROI, np.expand_dims(peak_index_per_roi, axis=0), axis=0)
+                    trough_index_matrix_per_ROI = np.append(trough_index_matrix_per_ROI, np.expand_dims(trough_index_per_roi, axis=0), axis=0)
+                    # DEBUG PRINT:
+                    print(f'shape of ratio_peak_to_trough_matrix_per_ROI b: {ptt_ratio_per_ROI.shape}')
+           
             # storage time!
             if pull_ind == 0:
                 mean_matrix_by_ROI = response_mean_by_ROI
@@ -521,12 +601,14 @@ def getWindowMetricsFromLayer(layer, condition_name, per_ROI=False, normalize_to
                 max_matrix_by_ROI = response_max_by_ROI
                 min_matrix_by_ROI = response_min_by_ROI
                 ptt_matrix_by_ROI = response_PtT_by_ROI
+
             else:
                 mean_matrix_by_ROI = np.append(mean_matrix_by_ROI, response_mean_by_ROI, axis=0)
                 sem_mean_matrix_by_ROI = np.append(sem_mean_matrix_by_ROI, response_sem_by_ROI, axis=0)
                 max_matrix_by_ROI = np.append(max_matrix_by_ROI, response_max_by_ROI, axis=0)
                 min_matrix_by_ROI = np.append(min_matrix_by_ROI, response_min_by_ROI, axis=0)
                 ptt_matrix_by_ROI = np.append(ptt_matrix_by_ROI, response_PtT_by_ROI, axis=0)
+
 
 
         if plot_trial_figs == True:
@@ -666,9 +748,87 @@ def getWindowMetricsFromLayer(layer, condition_name, per_ROI=False, normalize_to
         else:
             print("NO NORMALIZING HAPPENED BTW")
     
-        return mean_matrix_by_ROI, sem_mean_matrix_by_ROI, max_matrix_by_ROI, min_matrix_by_ROI, ptt_matrix_by_ROI
+        return mean_matrix_by_ROI, sem_mean_matrix_by_ROI, max_matrix_by_ROI, min_matrix_by_ROI, ptt_matrix_by_ROI, ptt_ratio_per_ROI, integral_positive_matrix_per_ROI, integral_negative_matrix_per_ROI, integral_ratio_matrix_per_ROI, peak_index_matrix_per_ROI, trough_index_matrix_per_ROI
     else:
-        return mean_matrix, sem_mean_matrix, max_matrix, min_matrix, ptt_matrix
+        return mean_matrix, sem_mean_matrix, max_matrix, min_matrix, ptt_matrix, ptt_ratio, integral_positive_matrix, integral_negative_matrix, integral_ratio_matrix, peak_index_matrix, trough_index_matrix
+    
+# ptt_ratio_per_ROI, integral_positive_matrix_per_ROI, integral_negative_matrix_per_ROI, integral_ratio_matrix_per_ROI, peak_index_matrix_per_ROI, trough_index_matrix_per_ROI
+# ptt_ratio, integral_positive_matrix, integral_negative_matrix, integral_ratio_matrix, peak_index_matrix, trough_index_matrix
+
+# %% Function for advanced window metric creation
+
+# Calculating new metrics for exploring AstA-R1-RNAi impact of shape 
+# windows are in UniqueOptoParams X Window X Time
+def getAdvancedWindowMetrics(window_matrix):
+    up, n_windows, t = window_matrix.shape
+
+    ratio_peak_to_trough_matrix = np.zeros((up, n_windows))
+    integral_positive_matrix = np.zeros((up, n_windows))
+    integral_negative_matrix = np.zeros((up, n_windows))
+    ratio_integral_positive_to_negative_matrix = np.zeros((up, n_windows))
+    time_to_peak_matrix = np.zeros((up, n_windows), dtype=int)
+    time_to_trough_matrix = np.zeros((up, n_windows), dtype=int)
+
+    for i in range(up):
+        for j in range(n_windows):
+            window = window_matrix[i, j]
+
+            # Step 1: Calculate the peak and trough values and their indices
+            peak_value = max(window)
+            trough_value = min(window)
+            time_to_peak = np.argmax(window)
+            time_to_trough = np.argmin(window)
+
+            # Step 2: Find the index where activity crosses zero
+            zero_crossing_index = None
+            for k in range(time_to_peak, t):
+                if window[k-1] >= 0 and window[k] < 0:
+                    zero_crossing_index = k
+                    break
+
+            # Handle the case when activity never crosses zero
+            if zero_crossing_index is None:
+                # Find the index of the lowest point after the peak
+                lowest_after_peak_index = time_to_peak + np.argmin(window[time_to_peak:])
+                # Use the lowest point after the peak as the zero crossing index
+                zero_crossing_index = lowest_after_peak_index
+
+            # Step 3: Separate positive and negative components based on zero-crossing index
+            positive_component = window[:zero_crossing_index]
+            negative_component = window[zero_crossing_index:]
+
+            # Step 4: Calculate the integral of the positive and negative components
+            integral_positive = sum(positive_component)
+
+            # Add a small value to avoid divide-by-zero error if the trough is zero
+            trough_value = trough_value if trough_value != 0 else 1e-10
+            integral_negative = sum(negative_component)
+
+            # Step 5: Calculate the ratio of the peak value to the trough value
+            ratio_peak_to_trough = peak_value / trough_value
+
+            # Step 6: Calculate the ratio of the integrals of positive and negative components
+            ratio_integral_positive_to_negative = integral_positive / abs(integral_negative)
+
+            # Store the metrics in their respective matrices
+            ratio_peak_to_trough_matrix[i, j] = ratio_peak_to_trough
+            integral_positive_matrix[i, j] = integral_positive
+            integral_negative_matrix[i, j] = integral_negative
+            ratio_integral_positive_to_negative_matrix[i, j] = ratio_integral_positive_to_negative
+            time_to_peak_matrix[i, j] = time_to_peak
+            time_to_trough_matrix[i, j] = time_to_trough
+
+    return (
+        ratio_peak_to_trough_matrix,
+        integral_positive_matrix,
+        integral_negative_matrix,
+        ratio_integral_positive_to_negative_matrix,
+        time_to_peak_matrix,
+        time_to_trough_matrix
+    )
+
+
+
 
 # %% RUN ALL THE SHIT
 #--------------------------------------------------------------------------------------------------------#
@@ -677,11 +837,11 @@ def getWindowMetricsFromLayer(layer, condition_name, per_ROI=False, normalize_to
 #--------------------------------------------------------------------------------------------------------#
 #--------------------------------------------------------------------------------------------------------#
 # Set meeeeeeeeeeee
-data_list = mi1_all_good # mi1_all_good | mi1_control_all | [mi1_rnai_prox] | [mi1_rnai_test]
-which_str = 'mi1_all_good'
-list_to_use = fly_list_exp # fly_list_exp | fly_list_control | fly_list_prox | mi1_rnai_prox_list | mi1_rnai_test_list
-per_ROI = False
-#layer_list = ['Proximal'] # only for RNAi
+data_list = [mi1_rnai_prox] # mi1_all_good | mi1_control_all | [mi1_rnai_prox] | [mi1_rnai_test]
+which_str = 'RNAi'
+list_to_use = mi1_rnai_prox_list # fly_list_exp | fly_list_control | fly_list_prox | mi1_rnai_prox_list | mi1_rnai_test_list
+per_ROI = True
+layer_list = ['Proximal'] # only for RNAi
 # Making a data frame the way it's supposed to be....
 # Currently have:
 # metric_matrix = Fly x unique_opto_param x window which is 11 x 3 x 3
@@ -693,16 +853,22 @@ per_ROI = False
 # Defines dataframe with desired columns
 if per_ROI == True:
     metric_df = pd.DataFrame(columns=['ROI', 'Layer', 'Mean', 'SEM_Mean', 'Min', 'Max', 'PtT', 'Opto', 'Window'])
+    advanced_metric_df = pd.DataFrame(columns=['ROI', 'Layer', 'PtT_Ratio', 'Pos_Integral', 'Neg_Integral', 'Integral_Ratio', 'Peak_Index', 'Trough_Index', 'Opto', 'Window'])
 else:
     metric_df = pd.DataFrame(columns=['Fly', 'Layer', 'Mean', 'SEM_Mean', 'Min', 'Max', 'PtT', 'Opto', 'Window'])
-
+    advanced_metric_df = pd.DataFrame(columns=['Fly', 'Layer', 'PtT_Ratio', 'Pos_Integral', 'Neg_Integral', 'Integral_Ratio', 'Peak_Index', 'Trough_Index', 'Opto', 'Window'])
 # Adds all metrics to dataframe one row at a time
 row_idx = 0
 # Print statement that explains loop is starting
 print(f"\nBeginning Loops for extracting data.")
 for layer_ind in range(len(layer_list)):
 #for layer_ind in [0]:
-    mean_diff_matrix, sem_mean_diff_matrix, max_diff_matrix, min_diff_matrix, ptt_diff_matrix = getWindowMetricsFromLayer(data_list[layer_ind], layer_list[layer_ind], per_ROI = per_ROI, normalize_to='sum', plot_trial_figs=True, save_fig=False)
+    mean_diff_matrix, sem_mean_diff_matrix, max_diff_matrix, min_diff_matrix, ptt_diff_matrix, ptt_ratio, integral_positive_matrix, integral_negative_matrix, integral_ratio_matrix, peak_index_matrix, trough_index_matrix = getWindowMetricsFromLayer(data_list[layer_ind], layer_list[layer_ind], per_ROI = per_ROI, normalize_to='sum', plot_trial_figs=True, save_fig=False)
+    
+    # DEBUG PRINT
+    print(f'mean_diff_matrix shape: {mean_diff_matrix.shape}')
+    print(f'ptt_ratio shape: {ptt_ratio.shape}')
+
     fly_indicies = list_to_use[layer_ind]
     if data_list == [mi1_rnai_prox]:
         fly_indicies = list_to_use
@@ -717,7 +883,8 @@ for layer_ind in range(len(layer_list)):
                     metric_df.loc[row_idx] = [
                         fly, layer_list[layer_ind], mean_diff_matrix[fly, opto, window], sem_mean_diff_matrix[fly, opto, window],
                         min_diff_matrix[fly, opto, window], max_diff_matrix[fly, opto, window],
-                        ptt_diff_matrix[fly, opto, window], opto, window,
+                        ptt_diff_matrix[fly, opto, window], 
+                        opto, window,
                         ]
                 else:
                     print(f'layer_list[layer_ind] = {layer_list[layer_ind]}')
@@ -728,9 +895,33 @@ for layer_ind in range(len(layer_list)):
                     metric_df.loc[row_idx] = [
                         fly_indicies[fly], layer_list[layer_ind], mean_diff_matrix[fly, opto, window], sem_mean_diff_matrix[fly, opto, window],
                         min_diff_matrix[fly, opto, window], max_diff_matrix[fly, opto, window], 
-                        ptt_diff_matrix[fly, opto, window], opto, window,
+                        ptt_diff_matrix[fly, opto, window], 
+                        opto, window,
                         ]
                 row_idx += 1
+    # Gets dimensions of metric arrays 
+    num_flies, num_opto, num_windows = ptt_ratio.shape   
+    for fly in range(num_flies):
+        #for fly in range(len(fly_indicies)):
+            for opto in range(num_opto):
+                for window in range(num_windows):
+                    if per_ROI == True:
+                        advanced_metric_df.loc[row_idx] = [
+                            fly, layer_list[layer_ind],
+                            ptt_ratio[fly, opto, window], integral_positive_matrix[fly, opto, window], 
+                            integral_negative_matrix[fly, opto, window], integral_ratio_matrix[fly, opto, window], 
+                            peak_index_matrix[fly, opto, window], trough_index_matrix[fly, opto, window], 
+                            opto, window,
+                        ]
+                    else:
+                        advanced_metric_df.loc[row_idx] = [
+                            fly_indicies[fly], layer_list[layer_ind],
+                            ptt_ratio[fly, opto, window], integral_positive_matrix[fly, opto, window], 
+                            integral_negative_matrix[fly, opto, window], integral_ratio_matrix[fly, opto, window], 
+                            peak_index_matrix[fly, opto, window], trough_index_matrix[fly, opto, window], 
+                            opto, window,
+                        ]
+                    row_idx += 1
 
 # Convert the floats which were indicies to ints   
 if per_ROI == True:
@@ -748,6 +939,33 @@ print('-------------------------------------------------------------------------
 print('------------------------------------------------------------------------------------------')
 print('------------------------------------------------------------------------------------------')
 
+# %% Saving all the advanced df's
+plt.close('all')
+
+#control_metric_df_by_fly = metric_df.copy()
+#exp_metric_df_by_fly = metric_df.copy()
+
+rnai_metric_df_by_roi = metric_df.copy()
+rnai_metric_df_by_roi['Type'] = 'RNAi'
+rnai_advanced_df_by_roi = advanced_metric_df.copy()
+rnai_advanced_df_by_roi['Type'] = 'RNAi'
+rnai_advanced_df_by_roi.to_pickle(save_directory + 'rnai_advanced_df_by_roi_v2.pkl')
+
+# control_metric_df_by_roi = metric_df.copy()
+# control_metric_df_by_roi['Type'] = 'control'
+# control_advanced_df_by_roi = advanced_metric_df.copy()
+# control_advanced_df_by_roi['Type'] = 'control'
+# control_advanced_df_by_roi.to_pickle(save_directory + 'control_advanced_df_by_roi_v2.pkl')
+
+# exp_metric_df_by_roi = metric_df.copy()
+# exp_metric_df_by_roi['Type'] = 'experimental'
+# exp_advanced_df_by_roi = advanced_metric_df.copy()
+# exp_advanced_df_by_roi['Type'] = 'experimental'
+# exp_advanced_df_by_roi.to_pickle(save_directory + 'exp_advanced_df_by_roi_v2.pkl')
+
+exp_control_rnai_advanced_by_roi = pd.concat([exp_advanced_df_by_roi, control_advanced_df_by_roi, rnai_advanced_df_by_roi])
+
+exp_control_rnai_advanced_by_roi.to_pickle(save_directory + 'exp_control_rnai_advanced_by_roi_v2.pkl')
 
 
 # %%
@@ -772,7 +990,7 @@ rnai_metric_df_by_fly = metric_df.copy()
 # 5) append a column label for experimental / control designations
 # exp_metric_df_by_roi['Type'] = 'Experimental' # metric_df_exp_byfly | metric_df_exp_byroi
 # control_metric_df_by_roi['Type'] = 'Control' # metric_df_control_byfly | metric_df_control_byoi
-rnai_metric_df_by_fly['Type'] = 'RNAi2'
+rnai_metric_df_by_fly['Type'] = 'RNAi'
 #exp_metric_df_by_fly['Type'] = 'Experimental' # metric_df_exp_byfly | metric_df_exp_byroi
 #control_metric_df_by_fly['Type'] = 'Control' # metric_df_control_byfly | metric_df_control_byoi
 #rnai_metric_df_by_fly['Type'] = 'RNAi'
@@ -782,7 +1000,7 @@ rnai_metric_df_by_fly['Type'] = 'RNAi2'
 # exp_control_rnai_by_roi = pd.concat([both_metric_df_byroi, rnai_df])
 #exp_control_rnai_by_roi = pd.concat([exp_metric_df_by_roi,control_metric_df_by_roi, rnai_metric_df_by_roi])
 #exp_control_rnai_by_roi3 = pd.concat([exp_control_rnai_by_roi2, rnai_metric_df_by_roi])
-çexp_control_rnai_by_fly3 = pd.concat([exp_control_rnai_by_fly2, rnai_metric_df_by_fly])
+exp_control_rnai_by_fly3 = pd.concat([exp_control_rnai_by_fly2, rnai_metric_df_by_fly])
 
 
 # 7) To save/read in summarized data as .pkl file
