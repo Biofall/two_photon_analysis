@@ -313,10 +313,10 @@ def getWindowMetricsFromLayer(layer, condition_name, per_ROI=False, normalize_to
     count = 0 # this is to help with the per_ROI stuff later
     for pull_ind in range(len(which_layer)):
         file_path = os.path.join(which_layer[pull_ind][0], which_layer[pull_ind][1] + ".hdf5")
-        #ID = imaging_data.ImagingDataObject(file_path, which_layer[pull_ind][2], quiet=True)
+        ID = imaging_data.ImagingDataObject(file_path, which_layer[pull_ind][2], quiet=True)
         ## DEBUG
-        cfg_dict = {'timing_channel_ind': 1}
-        ID = imaging_data.ImagingDataObject(file_path,
+        # cfg_dict = {'timing_channel_ind': 1}
+        # ID = imaging_data.ImagingDataObject(file_path,
         #                                 which_layer[pull_ind][2],
         #                                 quiet=True,
         #                                 cfg_dict=cfg_dict)
@@ -802,13 +802,13 @@ def getAdvancedWindowMetrics(window_matrix):
 
             # Add a small value to avoid divide-by-zero error if the trough is zero
             trough_value = trough_value if trough_value != 0 else 1e-10
-            integral_negative = sum(negative_component)
+            integral_negative = sum(abs(negative_component))
 
             # Step 5: Calculate the ratio of the peak value to the trough value
             ratio_peak_to_trough = peak_value / trough_value
 
             # Step 6: Calculate the ratio of the integrals of positive and negative components
-            ratio_integral_positive_to_negative = integral_positive / abs(integral_negative)
+            ratio_integral_positive_to_negative = integral_positive / integral_negative
 
             # Store the metrics in their respective matrices
             ratio_peak_to_trough_matrix[i, j] = ratio_peak_to_trough
@@ -837,9 +837,9 @@ def getAdvancedWindowMetrics(window_matrix):
 #--------------------------------------------------------------------------------------------------------#
 #--------------------------------------------------------------------------------------------------------#
 # Set meeeeeeeeeeee
-data_list = [mi1_rnai_prox] # mi1_all_good | mi1_control_all | [mi1_rnai_prox] | [mi1_rnai_test]
-which_str = 'RNAi'
-list_to_use = mi1_rnai_prox_list # fly_list_exp | fly_list_control | fly_list_prox | mi1_rnai_prox_list | mi1_rnai_test_list
+data_list = mi1_control_all # mi1_all_good | mi1_control_all | [mi1_rnai_prox] | [mi1_rnai_test]
+which_str = 'Control'
+list_to_use = fly_list_control # fly_list_exp | fly_list_control | fly_list_prox | mi1_rnai_prox_list | mi1_rnai_test_list
 per_ROI = True
 layer_list = ['Proximal'] # only for RNAi
 # Making a data frame the way it's supposed to be....
@@ -945,27 +945,27 @@ plt.close('all')
 #control_metric_df_by_fly = metric_df.copy()
 #exp_metric_df_by_fly = metric_df.copy()
 
-rnai_metric_df_by_roi = metric_df.copy()
-rnai_metric_df_by_roi['Type'] = 'RNAi'
-rnai_advanced_df_by_roi = advanced_metric_df.copy()
-rnai_advanced_df_by_roi['Type'] = 'RNAi'
-rnai_advanced_df_by_roi.to_pickle(save_directory + 'rnai_advanced_df_by_roi_v2.pkl')
+# rnai_metric_df_by_roi = metric_df.copy()
+# rnai_metric_df_by_roi['Type'] = 'RNAi'
+# rnai_advanced_df_by_roi = advanced_metric_df.copy()
+# rnai_advanced_df_by_roi['Type'] = 'RNAi'
+# rnai_advanced_df_by_roi.to_pickle(save_directory + 'rnai_advanced_df_by_roi_v3.pkl')
 
-# control_metric_df_by_roi = metric_df.copy()
-# control_metric_df_by_roi['Type'] = 'control'
-# control_advanced_df_by_roi = advanced_metric_df.copy()
-# control_advanced_df_by_roi['Type'] = 'control'
-# control_advanced_df_by_roi.to_pickle(save_directory + 'control_advanced_df_by_roi_v2.pkl')
+control_metric_df_by_roi = metric_df.copy()
+control_metric_df_by_roi['Type'] = 'control'
+control_advanced_df_by_roi = advanced_metric_df.copy()
+control_advanced_df_by_roi['Type'] = 'control'
+control_advanced_df_by_roi.to_pickle(save_directory + 'control_advanced_df_by_roi_v3.pkl')
 
 # exp_metric_df_by_roi = metric_df.copy()
 # exp_metric_df_by_roi['Type'] = 'experimental'
 # exp_advanced_df_by_roi = advanced_metric_df.copy()
 # exp_advanced_df_by_roi['Type'] = 'experimental'
-# exp_advanced_df_by_roi.to_pickle(save_directory + 'exp_advanced_df_by_roi_v2.pkl')
+# exp_advanced_df_by_roi.to_pickle(save_directory + 'exp_advanced_df_by_roi_v3.pkl')
 
 exp_control_rnai_advanced_by_roi = pd.concat([exp_advanced_df_by_roi, control_advanced_df_by_roi, rnai_advanced_df_by_roi])
 
-exp_control_rnai_advanced_by_roi.to_pickle(save_directory + 'exp_control_rnai_advanced_by_roi_v2.pkl')
+exp_control_rnai_advanced_by_roi.to_pickle(save_directory + 'exp_control_rnai_advanced_by_roi_v3.pkl')
 
 
 # %%
