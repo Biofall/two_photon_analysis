@@ -96,7 +96,7 @@ mi1_control1_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230317", "2023-03-
 mi1_control1_medi = [["/Volumes/ABK2TBData/data_repo/bruker/20230317", "2023-03-17", "4", "mi1_medial_multiple"]]
 mi1_control1_dist = [["/Volumes/ABK2TBData/data_repo/bruker/20230317", "2023-03-17", "4", "mi1_distal_multiple"]]
 # control fly 2
-mi1_control2_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230317", "2023-03-17", "5", "mi1_proximal_multiple"]]
+mi1_control2_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230317", "2023-03-17", "5", "mi1_proximal_multiple"]] # not a great look
 # control fly 3
 mi1_control3_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230509.selected", "2023-05-09", "1", "mi1_proximal_multiple"]]
 mi1_control3_dist = [["/Volumes/ABK2TBData/data_repo/bruker/20230509.selected", "2023-05-09", "1", "mi1_distal_multiple"]]
@@ -174,10 +174,10 @@ mi1_all_multiple = np.concatenate(
 
 # control flies
 mi1_control_prox = np.concatenate(
-                                  (mi1_control1_prox, mi1_control2_prox, mi1_control3_prox, mi1_control4_prox, mi1_control5_prox,),
+                                  (mi1_control1_prox, mi1_control3_prox, mi1_control4_prox, mi1_control5_prox),
                                   axis = 0,
                                  )
-fly_list_control_prox = [1, 2, 3, 4, 5]
+fly_list_control_prox = [1, 3, 4, 5] # removed fly 2 because it was weird
 
 mi1_control_dist = np.concatenate(
                                   (mi1_control1_prox, mi1_control3_prox, mi1_control5_prox,),
@@ -840,7 +840,7 @@ def getAdvancedWindowMetrics(window_matrix):
 data_list = mi1_control_all # mi1_all_good | mi1_control_all | [mi1_rnai_prox] | [mi1_rnai_test]
 which_str = 'Control'
 list_to_use = fly_list_control # fly_list_exp | fly_list_control | fly_list_prox | mi1_rnai_prox_list | mi1_rnai_test_list
-per_ROI = True
+per_ROI = False
 layer_list = ['Proximal'] # only for RNAi
 # Making a data frame the way it's supposed to be....
 # Currently have:
@@ -951,11 +951,11 @@ plt.close('all')
 # rnai_advanced_df_by_roi['Type'] = 'RNAi'
 # rnai_advanced_df_by_roi.to_pickle(save_directory + 'rnai_advanced_df_by_roi_v3.pkl')
 
-control_metric_df_by_roi = metric_df.copy()
-control_metric_df_by_roi['Type'] = 'control'
+control_metric_df_by_fly = metric_df.copy()
+control_metric_df_by_fly['Type'] = 'control'
 control_advanced_df_by_roi = advanced_metric_df.copy()
 control_advanced_df_by_roi['Type'] = 'control'
-control_advanced_df_by_roi.to_pickle(save_directory + 'control_advanced_df_by_roi_v3.pkl')
+control_advanced_df_by_roi.to_pickle(save_directory + 'control_advanced_df_by_roi_v4.pkl')
 
 # exp_metric_df_by_roi = metric_df.copy()
 # exp_metric_df_by_roi['Type'] = 'experimental'
@@ -963,23 +963,23 @@ control_advanced_df_by_roi.to_pickle(save_directory + 'control_advanced_df_by_ro
 # exp_advanced_df_by_roi['Type'] = 'experimental'
 # exp_advanced_df_by_roi.to_pickle(save_directory + 'exp_advanced_df_by_roi_v3.pkl')
 
-exp_control_rnai_advanced_by_roi = pd.concat([exp_advanced_df_by_roi, control_advanced_df_by_roi, rnai_advanced_df_by_roi])
+# exp_control_rnai_advanced_by_roi = pd.concat([exp_advanced_df_by_roi, control_advanced_df_by_roi, rnai_advanced_df_by_roi])
 
-exp_control_rnai_advanced_by_roi.to_pickle(save_directory + 'exp_control_rnai_advanced_by_roi_v3.pkl')
+# exp_control_rnai_advanced_by_roi.to_pickle(save_directory + 'exp_control_rnai_advanced_by_roi_v3.pkl')
 
 
 # %%
 plt.close('all')
 #control_metric_df_by_fly = metric_df.copy()
 #exp_metric_df_by_fly = metric_df.copy()
-rnai_metric_df_by_fly = metric_df.copy()
+#rnai_metric_df_by_fly = metric_df.copy()
 
 # %% Combine experimental and control data, then export as pickle. also lets you unpickle
 
 # 1) run the above loop for control data
 
 # 2) save control data
-# metric_df_control_byroi = metric_df # metric_df_control_byfly | metric_df_control_byoi
+metric_df_control_by_roi = metric_df # metric_df_control_byfly | metric_df_control_byoi
 #rnai_metric_df_by_roi = metric_df.copy()
 
 # 3) run the above loop for experimental data
@@ -989,8 +989,8 @@ rnai_metric_df_by_fly = metric_df.copy()
 
 # 5) append a column label for experimental / control designations
 # exp_metric_df_by_roi['Type'] = 'Experimental' # metric_df_exp_byfly | metric_df_exp_byroi
-# control_metric_df_by_roi['Type'] = 'Control' # metric_df_control_byfly | metric_df_control_byoi
-rnai_metric_df_by_fly['Type'] = 'RNAi'
+control_metric_df_by_roi['Type'] = 'Control' # metric_df_control_byfly | metric_df_control_byoi
+# rnai_metric_df_by_fly['Type'] = 'RNAi'
 #exp_metric_df_by_fly['Type'] = 'Experimental' # metric_df_exp_byfly | metric_df_exp_byroi
 #control_metric_df_by_fly['Type'] = 'Control' # metric_df_control_byfly | metric_df_control_byoi
 #rnai_metric_df_by_fly['Type'] = 'RNAi'
@@ -1000,7 +1000,7 @@ rnai_metric_df_by_fly['Type'] = 'RNAi'
 # exp_control_rnai_by_roi = pd.concat([both_metric_df_byroi, rnai_df])
 #exp_control_rnai_by_roi = pd.concat([exp_metric_df_by_roi,control_metric_df_by_roi, rnai_metric_df_by_roi])
 #exp_control_rnai_by_roi3 = pd.concat([exp_control_rnai_by_roi2, rnai_metric_df_by_roi])
-exp_control_rnai_by_fly3 = pd.concat([exp_control_rnai_by_fly2, rnai_metric_df_by_fly])
+#exp_control_rnai_by_fly3 = pd.concat([exp_control_rnai_by_fly2, rnai_metric_df_by_fly])
 
 
 # 7) To save/read in summarized data as .pkl file
@@ -1008,7 +1008,7 @@ exp_control_rnai_by_fly3 = pd.concat([exp_control_rnai_by_fly2, rnai_metric_df_b
 #rnai_by_fly_df.to_pickle(save_directory + 'rnai_metric_df_byfly.pkl')  # metric_df_exp_byfly | metric_df_exp_byroi
 #exp_control_rnai_by_roi3.to_pickle(save_directory + 'exp_control_rnai_by_roi3.pkl') 
 #exp_control_rnai_by_fly.to_pickle(save_directory + 'exp_control_rnai_by_fly2.pkl') 
-exp_control_rnai_by_fly3.to_pickle(save_directory + 'exp_control_rnai_by_fly3.pkl') 
+#exp_control_rnai_by_fly3.to_pickle(save_directory + 'exp_control_rnai_by_fly3.pkl') 
 # To unpickle: 
 #both_metric_df_byfly = pd.read_pickle(save_directory + 'both_metric_df_byfly.pkl')  # metric_df_exp_byfly | metric_df_exp_byroi
 #exp_control_rnai_by_roi = pd.read_pickle(save_directory + 'exp_control_rnai_by_roi.pkl')  # metric_df_exp_byfly | metric_df_exp_byroi
