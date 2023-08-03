@@ -46,7 +46,7 @@ mi1_fly6_dist = [["/Volumes/ABK2TBData/data_repo/bruker/20230302", "2023-03-02",
 # Fly 7 (only prox, kind of medial)
 mi1_fly7_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230302", "2023-03-02", "2", "mi1_proximal_multiple"]]
 # Fly 8 (prox only) lotta motion
-mi1_fly8_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230302", "2023-03-02", "6", "mi1_proximal_multiple"]]
+mi1_fly8_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230302", "2023-03-02", "6", "mi1_proximal_multiple"]] # could be better
 # Fly 9
 mi1_fly9_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230316", "2023-03-16", "4", "mi1_proximal_multiple"]]
 mi1_fly9_medi = [["/Volumes/ABK2TBData/data_repo/bruker/20230316", "2023-03-16", "4", "mi1_medial_multiple"]]
@@ -68,7 +68,7 @@ mi1_fly14_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230317", "2023-03-17"
 # Fly 15
 mi1_fly15_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230403.moco", "2023-04-03", "1", "mi1_proximal_multiple"]]
 # Fly 16
-mi1_fly16_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230403.moco", "2023-04-03", "3", "mi1_proximal_multiple"]]
+mi1_fly16_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230403.moco", "2023-04-03", "3", "mi1_proximal_multiple"]] # bad, could be fixed. earlier rois good
 # Fly 17
 mi1_fly17_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230403.moco", "2023-04-03", "4", "mi1_proximal_multiple"]]
 # Fly 18
@@ -76,11 +76,11 @@ mi1_fly18_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230427.moco", "2023-0
 # Fly 19
 mi1_fly19_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230427.moco", "2023-04-27", "2", "mi1_proximal_multiple"]]
 # Fly 20
-mi1_fly20_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230427.moco", "2023-04-27", "3", "mi1_proximal_multiple"]]
+mi1_fly20_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230427.moco", "2023-04-27", "3", "mi1_proximal_multiple"]] # bad centering
 # Fly 21
-mi1_fly21_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230427.moco", "2023-04-27", "5", "mi1_proximal_multiple"]]
+mi1_fly21_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230427.moco", "2023-04-27", "5", "mi1_proximal_multiple"]] # bad centering
 # Fly 22 #5/09/23
-mi1_fly22_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230509.selected", "2023-05-09", "3", "mi1_proximal_multiple"]]
+mi1_fly22_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230509.selected", "2023-05-09", "3", "mi1_proximal_multiple"]] # bad centering
 mi1_fly22_dist = [["/Volumes/ABK2TBData/data_repo/bruker/20230509.selected", "2023-05-09", "3", "mi1_distal_multiple"]]
 # Fly 23 #5/09/23
 mi1_fly23_prox = [["/Volumes/ABK2TBData/data_repo/bruker/20230509.selected", "2023-05-09", "4", "mi1_proximal_multiple"]]
@@ -134,14 +134,22 @@ mi1_prox_goodish = np.concatenate(
                              axis = 0,
                              )
 
+# mi1_prox_good = np.concatenate(
+#                              (mi1_fly6_prox, mi1_fly8_prox, mi1_fly16_prox, mi1_fly17_prox,
+#                               mi1_fly18_prox, mi1_fly19_prox, mi1_fly20_prox, mi1_fly21_prox,
+#                               mi1_fly22_prox, mi1_fly23_prox, mi1_fly24_prox,),
+#                              axis = 0,
+#                              ) # this is the one I used for figure gen pre 8/1/23
 mi1_prox_good = np.concatenate(
-                             (mi1_fly6_prox, mi1_fly8_prox, mi1_fly16_prox, mi1_fly17_prox,
-                              mi1_fly18_prox, mi1_fly19_prox, mi1_fly20_prox, mi1_fly21_prox,
-                              mi1_fly22_prox, mi1_fly23_prox, mi1_fly24_prox,),
+                             (mi1_fly6_prox, mi1_fly8_prox, mi1_fly17_prox,
+                              mi1_fly18_prox, mi1_fly19_prox,
+                              mi1_fly23_prox, mi1_fly24_prox,),
                              axis = 0,
                              )
 
-fly_list_prox = [6, 8, 16, 17, 18, 19, 20, 21, 22, 23, 24]
+# fly_list_prox = [6, 8, 16, 17, 18, 19, 20, 21, 22, 23, 24] # this is the one I used for figure gen pre 8/1/23
+fly_list_prox = [6, 8, 17, 18, 19, 23, 24]
+
 
 mi1_dist_good = np.concatenate(
                              (mi1_fly6_dist, mi1_fly22_dist, mi1_fly23_dist, mi1_fly24_dist,
@@ -359,7 +367,7 @@ def getWindowMetricsFromLayer(layer, condition_name, per_ROI=False, normalize_to
             colors = [cmap(i) for i in np.linspace(0.1, 1.0, len(unique_parameter_values))]
             # Plotting the whole trace
             fh, ax = plt.subplots(1, 1, figsize=(16, 8))
-            for up_ind, up in enumerate(unique_parameter_values): # up = unique parameter
+            for up_ind, up in enumerate(unique_parameter_values): # up = unique parameter 
                 ax.plot(roi_data['time_vector'], cross_roi_mean_response[up_ind, :], color=colors[up_ind], alpha=0.9, label=up)
                 ax.fill_between(roi_data['time_vector'], cross_roi_sem_plus[up_ind, :], 
                                 cross_roi_sem_minus[up_ind, :],
@@ -837,9 +845,9 @@ def getAdvancedWindowMetrics(window_matrix):
 #--------------------------------------------------------------------------------------------------------#
 #--------------------------------------------------------------------------------------------------------#
 # Set meeeeeeeeeeee
-data_list = mi1_control_all # mi1_all_good | mi1_control_all | [mi1_rnai_prox] | [mi1_rnai_test]
-which_str = 'Control'
-list_to_use = fly_list_control # fly_list_exp | fly_list_control | fly_list_prox | mi1_rnai_prox_list | mi1_rnai_test_list
+data_list = mi1_all_good # mi1_all_good | mi1_control_all | [mi1_rnai_prox] | [mi1_rnai_test]
+which_str = 'Experimental'
+list_to_use = fly_list_exp # fly_list_exp | fly_list_control | fly_list_prox | mi1_rnai_prox_list | mi1_rnai_test_list
 per_ROI = False
 layer_list = ['Proximal'] # only for RNAi
 # Making a data frame the way it's supposed to be....
@@ -951,21 +959,26 @@ plt.close('all')
 # rnai_advanced_df_by_roi['Type'] = 'RNAi'
 # rnai_advanced_df_by_roi.to_pickle(save_directory + 'rnai_advanced_df_by_roi_v3.pkl')
 
-control_metric_df_by_fly = metric_df.copy()
-control_metric_df_by_fly['Type'] = 'control'
-control_advanced_df_by_roi = advanced_metric_df.copy()
-control_advanced_df_by_roi['Type'] = 'control'
-control_advanced_df_by_roi.to_pickle(save_directory + 'control_advanced_df_by_roi_v4.pkl')
+# control_metric_df_by_fly = metric_df.copy()
+# control_metric_df_by_fly['Type'] = 'control'
+# control_advanced_df_by_roi = advanced_metric_df.copy()
+# control_advanced_df_by_roi['Type'] = 'control'
+# control_advanced_df_by_roi.to_pickle(save_directory + 'control_advanced_df_by_roi_v5.pkl')
 
-# exp_metric_df_by_roi = metric_df.copy()
-# exp_metric_df_by_roi['Type'] = 'experimental'
-# exp_advanced_df_by_roi = advanced_metric_df.copy()
-# exp_advanced_df_by_roi['Type'] = 'experimental'
-# exp_advanced_df_by_roi.to_pickle(save_directory + 'exp_advanced_df_by_roi_v3.pkl')
+exp_metric_df_by_fly = metric_df.copy()
+exp_metric_df_by_fly['Type'] = 'Experimental'
+exp_advanced_df_by_fly = advanced_metric_df.copy()
+exp_advanced_df_by_fly['Type'] = 'experimental'
+exp_advanced_df_by_fly.to_pickle(save_directory + 'exp_advanced_df_by_fly_v6.pkl')
 
 # exp_control_rnai_advanced_by_roi = pd.concat([exp_advanced_df_by_roi, control_advanced_df_by_roi, rnai_advanced_df_by_roi])
 
 # exp_control_rnai_advanced_by_roi.to_pickle(save_directory + 'exp_control_rnai_advanced_by_roi_v3.pkl')
+# %% remove and re add 
+exp_control_rnai_by_fly = pd.read_pickle(save_directory + 'exp_control_rnai_by_fly5.pkl')
+control_rnai_fly = exp_control_rnai_by_fly.loc[(exp_control_rnai_by_fly['Type'] != 'Experimental')]
+exp_control_rnai_by_fly6 = pd.concat([control_rnai_fly, exp_metric_df_by_fly])
+exp_control_rnai_by_fly6.to_pickle(save_directory + 'exp_control_rnai_by_fly6.pkl')
 
 
 # %%
@@ -979,7 +992,7 @@ plt.close('all')
 # 1) run the above loop for control data
 
 # 2) save control data
-metric_df_control_by_roi = metric_df # metric_df_control_byfly | metric_df_control_byoi
+# metric_df_control_by_fly = metric_df # metric_df_control_byfly | metric_df_control_byoi
 #rnai_metric_df_by_roi = metric_df.copy()
 
 # 3) run the above loop for experimental data
@@ -989,7 +1002,7 @@ metric_df_control_by_roi = metric_df # metric_df_control_byfly | metric_df_contr
 
 # 5) append a column label for experimental / control designations
 # exp_metric_df_by_roi['Type'] = 'Experimental' # metric_df_exp_byfly | metric_df_exp_byroi
-control_metric_df_by_roi['Type'] = 'Control' # metric_df_control_byfly | metric_df_control_byoi
+# metric_df_control_by_fly['Type'] = 'Control' # metric_df_control_byfly | metric_df_control_byoi
 # rnai_metric_df_by_fly['Type'] = 'RNAi'
 #exp_metric_df_by_fly['Type'] = 'Experimental' # metric_df_exp_byfly | metric_df_exp_byroi
 #control_metric_df_by_fly['Type'] = 'Control' # metric_df_control_byfly | metric_df_control_byoi
