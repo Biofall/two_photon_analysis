@@ -764,7 +764,7 @@ class MidPointNorm(Normalize):
 # %% My own version of getEpochResponseMatrix that allows for different
 #    flourescence calculations than df/f
 
-def getAltEpochResponseMatrix(ID, region_response, alt_pre_time=0, dff=True, df=False):
+def getAltEpochResponseMatrix(ID, region_response, alt_pre_time=0, dff=True, df=False, z_timing_correction=None):
         """
         getEpochReponseMatrix(self, region_response, dff=True)
             Takes in long stack response traces and splits them up into each stimulus epoch
@@ -782,6 +782,11 @@ def getAltEpochResponseMatrix(ID, region_response, alt_pre_time=0, dff=True, df=
         run_parameters = ID.getRunParameters()
         response_timing = ID.getResponseTiming()
         stimulus_timing = ID.getStimulusTiming()
+
+        if z_timing_correction is None:
+            response_time_vector = response_timing["time_vector"]
+        else:
+            response_time_vector = response_timing["time_vector"] + ID.getVolumeFrameOffsets()[z_timing_correction]
 
         epoch_start_times = stimulus_timing['stimulus_start_times'] - run_parameters['pre_time']
         epoch_end_times = stimulus_timing['stimulus_end_times'] + run_parameters['tail_time']
@@ -807,8 +812,8 @@ def getAltEpochResponseMatrix(ID, region_response, alt_pre_time=0, dff=True, df=
         response_matrix[:] = np.nan
         cut_inds = np.empty(0, dtype=int)  # trial/epoch indices to cut from response_matrix
         for idx, val in enumerate(epoch_start_times):
-            stack_inds = np.where(np.logical_and(response_timing['time_vector'] < epoch_end_times[idx],
-                                                 response_timing['time_vector'] >= epoch_start_times[idx]))[0]
+            stack_inds = np.where(np.logical_and(response_time_vector < epoch_end_times[idx],
+                                                 response_time_vector >= epoch_start_times[idx]))[0] - 1
             if len(stack_inds) == 0:  # no imaging acquisitions happened during this epoch presentation
                 cut_inds = np.append(cut_inds, idx)
                 continue
