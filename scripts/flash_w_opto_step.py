@@ -259,7 +259,7 @@ def metricDifNormalizer(metric_in, normalize_to = "sum"):
     return metric_out
 
 # Giant function that takes in layer and outputs metric matrices
-def getWindowMetricsFromLayer(layer, condition_name, per_ROI=False, normalize_to=False, plot_trial_figs=False, save_fig=False):
+def getWindowMetricsFromLayer(layer, condition_name, per_ROI=False, normalize_to=False, plot_trial_figs=False, save_fig=False, cfg_dict=False):
     which_layer = layer
     # Make the metric arrays - each will be experiment x unique opto params x visual flash window
     n_exps = len(which_layer)
@@ -321,13 +321,15 @@ def getWindowMetricsFromLayer(layer, condition_name, per_ROI=False, normalize_to
     count = 0 # this is to help with the per_ROI stuff later
     for pull_ind in range(len(which_layer)):
         file_path = os.path.join(which_layer[pull_ind][0], which_layer[pull_ind][1] + ".hdf5")
-        ID = imaging_data.ImagingDataObject(file_path, which_layer[pull_ind][2], quiet=True)
-        ## DEBUG
-        # cfg_dict = {'timing_channel_ind': 1}
-        # ID = imaging_data.ImagingDataObject(file_path,
-        #                                 which_layer[pull_ind][2],
-        #                                 quiet=True,
-        #                                 cfg_dict=cfg_dict)
+        if cfg_dict == False:
+            ID = imaging_data.ImagingDataObject(file_path, which_layer[pull_ind][2], quiet=True)
+        # for RNAi or fucked windows
+        if cfg_dict == True:
+            cfg_dict = {'timing_channel_ind': 1}
+            ID = imaging_data.ImagingDataObject(file_path,
+                                         which_layer[pull_ind][2],
+                                         quiet=True,
+                                         cfg_dict=cfg_dict)
 
         roi_data = ID.getRoiResponses(which_layer[pull_ind][3], background_roi_name='bg_proximal_lessbi', background_subtraction=False)
         ID.getStimulusTiming(plot_trace_flag=True)
@@ -770,6 +772,8 @@ def getWindowMetricsFromLayer(layer, condition_name, per_ROI=False, normalize_to
 def getAdvancedWindowMetrics(window_matrix):
     up, n_windows, t = window_matrix.shape
 
+    dt = 3.5/t # hardcoded number of seconds for each window
+
     ratio_peak_to_trough_matrix = np.zeros((up, n_windows))
     integral_positive_matrix = np.zeros((up, n_windows))
     integral_negative_matrix = np.zeros((up, n_windows))
@@ -804,13 +808,16 @@ def getAdvancedWindowMetrics(window_matrix):
             # Step 3: Separate positive and negative components based on zero-crossing index
             positive_component = window[:zero_crossing_index]
             negative_component = window[zero_crossing_index:]
+            negative_component[negative_component > 0] = 0 # takes all the postive values and sets to 0, allowing for only negative values
 
             # Step 4: Calculate the integral of the positive and negative components
-            integral_positive = sum(positive_component)
+            integral_positive = np.trapz(positive_component, dx=dt)
+            # integral_positive = sum(positive_component) # old way
 
             # Add a small value to avoid divide-by-zero error if the trough is zero
             trough_value = trough_value if trough_value != 0 else 1e-10
-            integral_negative = sum(abs(negative_component))
+            integral_negative = abs(np.trapz(negative_component, dx=dt))
+            #integral_negative = sum(abs(negative_component))
 
             # Step 5: Calculate the ratio of the peak value to the trough value
             ratio_peak_to_trough = peak_value / trough_value
@@ -848,7 +855,7 @@ def getAdvancedWindowMetrics(window_matrix):
 data_list = mi1_all_good # mi1_all_good | mi1_control_all | [mi1_rnai_prox] | [mi1_rnai_test]
 which_str = 'Experimental'
 list_to_use = fly_list_exp # fly_list_exp | fly_list_control | fly_list_prox | mi1_rnai_prox_list | mi1_rnai_test_list
-per_ROI = False
+per_ROI = True
 layer_list = ['Proximal'] # only for RNAi
 # Making a data frame the way it's supposed to be....
 # Currently have:
@@ -947,8 +954,160 @@ print('-------------------------------------------------------------------------
 print('------------------------------------------------------------------------------------------')
 print('------------------------------------------------------------------------------------------')
 
+
+# %% Loop version of the above code. Run for each condition and for fly and roi arguments. 
+
+# Save the metrics into sensible containers
+# by roi
+exp_advanced_by_roi = []
+con_advanced_by_roi = []
+rnai_advanced_by_roi = []
+# by fly
+exp_advanced_by_fly = []
+con_advanced_by_fly = []
+rnai_advanced_by_fly = []
+
+data_list_set = [mi1_prox_good, mi1_control_prox, mi1_rnai_prox] # mi1_all_good | mi1_control_all | [mi1_rnai_prox] | [mi1_rnai_test]
+which_str_set = ['Experimental', 'Control', 'RNAi']
+list_to_use_set = [fly_list_prox, fly_list_control_prox, mi1_rnai_prox_list] # fly_list_exp | fly_list_control | fly_list_prox | mi1_rnai_prox_list | mi1_rnai_test_list
+per_ROI_set = [True, False]
+
+layer_list = ['Proximal']
+
+for per_ROI in per_ROI_set:
+    for tracking_ind, data_list in enumerate(data_list_set):
+        which_str = which_str_set[tracking_ind]
+        list_to_use = list_to_use_set[tracking_ind]
+        # if tracking_ind == 2:
+        #     layer_list = ['Proximal']
+        # else:
+        #     layer_list = ['Proximal', 'Medial', 'Distal']
+        
+
+        # Defines dataframe with desired columns
+        if per_ROI == True:
+            # metric_df = pd.DataFrame(columns=['ROI', 'Layer', 'Mean', 'SEM_Mean', 'Min', 'Max', 'PtT', 'Opto', 'Window'])
+            advanced_metric_df = pd.DataFrame(columns=['ROI', 'Layer', 'PtT_Ratio', 'Pos_Integral', 'Neg_Integral', 'Integral_Ratio', 'Peak_Index', 'Trough_Index', 'Opto', 'Window'])
+        else:
+            # metric_df = pd.DataFrame(columns=['Fly', 'Layer', 'Mean', 'SEM_Mean', 'Min', 'Max', 'PtT', 'Opto', 'Window'])
+            advanced_metric_df = pd.DataFrame(columns=['Fly', 'Layer', 'PtT_Ratio', 'Pos_Integral', 'Neg_Integral', 'Integral_Ratio', 'Peak_Index', 'Trough_Index', 'Opto', 'Window'])
+        # Adds all metrics to dataframe one row at a time
+        row_idx = 0
+        # Print statement that explains loop is starting
+        print(f"\nBeginning Loops for extracting data.")
+        #for layer_ind in range(len(layer_list)):
+        if tracking_ind != 2:
+            mean_diff_matrix, sem_mean_diff_matrix, max_diff_matrix, min_diff_matrix, ptt_diff_matrix, ptt_ratio, integral_positive_matrix, integral_negative_matrix, integral_ratio_matrix, peak_index_matrix, trough_index_matrix = getWindowMetricsFromLayer(data_list, layer_list, per_ROI = per_ROI, normalize_to='sum', plot_trial_figs=True, save_fig=False)
+        else:
+            mean_diff_matrix, sem_mean_diff_matrix, max_diff_matrix, min_diff_matrix, ptt_diff_matrix, ptt_ratio, integral_positive_matrix, integral_negative_matrix, integral_ratio_matrix, peak_index_matrix, trough_index_matrix = getWindowMetricsFromLayer(data_list, layer_list, per_ROI = per_ROI, normalize_to='sum', plot_trial_figs=True, save_fig=False, cfg_dict=True)
+
+            # for layer_ind in [0]:
+            #     mean_diff_matrix, sem_mean_diff_matrix, max_diff_matrix, min_diff_matrix, ptt_diff_matrix, ptt_ratio, integral_positive_matrix, integral_negative_matrix, integral_ratio_matrix, peak_index_matrix, trough_index_matrix = getWindowMetricsFromLayer(data_list[layer_ind], layer_list[layer_ind], per_ROI = per_ROI, normalize_to='sum', plot_trial_figs=True, save_fig=False)
+            # fly_indicies = list_to_use
+            # if layer_ind == 2:
+            #     fly_indicies = list_to_use
+        #     fly_indicies = list_to_use[layer_ind]
+        #     if data_list == [mi1_rnai_prox]:
+        #         fly_indicies = list_to_use
+        #     # Gets dimensions of metric arrays 
+        #     num_flies, num_opto, num_windows = mean_diff_matrix.shape   
+        #     print(f'mean_diff_matrix.shape = {mean_diff_matrix.shape}')
+        #     for fly in range(num_flies):
+        #     #for fly in range(len(fly_indicies)):
+        #         for opto in range(num_opto):
+        #             for window in range(num_windows):
+        #                 if per_ROI == True:
+        #                     metric_df.loc[row_idx] = [
+        #                         fly, layer_list[layer_ind], mean_diff_matrix[fly, opto, window], sem_mean_diff_matrix[fly, opto, window],
+        #                         min_diff_matrix[fly, opto, window], max_diff_matrix[fly, opto, window],
+        #                         ptt_diff_matrix[fly, opto, window], 
+        #                         opto, window,
+        #                         ]
+        #                 else:
+        #                     print(f'layer_list[layer_ind] = {layer_list[layer_ind]}')
+        #                     print(f'fly_indicies[fly] = {fly_indicies[fly]}')
+        #                     print(f'opto = {opto}')
+        #                     print(f'window = {window}')
+
+        #                     metric_df.loc[row_idx] = [
+        #                         fly_indicies[fly], layer_list[layer_ind], mean_diff_matrix[fly, opto, window], sem_mean_diff_matrix[fly, opto, window],
+        #                         min_diff_matrix[fly, opto, window], max_diff_matrix[fly, opto, window], 
+        #                         ptt_diff_matrix[fly, opto, window], 
+        #                         opto, window,
+        #                         ]
+        #                 row_idx += 1
+        # Gets dimensions of metric arrays 
+        num_flies, num_opto, num_windows = ptt_ratio.shape   
+        for fly in range(num_flies):
+            #for fly in range(len(fly_indicies)):
+                for opto in range(num_opto):
+                    for window in range(num_windows):
+                        if per_ROI == True:
+                            advanced_metric_df.loc[row_idx] = [
+                                fly, layer_list[layer_ind],
+                                ptt_ratio[fly, opto, window], integral_positive_matrix[fly, opto, window], 
+                                integral_negative_matrix[fly, opto, window], integral_ratio_matrix[fly, opto, window], 
+                                peak_index_matrix[fly, opto, window], trough_index_matrix[fly, opto, window], 
+                                opto, window,
+                            ]
+                        else:
+                            advanced_metric_df.loc[row_idx] = [
+                                fly_indicies[fly], layer_list[layer_ind],
+                                ptt_ratio[fly, opto, window], integral_positive_matrix[fly, opto, window], 
+                                integral_negative_matrix[fly, opto, window], integral_ratio_matrix[fly, opto, window], 
+                                peak_index_matrix[fly, opto, window], trough_index_matrix[fly, opto, window], 
+                                opto, window,
+                            ]
+                        row_idx += 1
+
+        # # Convert the floats which were indicies to ints   
+        # if per_ROI == True:
+        #     metric_df['ROI'] = metric_df['ROI'].astype(int)   
+        # else:
+        #     metric_df['Fly'] = metric_df['Fly'].astype(int)
+        # metric_df['Opto'] = metric_df['Opto'].astype(int)
+        # metric_df['Window'] = metric_df['Window'].astype(int)
+
+        # now assign the advanced_metric_df to the correct container
+        if per_ROI == True:
+            if tracking_ind == 0:
+                exp_advanced_by_roi = advanced_metric_df
+            elif tracking_ind == 1:
+                con_advanced_by_roi = advanced_metric_df
+            elif tracking_ind == 2:
+                rnai_advanced_by_roi = advanced_metric_df
+        elif per_ROI == False:
+            if tracking_ind == 0:
+                exp_advanced_by_fly = advanced_metric_df
+            elif tracking_ind == 1:
+                con_advanced_by_fly = advanced_metric_df
+            elif tracking_ind == 2:
+                rnai_advanced_by_fly = advanced_metric_df
+
+        plt.close('all')
+print('\n\nFucking Done\n\n')
+
+
+
+
 # %% Saving all the advanced df's
 plt.close('all')
+
+# adding the type column
+exp_advanced_by_roi['Type'] = 'Experimental'
+con_advanced_by_roi['Type'] = 'Control'
+rnai_advanced_by_roi['Type'] = 'RNAi'
+# exp_advanced_by_fly['Type'] = 'Experimental'
+# con_advanced_by_fly['Type'] = 'Control'
+# rnai_advanced_by_fly['Type'] = 'RNAi'
+
+# concatenating and saving
+exp_control_rnai_advanced_by_roi = pd.concat([exp_advanced_by_roi, con_advanced_by_roi, rnai_advanced_by_roi])
+exp_control_rnai_advanced_by_roi.to_pickle(save_directory + 'exp_control_rnai_advanced_by_roi_v12.pkl')
+
+# exp_control_rnai_advanced_by_fly = pd.concat([exp_advanced_by_fly, con_advanced_by_fly, rnai_advanced_by_fly])
+# exp_control_rnai_advanced_by_fly.to_pickle(save_directory + 'exp_control_rnai_advanced_by_fly_v12.pkl')
+
 
 #control_metric_df_by_fly = metric_df.copy()
 #exp_metric_df_by_fly = metric_df.copy()
@@ -965,11 +1124,11 @@ plt.close('all')
 # control_advanced_df_by_roi['Type'] = 'control'
 # control_advanced_df_by_roi.to_pickle(save_directory + 'control_advanced_df_by_roi_v5.pkl')
 
-exp_metric_df_by_fly = metric_df.copy()
-exp_metric_df_by_fly['Type'] = 'Experimental'
-exp_advanced_df_by_fly = advanced_metric_df.copy()
-exp_advanced_df_by_fly['Type'] = 'experimental'
-exp_advanced_df_by_fly.to_pickle(save_directory + 'exp_advanced_df_by_fly_v6.pkl')
+# exp_metric_df_by_fly = metric_df.copy()
+# exp_metric_df_by_fly['Type'] = 'Experimental'
+# exp_advanced_df_by_fly = advanced_metric_df.copy()
+# exp_advanced_df_by_fly['Type'] = 'experimental'
+# exp_advanced_df_by_fly.to_pickle(save_directory + 'exp_advanced_df_by_fly_v6.pkl')
 
 # exp_control_rnai_advanced_by_roi = pd.concat([exp_advanced_df_by_roi, control_advanced_df_by_roi, rnai_advanced_df_by_roi])
 
