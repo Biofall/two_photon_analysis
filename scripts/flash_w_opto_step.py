@@ -539,13 +539,14 @@ def getWindowMetricsFromLayer(layer, condition_name, per_ROI=False, normalize_to
         response_PtT = response_max - response_min
 
         # Call the function that calculates more in-depth window metrics HERE
+        current_sample_period = ID.getResponseTiming().get('sample_period')
         (ratio_peak_to_trough_matrix,
         integral_positives,
         integral_negatives,
         integral_ratios,
         peak_indecies,
         trough_indecies
-         ) = getAdvancedWindowMetrics(windows)
+         ) = getAdvancedWindowMetrics(windows, current_sample_period)
 
         # storage time!
         mean_matrix[pull_ind] = response_mean
@@ -579,7 +580,7 @@ def getWindowMetricsFromLayer(layer, condition_name, per_ROI=False, normalize_to
                     ratio_integral_positive_to_negative_matrix_per_roi,
                     peak_index_per_roi,
                     trough_index_per_roi
-                ) = getAdvancedWindowMetrics(windows_by_ROI[roi_ind, :, :])   
+                ) = getAdvancedWindowMetrics(windows_by_ROI[roi_ind, :, :], sample_period=current_sample_period)   
 
                 # DEBUG PRINT:
                 print(f'shape of ratio_peak_to_trough_matrix_per_roi: {ratio_peak_to_trough_matrix_per_roi.shape}')
@@ -769,10 +770,16 @@ def getWindowMetricsFromLayer(layer, condition_name, per_ROI=False, normalize_to
 
 # Calculating new metrics for exploring AstA-R1-RNAi impact of shape 
 # windows are in UniqueOptoParams X Window X Time
-def getAdvancedWindowMetrics(window_matrix):
+def getAdvancedWindowMetrics(window_matrix, sample_period):
     up, n_windows, t = window_matrix.shape
 
-    dt = 3.5/t # hardcoded number of seconds for each window
+    dt = sample_period
+    print(f'\n\n\n\nsample_period: {sample_period}\n\n\n\n')
+    # if sample_period != None:
+    #     dt = sample_period
+    # else:
+    #     dt = 3.5/t # hardcoded number of seconds for each window
+    #     print('\n\nused hardcoded sample period!\n\n\n')
 
     ratio_peak_to_trough_matrix = np.zeros((up, n_windows))
     integral_positive_matrix = np.zeros((up, n_windows))
@@ -1003,7 +1010,7 @@ for per_ROI in per_ROI_set:
 
             # for layer_ind in [0]:
             #     mean_diff_matrix, sem_mean_diff_matrix, max_diff_matrix, min_diff_matrix, ptt_diff_matrix, ptt_ratio, integral_positive_matrix, integral_negative_matrix, integral_ratio_matrix, peak_index_matrix, trough_index_matrix = getWindowMetricsFromLayer(data_list[layer_ind], layer_list[layer_ind], per_ROI = per_ROI, normalize_to='sum', plot_trial_figs=True, save_fig=False)
-            # fly_indicies = list_to_use
+        fly_indicies = list_to_use
             # if layer_ind == 2:
             #     fly_indicies = list_to_use
         #     fly_indicies = list_to_use[layer_ind]
@@ -1044,7 +1051,7 @@ for per_ROI in per_ROI_set:
                     for window in range(num_windows):
                         if per_ROI == True:
                             advanced_metric_df.loc[row_idx] = [
-                                fly, layer_list[layer_ind],
+                                fly, layer_list[0],
                                 ptt_ratio[fly, opto, window], integral_positive_matrix[fly, opto, window], 
                                 integral_negative_matrix[fly, opto, window], integral_ratio_matrix[fly, opto, window], 
                                 peak_index_matrix[fly, opto, window], trough_index_matrix[fly, opto, window], 
@@ -1052,7 +1059,7 @@ for per_ROI in per_ROI_set:
                             ]
                         else:
                             advanced_metric_df.loc[row_idx] = [
-                                fly_indicies[fly], layer_list[layer_ind],
+                                fly_indicies[fly], layer_list[0],
                                 ptt_ratio[fly, opto, window], integral_positive_matrix[fly, opto, window], 
                                 integral_negative_matrix[fly, opto, window], integral_ratio_matrix[fly, opto, window], 
                                 peak_index_matrix[fly, opto, window], trough_index_matrix[fly, opto, window], 
@@ -1103,7 +1110,7 @@ rnai_advanced_by_roi['Type'] = 'RNAi'
 
 # concatenating and saving
 exp_control_rnai_advanced_by_roi = pd.concat([exp_advanced_by_roi, con_advanced_by_roi, rnai_advanced_by_roi])
-exp_control_rnai_advanced_by_roi.to_pickle(save_directory + 'exp_control_rnai_advanced_by_roi_v12.pkl')
+exp_control_rnai_advanced_by_roi.to_pickle(save_directory + 'exp_control_rnai_advanced_by_roi_v13.pkl')
 
 # exp_control_rnai_advanced_by_fly = pd.concat([exp_advanced_by_fly, con_advanced_by_fly, rnai_advanced_by_fly])
 # exp_control_rnai_advanced_by_fly.to_pickle(save_directory + 'exp_control_rnai_advanced_by_fly_v12.pkl')
