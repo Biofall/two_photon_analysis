@@ -9,11 +9,3 @@ Written by Avery Krieger - contact @ krave@stanford.edu
 ```python
 (your venv) >> pip install -e .
 ```
-
-For Waaaaayyyy more information go here: [ouroboros](https://github.com/tgfisher/ouroboros).
-
-Currently, the medulla_analysis.py file contains functions called by the scripts>plotting_responses.py file. 
-
-ToDo:
--Finish writing backbone code to turn this into an installable package
--create separate utility functions for things like motion correction 
