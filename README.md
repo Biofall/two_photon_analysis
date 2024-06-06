@@ -60,7 +60,7 @@ pip install -e .
 Contributions to enhance or expand the toolkit are welcome. Please fork the repository and submit pull requests or reach out directly to Avery Krieger at krave@stanford.edu.
 
 ## License
-Specify the license under which your project is made available.
+This project is licensed under the MIT License - see the LICENSE.md file for details.
 
 ## Contact
 For any inquiries or support, contact Avery Krieger at krave@stanford.edu.
